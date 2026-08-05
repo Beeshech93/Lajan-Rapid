@@ -6,7 +6,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { mxn, htg, shortDate, STATUS_LABEL, STATUS_TONE, type TransferStatus } from "@/lib/remesa";
+import { mxn, shortDate, STATUS_LABEL, STATUS_TONE, type TransferStatus } from "@/lib/remesa";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -181,7 +181,7 @@ function Dashboard() {
       </Card>
 
       <p className="pb-2 text-center text-xs text-muted-foreground">
-        Recibe {htg(0)} · los montos se calculan al tipo de cambio del momento del envío.
+        Los montos en gourdes se calculan con el tipo de cambio vigente al momento del envío.
       </p>
     </div>
   );
