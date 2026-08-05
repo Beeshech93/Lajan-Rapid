@@ -44,7 +44,7 @@ const kycSchema = z.object({
 });
 
 function Perfil() {
-  const { user, profile, roles, refresh } = useProfile();
+  const { user, profile, roles, reload } = useProfile();
   const qc = useQueryClient();
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingKyc, setSavingKyc] = useState(false);
@@ -72,13 +72,19 @@ function Perfil() {
       full_name: String(form.get("full_name") ?? ""),
       phone: String(form.get("phone") ?? ""),
     });
-    if (!parsed.success) return toast.error(parsed.error.issues[0]!.message);
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0]!.message);
+      return;
+    }
     setSavingProfile(true);
     const { error } = await supabase.from("profiles").update(parsed.data).eq("id", user!.id);
     setSavingProfile(false);
-    if (error) return toast.error("No se pudo guardar");
+    if (error) {
+      toast.error("No se pudo guardar");
+      return;
+    }
     toast.success("Perfil actualizado");
-    refresh();
+    void reload();
   };
 
   const saveKyc = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -90,7 +96,10 @@ function Perfil() {
       birth_date: String(form.get("birth_date") ?? ""),
       address: String(form.get("address") ?? ""),
     });
-    if (!parsed.success) return toast.error(parsed.error.issues[0]!.message);
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0]!.message);
+      return;
+    }
     setSavingKyc(true);
     const { error } = await supabase.from("kyc_submissions").insert({
       user_id: user!.id,
@@ -99,10 +108,13 @@ function Perfil() {
     });
     if (!error) await supabase.from("profiles").update({ kyc_status: "pending" }).eq("id", user!.id);
     setSavingKyc(false);
-    if (error) return toast.error("No se pudo enviar la verificación");
+    if (error) {
+      toast.error("No se pudo enviar la verificación");
+      return;
+    }
     toast.success("Verificación enviada. Te avisaremos al aprobarla.");
     qc.invalidateQueries({ queryKey: ["kyc", user?.id] });
-    refresh();
+    void reload();
   };
 
   const kyc = (profile?.kyc_status ?? "unverified") as KycStatus;
