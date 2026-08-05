@@ -153,7 +153,7 @@ function KycPanel() {
     const notes = status === "rejected" ? "Documentación ilegible o incompleta." : null;
     const { error } = await supabase
       .from("kyc_submissions")
-      .update({ status, review_notes: notes, reviewed_at: new Date().toISOString() })
+      .update({ status, review_notes: notes })
       .eq("id", id);
     if (!error) await supabase.from("profiles").update({ kyc_status: status }).eq("id", userId);
     if (error) {
@@ -330,7 +330,7 @@ function RatesPanel() {
     if (rate) await supabase.from("exchange_rates").update({ is_active: false }).eq("id", rate.id);
     const { error } = await supabase
       .from("exchange_rates")
-      .insert({ ...values, is_active: true, base_currency: "MXN", quote_currency: "HTG" });
+      .insert({ ...values, is_active: true, from_currency: "MXN", to_currency: "HTG" });
     setSaving(false);
     if (error) {
       toast.error("No se pudo guardar");

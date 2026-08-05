@@ -48,12 +48,7 @@ function Agente() {
   });
 
   const advance = async (id: string, status: TransferStatus, message: string) => {
-    const now = new Date().toISOString();
-    const patch = {
-      status,
-      ...(status === "paid" ? { paid_at: now } : {}),
-      ...(status === "completed" ? { completed_at: now } : {}),
-    };
+    const patch = { status };
     const { error } = await supabase.from("transfers").update(patch).eq("id", id);
     if (error) {
       toast.error("No se pudo actualizar");
