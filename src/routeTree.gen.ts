@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedEnviarRouteImport } from './routes/_authenticated/enviar'
+import { Route as AuthenticatedHistorialRouteImport } from './routes/_authenticated/historial'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -39,18 +40,25 @@ const AuthenticatedEnviarRoute = AuthenticatedEnviarRouteImport.update({
   path: '/enviar',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedHistorialRoute = AuthenticatedHistorialRouteImport.update({
+  id: '/historial',
+  path: '/historial',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/enviar': typeof AuthenticatedEnviarRoute
+  '/historial': typeof AuthenticatedHistorialRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/enviar': typeof AuthenticatedEnviarRoute
+  '/historial': typeof AuthenticatedHistorialRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -59,12 +67,13 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/enviar': typeof AuthenticatedEnviarRoute
+  '/_authenticated/historial': typeof AuthenticatedHistorialRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/dashboard' | '/enviar'
+  fullPaths: '/' | '/auth' | '/dashboard' | '/enviar' | '/historial'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/dashboard' | '/enviar'
+  to: '/' | '/auth' | '/dashboard' | '/enviar' | '/historial'
   id:
     | '__root__'
     | '/'
@@ -72,6 +81,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/dashboard'
     | '/_authenticated/enviar'
+    | '/_authenticated/historial'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -117,17 +127,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEnviarRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/historial': {
+      id: '/_authenticated/historial'
+      path: '/historial'
+      fullPath: '/historial'
+      preLoaderRoute: typeof AuthenticatedHistorialRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEnviarRoute: typeof AuthenticatedEnviarRoute
+  AuthenticatedHistorialRoute: typeof AuthenticatedHistorialRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEnviarRoute: AuthenticatedEnviarRoute,
+  AuthenticatedHistorialRoute: AuthenticatedHistorialRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
