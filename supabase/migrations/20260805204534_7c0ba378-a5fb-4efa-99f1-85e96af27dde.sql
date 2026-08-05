@@ -1,0 +1,11 @@
+REVOKE EXECUTE ON FUNCTION public.has_role(UUID, public.app_role) FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.is_staff(UUID) FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.claim_admin_if_none() FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.set_user_role(UUID, public.app_role) FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.handle_new_user() FROM anon, authenticated, public;
+REVOKE EXECUTE ON FUNCTION public.log_transfer_event() FROM anon, authenticated, public;
+REVOKE EXECUTE ON FUNCTION public.touch_updated_at() FROM anon, authenticated, public;
+GRANT EXECUTE ON FUNCTION public.has_role(UUID, public.app_role) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.is_staff(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.claim_admin_if_none() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.set_user_role(UUID, public.app_role) TO authenticated;
