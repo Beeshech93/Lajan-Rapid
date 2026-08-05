@@ -16,6 +16,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedEnviarRouteImport } from './routes/_authenticated/enviar'
 import { Route as AuthenticatedHistorialRouteImport } from './routes/_authenticated/historial'
 import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
+import { Route as AuthenticatedSoporteRouteImport } from './routes/_authenticated/soporte'
 import { Route as AuthenticatedTransferenciaIdRouteImport } from './routes/_authenticated/transferencia.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -52,6 +53,11 @@ const AuthenticatedPerfilRoute = AuthenticatedPerfilRouteImport.update({
   path: '/perfil',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSoporteRoute = AuthenticatedSoporteRouteImport.update({
+  id: '/soporte',
+  path: '/soporte',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedTransferenciaIdRoute =
   AuthenticatedTransferenciaIdRouteImport.update({
     id: '/transferencia/$id',
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/enviar': typeof AuthenticatedEnviarRoute
   '/historial': typeof AuthenticatedHistorialRoute
   '/perfil': typeof AuthenticatedPerfilRoute
+  '/soporte': typeof AuthenticatedSoporteRoute
   '/transferencia/$id': typeof AuthenticatedTransferenciaIdRoute
 }
 export interface FileRoutesByTo {
@@ -75,6 +82,7 @@ export interface FileRoutesByTo {
   '/enviar': typeof AuthenticatedEnviarRoute
   '/historial': typeof AuthenticatedHistorialRoute
   '/perfil': typeof AuthenticatedPerfilRoute
+  '/soporte': typeof AuthenticatedSoporteRoute
   '/transferencia/$id': typeof AuthenticatedTransferenciaIdRoute
 }
 export interface FileRoutesById {
@@ -86,6 +94,7 @@ export interface FileRoutesById {
   '/_authenticated/enviar': typeof AuthenticatedEnviarRoute
   '/_authenticated/historial': typeof AuthenticatedHistorialRoute
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
+  '/_authenticated/soporte': typeof AuthenticatedSoporteRoute
   '/_authenticated/transferencia/$id': typeof AuthenticatedTransferenciaIdRoute
 }
 export interface FileRouteTypes {
@@ -97,6 +106,7 @@ export interface FileRouteTypes {
     | '/enviar'
     | '/historial'
     | '/perfil'
+    | '/soporte'
     | '/transferencia/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -106,6 +116,7 @@ export interface FileRouteTypes {
     | '/enviar'
     | '/historial'
     | '/perfil'
+    | '/soporte'
     | '/transferencia/$id'
   id:
     | '__root__'
@@ -116,6 +127,7 @@ export interface FileRouteTypes {
     | '/_authenticated/enviar'
     | '/_authenticated/historial'
     | '/_authenticated/perfil'
+    | '/_authenticated/soporte'
     | '/_authenticated/transferencia/$id'
   fileRoutesById: FileRoutesById
 }
@@ -176,6 +188,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPerfilRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/soporte': {
+      id: '/_authenticated/soporte'
+      path: '/soporte'
+      fullPath: '/soporte'
+      preLoaderRoute: typeof AuthenticatedSoporteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/transferencia/$id': {
       id: '/_authenticated/transferencia/$id'
       path: '/transferencia/$id'
@@ -191,6 +210,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedEnviarRoute: typeof AuthenticatedEnviarRoute
   AuthenticatedHistorialRoute: typeof AuthenticatedHistorialRoute
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
+  AuthenticatedSoporteRoute: typeof AuthenticatedSoporteRoute
   AuthenticatedTransferenciaIdRoute: typeof AuthenticatedTransferenciaIdRoute
 }
 
@@ -199,6 +219,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedEnviarRoute: AuthenticatedEnviarRoute,
   AuthenticatedHistorialRoute: AuthenticatedHistorialRoute,
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
+  AuthenticatedSoporteRoute: AuthenticatedSoporteRoute,
   AuthenticatedTransferenciaIdRoute: AuthenticatedTransferenciaIdRoute,
 }
 
