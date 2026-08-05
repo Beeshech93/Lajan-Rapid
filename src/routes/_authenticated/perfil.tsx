@@ -117,7 +117,7 @@ function Perfil() {
     void reload();
   };
 
-  const kyc = (profile?.kyc_status ?? "unverified") as KycStatus;
+  const kyc = (profile?.kyc_status ?? "none") as KycStatus;
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">

@@ -35,17 +35,17 @@ export const STATUS_FLOW: TransferStatus[] = [
   "completed",
 ];
 
-export type KycStatus = "unverified" | "pending" | "approved" | "rejected";
+export type KycStatus = "none" | "pending" | "approved" | "rejected";
 
 export const KYC_LABEL: Record<KycStatus, string> = {
-  unverified: "Sin verificar",
+  none: "Sin verificar",
   pending: "En revisión",
   approved: "Verificado",
   rejected: "Rechazado",
 };
 
 export const KYC_TONE: Record<KycStatus, string> = {
-  unverified: "bg-muted text-muted-foreground",
+  none: "bg-muted text-muted-foreground",
   pending: "bg-warning/15 text-warning-foreground",
   approved: "bg-success/15 text-success",
   rejected: "bg-destructive/10 text-destructive",
