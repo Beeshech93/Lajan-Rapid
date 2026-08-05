@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedEnviarRouteImport } from './routes/_authenticated/enviar'
 import { Route as AuthenticatedHistorialRouteImport } from './routes/_authenticated/historial'
+import { Route as AuthenticatedTransferenciaIdRouteImport } from './routes/_authenticated/transferencia.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -45,6 +46,12 @@ const AuthenticatedHistorialRoute = AuthenticatedHistorialRouteImport.update({
   path: '/historial',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTransferenciaIdRoute =
+  AuthenticatedTransferenciaIdRouteImport.update({
+    id: '/transferencia/$id',
+    path: '/transferencia/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -52,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/enviar': typeof AuthenticatedEnviarRoute
   '/historial': typeof AuthenticatedHistorialRoute
+  '/transferencia/$id': typeof AuthenticatedTransferenciaIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -59,6 +67,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/enviar': typeof AuthenticatedEnviarRoute
   '/historial': typeof AuthenticatedHistorialRoute
+  '/transferencia/$id': typeof AuthenticatedTransferenciaIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -68,12 +77,25 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/enviar': typeof AuthenticatedEnviarRoute
   '/_authenticated/historial': typeof AuthenticatedHistorialRoute
+  '/_authenticated/transferencia/$id': typeof AuthenticatedTransferenciaIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/dashboard' | '/enviar' | '/historial'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/enviar'
+    | '/historial'
+    | '/transferencia/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/dashboard' | '/enviar' | '/historial'
+  to:
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/enviar'
+    | '/historial'
+    | '/transferencia/$id'
   id:
     | '__root__'
     | '/'
@@ -82,6 +104,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/enviar'
     | '/_authenticated/historial'
+    | '/_authenticated/transferencia/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -134,6 +157,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHistorialRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/transferencia/$id': {
+      id: '/_authenticated/transferencia/$id'
+      path: '/transferencia/$id'
+      fullPath: '/transferencia/$id'
+      preLoaderRoute: typeof AuthenticatedTransferenciaIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -141,12 +171,14 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEnviarRoute: typeof AuthenticatedEnviarRoute
   AuthenticatedHistorialRoute: typeof AuthenticatedHistorialRoute
+  AuthenticatedTransferenciaIdRoute: typeof AuthenticatedTransferenciaIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEnviarRoute: AuthenticatedEnviarRoute,
   AuthenticatedHistorialRoute: AuthenticatedHistorialRoute,
+  AuthenticatedTransferenciaIdRoute: AuthenticatedTransferenciaIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
