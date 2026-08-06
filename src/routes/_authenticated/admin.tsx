@@ -10,8 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  mxn,
-  htg,
+  money,
   shortDate,
   STATUS_LABEL,
   STATUS_TONE,
@@ -95,16 +94,24 @@ function Resumen() {
   });
 
   const rows = transfers ?? [];
-  const volume = rows.reduce((a, t) => a + Number(t.amount_mxn), 0);
-  const fees = rows.reduce((a, t) => a + Number(t.fee_mxn), 0);
+  const sumBy = (pick: (t: (typeof rows)[number]) => number) => {
+    const acc: Record<string, number> = {};
+    rows.forEach((t) => {
+      acc[t.send_currency] = (acc[t.send_currency] ?? 0) + pick(t);
+    });
+    const entries = Object.entries(acc);
+    return entries.length ? entries.map(([c, v]) => money(v, c)).join(" · ") : "—";
+  };
+  const volume = sumBy((t) => Number(t.amount_send));
+  const fees = sumBy((t) => Number(t.fee_send));
   const completed = rows.filter((t) => t.status === "completed").length;
   const pendingKyc = (profiles ?? []).filter((p) => p.kyc_status === "pending").length;
 
   return (
     <div className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Volumen total" value={mxn(volume)} />
-        <Stat label="Ingresos por comisión" value={mxn(fees)} />
+        <Stat label="Volumen total" value={volume} />
+        <Stat label="Ingresos por comisión" value={fees} />
         <Stat label="Envíos entregados" value={`${completed} / ${rows.length}`} />
         <Stat label="KYC por revisar" value={String(pendingKyc)} />
       </div>
@@ -220,12 +227,15 @@ function TxPanel() {
             <div>
               <p className="font-medium">{t.recipient_name}</p>
               <p className="text-xs text-muted-foreground">
-                {t.reference} · {t.payment_method} · {shortDate(t.created_at)}
+                {t.reference} · {t.origin_country} → {t.destination_country} ·{" "}
+                {t.payment_method} · {shortDate(t.created_at)}
               </p>
             </div>
             <div className="text-right">
-              <p className="font-semibold">{mxn(Number(t.amount_mxn))}</p>
-              <p className="text-xs text-muted-foreground">{htg(Number(t.amount_htg))}</p>
+              <p className="font-semibold">{money(Number(t.amount_send), t.send_currency)}</p>
+              <p className="text-xs text-muted-foreground">
+                {money(Number(t.amount_receive), t.receive_currency)}
+              </p>
             </div>
             <Badge className={STATUS_TONE[t.status as TransferStatus]} variant="secondary">
               {STATUS_LABEL[t.status as TransferStatus]}
