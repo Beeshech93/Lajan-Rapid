@@ -92,9 +92,12 @@ function Detalle() {
 
       <Card className="bg-brand text-primary-foreground">
         <CardContent className="grid gap-4 p-5 sm:grid-cols-3">
-          <Metric label="Tú pagas" value={mxn(Number(t.total_mxn))} />
-          <Metric label="Comisión" value={mxn(Number(t.fee_mxn))} />
-          <Metric label={`${t.recipient_name} recibe`} value={htg(Number(t.amount_htg))} />
+          <Metric label="Tú pagas" value={money(Number(t.total_send), t.send_currency)} />
+          <Metric label="Comisión" value={money(Number(t.fee_send), t.send_currency)} />
+          <Metric
+            label={`${t.recipient_name} recibe`}
+            value={money(Number(t.amount_receive), t.receive_currency)}
+          />
         </CardContent>
       </Card>
 
@@ -102,7 +105,7 @@ function Detalle() {
         <Card className="border-warning/40 bg-warning/10">
           <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
             <div>
-              <p className="font-semibold">Completa tu pago con {payment?.label}</p>
+              <p className="font-semibold">Completa tu pago con {paymentName}</p>
               <p className="text-sm text-muted-foreground">
                 Usa la referencia {t.reference}. Un agente confirmará el pago.
               </p>
@@ -170,9 +173,10 @@ function Detalle() {
           <Row label="Destinatario" value={t.recipient_name} />
           <Row label="Teléfono" value={t.recipient_phone} />
           <Row label="Ciudad" value={t.recipient_city} />
-          <Row label="Entrega" value={delivery?.label ?? t.delivery_method} />
-          <Row label="Método de pago" value={payment?.label ?? t.payment_method} />
-          <Row label="Tipo de cambio" value={`1 MXN = ${Number(t.rate).toFixed(4)} HTG`} />
+          <Row label="Entrega" value={deliveryName} />
+          <Row label="Corredor" value={`${t.origin_country} → ${t.destination_country}`} />
+          <Row label="Método de pago" value={paymentName} />
+          <Row label="Tipo de cambio" value={`1 ${t.send_currency} = ${Number(t.rate).toFixed(4)} ${t.receive_currency}`} />
           {t.note && <Row label="Mensaje" value={t.note} />}
         </CardContent>
       </Card>
