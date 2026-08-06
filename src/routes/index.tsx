@@ -20,7 +20,7 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "RemesaHaití — Envía dinero de México a Haití" },
       {
         property: "og:description",
-        content: "Tipo de cambio transparente, pago en OXXO o SPEI y entrega en efectivo en Haití.",
+        content: "Envía dinero de México a Haití en minutos. Tipo de cambio transparente, comisiones claras y seguimiento en tiempo real.",
       },
     ],
   }),

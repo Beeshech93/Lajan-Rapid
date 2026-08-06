@@ -83,10 +83,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "description",
         content:
-          "Envía dinero de México a Haití en minutos con tipo de cambio transparente y seguimiento en tiempo real.",
+          "Envía dinero de México a Haití en minutos. Tipo de cambio transparente, comisiones claras y seguimiento en tiempo real.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:title", content: "RemesaHaití — Envía dinero de México a Haití" },
+      { name: "twitter:title", content: "RemesaHaití — Envía dinero de México a Haití" },
+      { property: "og:description", content: "Envía dinero de México a Haití en minutos. Tipo de cambio transparente, comisiones claras y seguimiento en tiempo real." },
+      { name: "twitter:description", content: "Envía dinero de México a Haití en minutos. Tipo de cambio transparente, comisiones claras y seguimiento en tiempo real." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/12a98643-608e-4133-90a8-d9091cc3da8a/id-preview-9e63a84a--b7a9baa3-804a-465d-b798-284cc8ac44da.lovable.app-1785963363792.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/12a98643-608e-4133-90a8-d9091cc3da8a/id-preview-9e63a84a--b7a9baa3-804a-465d-b798-284cc8ac44da.lovable.app-1785963363792.png" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
