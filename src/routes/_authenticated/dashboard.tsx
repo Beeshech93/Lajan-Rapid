@@ -1,12 +1,21 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { ArrowRight, Bell, ShieldAlert, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
+import { useCountries, useRate } from "@/hooks/useCorridors";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { mxn, shortDate, STATUS_LABEL, STATUS_TONE, type TransferStatus } from "@/lib/remesa";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { money, shortDate, STATUS_LABEL, STATUS_TONE, type TransferStatus } from "@/lib/remesa";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -22,20 +31,16 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function Dashboard() {
   const { profile, user } = useProfile();
+  const { data: countries } = useCountries();
+  const [origin, setOrigin] = useState("MX");
+  const [destination, setDestination] = useState("HT");
 
-  const { data: rate } = useQuery({
-    queryKey: ["rate"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("exchange_rates")
-        .select("*")
-        .eq("is_active", true)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      return data;
-    },
-  });
+  const origins = (countries ?? []).filter((c) => c.is_origin);
+  const destinations = (countries ?? []).filter((c) => c.is_destination);
+  const sendCur = origins.find((c) => c.code === origin)?.currency ?? "";
+  const recvCur = destinations.find((c) => c.code === destination)?.currency ?? "";
+
+  const { data: rate } = useRate(sendCur, recvCur);
 
   const { data: transfers } = useQuery({
     queryKey: ["my-transfers", user?.id],
@@ -63,8 +68,6 @@ function Dashboard() {
       return data ?? [];
     },
   });
-
-  const sentTotal = (transfers ?? []).reduce((a, t) => a + Number(t.amount_mxn), 0);
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
@@ -104,11 +107,40 @@ function Dashboard() {
             <p className="flex items-center gap-2 text-xs font-semibold opacity-80">
               <TrendingUp className="size-4" /> Tipo de cambio de hoy
             </p>
-            <p className="mt-2 font-display text-3xl font-bold">
-              1 MXN = {rate ? Number(rate.rate).toFixed(4) : "—"} HTG
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              <Select value={origin} onValueChange={setOrigin}>
+                <SelectTrigger className="bg-primary-foreground/10 text-primary-foreground">
+                  <SelectValue placeholder="Desde" />
+                </SelectTrigger>
+                <SelectContent>
+                  {origins.map((c) => (
+                    <SelectItem key={c.code} value={c.code}>
+                      {c.flag} {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={destination} onValueChange={setDestination}>
+                <SelectTrigger className="bg-primary-foreground/10 text-primary-foreground">
+                  <SelectValue placeholder="Hacia" />
+                </SelectTrigger>
+                <SelectContent>
+                  {destinations.map((c) => (
+                    <SelectItem key={c.code} value={c.code}>
+                      {c.flag} {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <p className="mt-3 font-display text-3xl font-bold">
+              1 {sendCur || "—"} = {rate ? Number(rate.rate).toFixed(4) : "—"} {recvCur || "—"}
             </p>
             <p className="mt-1 text-sm opacity-80">
-              Comisión {rate ? `${Number(rate.fee_percent)}% + ${mxn(Number(rate.fee_fixed))}` : "—"}
+              Comisión{" "}
+              {rate
+                ? `${Number(rate.fee_percent)}% + ${money(Number(rate.fee_fixed), sendCur)}`
+                : "—"}
             </p>
             <Button asChild variant="secondary" className="mt-4 gap-2">
               <Link to="/enviar">
@@ -119,9 +151,9 @@ function Dashboard() {
         </Card>
         <Card>
           <CardContent className="p-5">
-            <p className="text-xs font-semibold text-muted-foreground">Enviado (últimos envíos)</p>
-            <p className="mt-2 font-display text-2xl font-bold">{mxn(sentTotal)}</p>
-            <p className="mt-1 text-sm text-muted-foreground">{transfers?.length ?? 0} operaciones</p>
+            <p className="text-xs font-semibold text-muted-foreground">Envíos recientes</p>
+            <p className="mt-2 font-display text-2xl font-bold">{transfers?.length ?? 0}</p>
+            <p className="mt-1 text-sm text-muted-foreground">operaciones registradas</p>
           </CardContent>
         </Card>
       </div>
@@ -147,11 +179,14 @@ function Dashboard() {
               <div>
                 <p className="font-medium">{t.recipient_name}</p>
                 <p className="text-xs text-muted-foreground">
-                  {t.reference} · {shortDate(t.created_at)}
+                  {t.reference} · {t.origin_country} → {t.destination_country} ·{" "}
+                  {shortDate(t.created_at)}
                 </p>
               </div>
               <div className="text-right">
-                <p className="font-semibold">{mxn(Number(t.amount_mxn))}</p>
+                <p className="font-semibold">
+                  {money(Number(t.amount_send), t.send_currency)}
+                </p>
                 <Badge className={STATUS_TONE[t.status as TransferStatus]} variant="secondary">
                   {STATUS_LABEL[t.status as TransferStatus]}
                 </Badge>
@@ -181,7 +216,8 @@ function Dashboard() {
       </Card>
 
       <p className="pb-2 text-center text-xs text-muted-foreground">
-        Los montos en gourdes se calculan con el tipo de cambio vigente al momento del envío.
+        Los montos en moneda de destino se calculan con el tipo de cambio vigente al momento del
+        envío.
       </p>
     </div>
   );
