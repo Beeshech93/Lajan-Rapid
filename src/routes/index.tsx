@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowRight, ShieldCheck, Timer, Wallet, TrendingUp } from "lucide-react";
-import heroImg from "@/assets/hero.jpg";
+
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -95,14 +95,8 @@ function Landing() {
         </div>
 
         <div className="relative">
-          <img
-            src={heroImg}
-            alt="Persona enviando dinero desde su teléfono en México"
-            width={1280}
-            height={1024}
-            className="h-72 w-full rounded-3xl object-cover shadow-lift sm:h-96"
-          />
-          <Card className="mx-auto -mt-16 w-[92%] shadow-lift">
+          <Card className="mx-auto w-full shadow-lift">
+
             <CardContent className="space-y-4 p-5">
               <div>
                 <label htmlFor="monto" className="text-xs font-semibold text-muted-foreground">
