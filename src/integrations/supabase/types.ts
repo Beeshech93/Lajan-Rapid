@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      countries: {
+        Row: {
+          code: string
+          created_at: string
+          currency: string
+          flag: string
+          is_active: boolean
+          is_destination: boolean
+          is_origin: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          currency: string
+          flag?: string
+          is_active?: boolean
+          is_destination?: boolean
+          is_origin?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          currency?: string
+          flag?: string
+          is_active?: boolean
+          is_destination?: boolean
+          is_origin?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       exchange_rates: {
         Row: {
           agent_commission_percent: number
@@ -192,65 +228,77 @@ export type Database = {
       }
       transfers: {
         Row: {
-          agent_commission_mxn: number
+          agent_commission_send: number
           agent_id: string | null
-          amount_htg: number
-          amount_mxn: number
+          amount_receive: number
+          amount_send: number
           created_at: string
           delivery_method: string
-          fee_mxn: number
+          destination_country: string
+          fee_send: number
           id: string
           note: string | null
+          origin_country: string
           payment_method: string
           rate: number
+          receive_currency: string
           recipient_city: string
           recipient_name: string
           recipient_phone: string
           reference: string
+          send_currency: string
           status: Database["public"]["Enums"]["transfer_status"]
-          total_mxn: number
+          total_send: number
           updated_at: string
           user_id: string
         }
         Insert: {
-          agent_commission_mxn?: number
+          agent_commission_send?: number
           agent_id?: string | null
-          amount_htg?: number
-          amount_mxn: number
+          amount_receive?: number
+          amount_send: number
           created_at?: string
           delivery_method?: string
-          fee_mxn?: number
+          destination_country?: string
+          fee_send?: number
           id?: string
           note?: string | null
+          origin_country?: string
           payment_method?: string
           rate: number
+          receive_currency?: string
           recipient_city: string
           recipient_name: string
           recipient_phone: string
           reference?: string
+          send_currency?: string
           status?: Database["public"]["Enums"]["transfer_status"]
-          total_mxn?: number
+          total_send?: number
           updated_at?: string
           user_id: string
         }
         Update: {
-          agent_commission_mxn?: number
+          agent_commission_send?: number
           agent_id?: string | null
-          amount_htg?: number
-          amount_mxn?: number
+          amount_receive?: number
+          amount_send?: number
           created_at?: string
           delivery_method?: string
-          fee_mxn?: number
+          destination_country?: string
+          fee_send?: number
           id?: string
           note?: string | null
+          origin_country?: string
           payment_method?: string
           rate?: number
+          receive_currency?: string
           recipient_city?: string
           recipient_name?: string
           recipient_phone?: string
           reference?: string
+          send_currency?: string
           status?: Database["public"]["Enums"]["transfer_status"]
-          total_mxn?: number
+          total_send?: number
           updated_at?: string
           user_id?: string
         }
