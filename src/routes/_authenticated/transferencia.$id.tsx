@@ -75,8 +75,8 @@ function Detalle() {
 
   const status = t.status as TransferStatus;
   const currentIndex = STATUS_FLOW.indexOf(status);
-  const payment = PAYMENT_METHODS.find((p) => p.value === t.payment_method);
-  const delivery = DELIVERY_METHODS.find((d) => d.value === t.delivery_method);
+  const paymentName = paymentLabel(t.payment_method);
+  const deliveryName = deliveryLabel(t.delivery_method);
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
