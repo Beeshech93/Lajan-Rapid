@@ -6,7 +6,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { mxn, htg, shortDate, STATUS_LABEL, STATUS_TONE, type TransferStatus } from "@/lib/remesa";
+import { money, shortDate, STATUS_LABEL, STATUS_TONE, type TransferStatus } from "@/lib/remesa";
 
 export const Route = createFileRoute("/_authenticated/historial")({
   head: () => ({
@@ -69,8 +69,10 @@ function Historial() {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold">{mxn(Number(t.amount_mxn))}</p>
-                  <p className="text-xs text-muted-foreground">{htg(Number(t.amount_htg))}</p>
+                  <p className="font-semibold">{money(Number(t.amount_send), t.send_currency)}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {money(Number(t.amount_receive), t.receive_currency)}
+                  </p>
                 </div>
                 <Badge className={STATUS_TONE[t.status as TransferStatus]} variant="secondary">
                   {STATUS_LABEL[t.status as TransferStatus]}

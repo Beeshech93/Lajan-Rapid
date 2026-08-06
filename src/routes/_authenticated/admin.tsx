@@ -10,8 +10,15 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  mxn,
-  htg,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useCountries } from "@/hooks/useCorridors";
+import {
+  money,
   shortDate,
   STATUS_LABEL,
   STATUS_TONE,
@@ -95,16 +102,24 @@ function Resumen() {
   });
 
   const rows = transfers ?? [];
-  const volume = rows.reduce((a, t) => a + Number(t.amount_mxn), 0);
-  const fees = rows.reduce((a, t) => a + Number(t.fee_mxn), 0);
+  const sumBy = (pick: (t: (typeof rows)[number]) => number) => {
+    const acc: Record<string, number> = {};
+    rows.forEach((t) => {
+      acc[t.send_currency] = (acc[t.send_currency] ?? 0) + pick(t);
+    });
+    const entries = Object.entries(acc);
+    return entries.length ? entries.map(([c, v]) => money(v, c)).join(" · ") : "—";
+  };
+  const volume = sumBy((t) => Number(t.amount_send));
+  const fees = sumBy((t) => Number(t.fee_send));
   const completed = rows.filter((t) => t.status === "completed").length;
   const pendingKyc = (profiles ?? []).filter((p) => p.kyc_status === "pending").length;
 
   return (
     <div className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Volumen total" value={mxn(volume)} />
-        <Stat label="Ingresos por comisión" value={mxn(fees)} />
+        <Stat label="Volumen total" value={volume} />
+        <Stat label="Ingresos por comisión" value={fees} />
         <Stat label="Envíos entregados" value={`${completed} / ${rows.length}`} />
         <Stat label="KYC por revisar" value={String(pendingKyc)} />
       </div>
@@ -220,12 +235,15 @@ function TxPanel() {
             <div>
               <p className="font-medium">{t.recipient_name}</p>
               <p className="text-xs text-muted-foreground">
-                {t.reference} · {t.payment_method} · {shortDate(t.created_at)}
+                {t.reference} · {t.origin_country} → {t.destination_country} ·{" "}
+                {t.payment_method} · {shortDate(t.created_at)}
               </p>
             </div>
             <div className="text-right">
-              <p className="font-semibold">{mxn(Number(t.amount_mxn))}</p>
-              <p className="text-xs text-muted-foreground">{htg(Number(t.amount_htg))}</p>
+              <p className="font-semibold">{money(Number(t.amount_send), t.send_currency)}</p>
+              <p className="text-xs text-muted-foreground">
+                {money(Number(t.amount_receive), t.receive_currency)}
+              </p>
             </div>
             <Badge className={STATUS_TONE[t.status as TransferStatus]} variant="secondary">
               {STATUS_LABEL[t.status as TransferStatus]}
@@ -299,19 +317,30 @@ function UsersPanel() {
 function RatesPanel() {
   const qc = useQueryClient();
   const [saving, setSaving] = useState(false);
-  const { data: rate } = useQuery({
-    queryKey: ["rate"],
+  const [from, setFrom] = useState("MXN");
+  const [to, setTo] = useState("HTG");
+  const { data: countries } = useCountries();
+
+  const originCurrencies = Array.from(
+    new Set((countries ?? []).filter((c) => c.is_origin).map((c) => c.currency)),
+  ).sort();
+  const destCurrencies = Array.from(
+    new Set((countries ?? []).filter((c) => c.is_destination).map((c) => c.currency)),
+  ).sort();
+
+  const { data: rates } = useQuery({
+    queryKey: ["all-rates"],
     queryFn: async () =>
       (
         await supabase
           .from("exchange_rates")
           .select("*")
           .eq("is_active", true)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle()
-      ).data,
+          .order("from_currency")
+      ).data ?? [],
   });
+
+  const rate = (rates ?? []).find((r) => r.from_currency === from && r.to_currency === to);
 
   const save = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -327,41 +356,110 @@ function RatesPanel() {
       return;
     }
     setSaving(true);
-    if (rate) await supabase.from("exchange_rates").update({ is_active: false }).eq("id", rate.id);
-    const { error } = await supabase
-      .from("exchange_rates")
-      .insert({ ...values, is_active: true, from_currency: "MXN", to_currency: "HTG" });
+    const { error } = rate
+      ? await supabase.from("exchange_rates").update(values).eq("id", rate.id)
+      : await supabase
+          .from("exchange_rates")
+          .insert({ ...values, is_active: true, from_currency: from, to_currency: to });
     setSaving(false);
     if (error) {
       toast.error("No se pudo guardar");
       return;
     }
     toast.success("Tarifas actualizadas");
+    qc.invalidateQueries({ queryKey: ["all-rates"] });
     qc.invalidateQueries({ queryKey: ["rate"] });
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Tipo de cambio y comisiones</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={save} className="grid gap-4 sm:grid-cols-2">
-          <Field name="rate" label="HTG por 1 MXN" value={rate?.rate} step="0.0001" />
-          <Field name="fee_percent" label="Comisión (%)" value={rate?.fee_percent} step="0.01" />
-          <Field name="fee_fixed" label="Comisión fija (MXN)" value={rate?.fee_fixed} step="0.01" />
-          <Field
-            name="agent_commission_percent"
-            label="Comisión del agente (%)"
-            value={rate?.agent_commission_percent}
-            step="0.01"
-          />
-          <Button type="submit" disabled={saving} className="sm:col-span-2">
-            {saving ? "Guardando…" : "Publicar nuevas tarifas"}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Tarifas por corredor</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label>Moneda de origen</Label>
+              <Select value={from} onValueChange={setFrom}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {originCurrencies.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Moneda de destino</Label>
+              <Select value={to} onValueChange={setTo}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {destCurrencies.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <form onSubmit={save} className="grid gap-4 sm:grid-cols-2" key={`${from}-${to}`}>
+            <Field name="rate" label={`${to} por 1 ${from}`} value={rate?.rate} step="0.0001" />
+            <Field name="fee_percent" label="Comisión (%)" value={rate?.fee_percent} step="0.01" />
+            <Field
+              name="fee_fixed"
+              label={`Comisión fija (${from})`}
+              value={rate?.fee_fixed}
+              step="0.01"
+            />
+            <Field
+              name="agent_commission_percent"
+              label="Comisión del agente (%)"
+              value={rate?.agent_commission_percent}
+              step="0.01"
+            />
+            <Button type="submit" disabled={saving} className="sm:col-span-2">
+              {saving ? "Guardando…" : rate ? "Actualizar tarifas" : "Crear corredor"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Corredores activos</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-2 sm:grid-cols-2">
+          {(rates ?? []).map((r) => (
+            <button
+              key={r.id}
+              type="button"
+              onClick={() => {
+                setFrom(r.from_currency);
+                setTo(r.to_currency);
+              }}
+              className="rounded-xl border p-3 text-left transition-colors hover:bg-secondary"
+            >
+              <p className="font-medium">
+                {r.from_currency} → {r.to_currency}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                1 {r.from_currency} = {Number(r.rate).toFixed(4)} {r.to_currency} · comisión{" "}
+                {Number(r.fee_percent)}% + {Number(r.fee_fixed)} {r.from_currency}
+              </p>
+            </button>
+          ))}
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 

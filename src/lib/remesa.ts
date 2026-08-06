@@ -51,30 +51,133 @@ export const KYC_TONE: Record<KycStatus, string> = {
   rejected: "bg-destructive/10 text-destructive",
 };
 
+export type Country = {
+  code: string;
+  name: string;
+  currency: string;
+  flag: string;
+  is_origin: boolean;
+  is_destination: boolean;
+  is_active: boolean;
+};
 
-export const PAYMENT_METHODS = [
-  { value: "oxxo", label: "OXXO", hint: "Pago en efectivo en tienda" },
-  { value: "mercado_pago", label: "Mercado Pago", hint: "Saldo o tarjeta" },
-  { value: "spei", label: "Transferencia SPEI", hint: "Desde tu banco" },
-  { value: "card", label: "Tarjeta de débito", hint: "Visa / Mastercard" },
-] as const;
+/* ---------- Métodos de pago por país de origen ---------- */
 
-export const DELIVERY_METHODS = [
-  { value: "cash_pickup", label: "Retiro en efectivo", hint: "Sucursal aliada en Haití" },
-  { value: "bank_deposit", label: "Depósito bancario", hint: "Cuenta en gourdes" },
-  { value: "mobile_wallet", label: "Billetera móvil", hint: "MonCash y similares" },
-] as const;
+type Method = { value: string; label: string; hint: string };
 
-export const HAITI_CITIES = [
-  "Port-au-Prince",
-  "Cap-Haïtien",
-  "Gonaïves",
-  "Les Cayes",
-  "Jacmel",
-  "Jérémie",
-  "Hinche",
-  "Port-de-Paix",
-];
+export const PAYMENT_CATALOG: Record<string, Method> = {
+  oxxo: { value: "oxxo", label: "OXXO", hint: "Pago en efectivo en tienda" },
+  mercado_pago: { value: "mercado_pago", label: "Mercado Pago", hint: "Saldo o tarjeta" },
+  spei: { value: "spei", label: "Transferencia SPEI", hint: "Desde tu banco" },
+  card: { value: "card", label: "Tarjeta de débito", hint: "Visa / Mastercard" },
+  ach: { value: "ach", label: "Transferencia ACH", hint: "Desde tu banco en EE.UU." },
+  zelle: { value: "zelle", label: "Zelle", hint: "Envío instantáneo" },
+  interac: { value: "interac", label: "Interac e-Transfer", hint: "Bancos de Canadá" },
+  pix: { value: "pix", label: "Pix", hint: "Instantáneo en Brasil" },
+  sepa: { value: "sepa", label: "Transferencia SEPA", hint: "Bancos de la zona euro" },
+  faster_payments: {
+    value: "faster_payments",
+    label: "Faster Payments",
+    hint: "Bancos del Reino Unido",
+  },
+  bank_transfer: { value: "bank_transfer", label: "Transferencia bancaria", hint: "Desde tu banco" },
+  cash_agent: { value: "cash_agent", label: "Efectivo con agente", hint: "Punto autorizado" },
+};
+
+const DEFAULT_PAYMENTS = ["bank_transfer", "card", "cash_agent"];
+
+const PAYMENTS_BY_COUNTRY: Record<string, string[]> = {
+  MX: ["oxxo", "spei", "mercado_pago", "card"],
+  US: ["ach", "zelle", "card", "cash_agent"],
+  CA: ["interac", "bank_transfer", "card"],
+  BR: ["pix", "bank_transfer", "card"],
+  ES: ["sepa", "card", "cash_agent"],
+  FR: ["sepa", "card", "cash_agent"],
+  DE: ["sepa", "card"],
+  IT: ["sepa", "card"],
+  PT: ["sepa", "card"],
+  NL: ["sepa", "card"],
+  BE: ["sepa", "card"],
+  CH: ["bank_transfer", "card"],
+  GB: ["faster_payments", "bank_transfer", "card"],
+};
+
+export function paymentMethods(countryCode: string | undefined): Method[] {
+  const keys = (countryCode && PAYMENTS_BY_COUNTRY[countryCode]) || DEFAULT_PAYMENTS;
+  return keys.map((k) => PAYMENT_CATALOG[k]!).filter(Boolean);
+}
+
+export function paymentLabel(value: string): string {
+  return PAYMENT_CATALOG[value]?.label ?? value;
+}
+
+/* ---------- Entrega y ciudades por país de destino ---------- */
+
+export const DELIVERY_CATALOG: Record<string, Method> = {
+  cash_pickup: {
+    value: "cash_pickup",
+    label: "Retiro en efectivo",
+    hint: "Sucursal aliada en destino",
+  },
+  bank_deposit: {
+    value: "bank_deposit",
+    label: "Depósito bancario",
+    hint: "Cuenta en moneda local",
+  },
+  mobile_wallet: {
+    value: "mobile_wallet",
+    label: "Billetera móvil",
+    hint: "MonCash, tPago y similares",
+  },
+  home_delivery: {
+    value: "home_delivery",
+    label: "Entrega a domicilio",
+    hint: "Ciudades principales",
+  },
+};
+
+const DELIVERY_BY_COUNTRY: Record<string, string[]> = {
+  HT: ["cash_pickup", "bank_deposit", "mobile_wallet"],
+  DO: ["cash_pickup", "bank_deposit", "mobile_wallet", "home_delivery"],
+};
+
+export function deliveryMethods(countryCode: string | undefined): Method[] {
+  const keys = (countryCode && DELIVERY_BY_COUNTRY[countryCode]) || ["cash_pickup", "bank_deposit"];
+  return keys.map((k) => DELIVERY_CATALOG[k]!).filter(Boolean);
+}
+
+export function deliveryLabel(value: string): string {
+  return DELIVERY_CATALOG[value]?.label ?? value;
+}
+
+export const CITIES_BY_COUNTRY: Record<string, string[]> = {
+  HT: [
+    "Port-au-Prince",
+    "Cap-Haïtien",
+    "Gonaïves",
+    "Les Cayes",
+    "Jacmel",
+    "Jérémie",
+    "Hinche",
+    "Port-de-Paix",
+  ],
+  DO: [
+    "Santo Domingo",
+    "Santiago de los Caballeros",
+    "La Romana",
+    "San Pedro de Macorís",
+    "Puerto Plata",
+    "San Cristóbal",
+    "Higüey",
+    "Barahona",
+  ],
+};
+
+export function citiesFor(countryCode: string | undefined): string[] {
+  return (countryCode && CITIES_BY_COUNTRY[countryCode]) || [];
+}
+
+/* ---------- Cotización ---------- */
 
 export type RateConfig = {
   rate: number;
@@ -91,15 +194,22 @@ export type Quote = {
   commission: number;
 };
 
+export const ZERO_RATE: RateConfig = {
+  rate: 0,
+  fee_percent: 0,
+  fee_fixed: 0,
+  agent_commission_percent: 0,
+};
+
 export function quote(amount: number, cfg: RateConfig): Quote {
   const safe = Number.isFinite(amount) && amount > 0 ? amount : 0;
-  const fee = round2(safe * (cfg.fee_percent / 100) + (safe > 0 ? cfg.fee_fixed : 0));
+  const fee = round2(safe * (Number(cfg.fee_percent) / 100) + (safe > 0 ? Number(cfg.fee_fixed) : 0));
   return {
     amount: round2(safe),
     fee,
     total: round2(safe + fee),
-    receives: round2(safe * cfg.rate),
-    commission: round2(safe * (cfg.agent_commission_percent / 100)),
+    receives: round2(safe * Number(cfg.rate)),
+    commission: round2(safe * (Number(cfg.agent_commission_percent) / 100)),
   };
 }
 
@@ -107,11 +217,42 @@ function round2(n: number) {
   return Math.round(n * 100) / 100;
 }
 
-export const mxn = (n: number) =>
-  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n ?? 0);
+const ISO_CURRENCIES = new Set([
+  "MXN",
+  "USD",
+  "CAD",
+  "CLP",
+  "BRL",
+  "ARS",
+  "COP",
+  "PEN",
+  "CRC",
+  "GTQ",
+  "EUR",
+  "GBP",
+  "CHF",
+  "DOP",
+  "HTG",
+]);
 
-export const htg = (n: number) =>
-  `${new Intl.NumberFormat("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n ?? 0)} HTG`;
+export function money(n: number, currency: string): string {
+  const value = Number.isFinite(n) ? n : 0;
+  if (ISO_CURRENCIES.has(currency)) {
+    try {
+      return new Intl.NumberFormat("es-MX", {
+        style: "currency",
+        currency,
+        currencyDisplay: "code",
+      }).format(value);
+    } catch {
+      /* fallthrough */
+    }
+  }
+  return `${new Intl.NumberFormat("es-MX", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value)} ${currency}`;
+}
 
 export const shortDate = (iso: string) =>
   new Date(iso).toLocaleString("es-MX", {

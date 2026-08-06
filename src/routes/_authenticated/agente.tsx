@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { mxn, htg, shortDate, STATUS_LABEL, STATUS_TONE, type TransferStatus } from "@/lib/remesa";
+import { money, shortDate, STATUS_LABEL, STATUS_TONE, type TransferStatus } from "@/lib/remesa";
 
 export const Route = createFileRoute("/_authenticated/agente")({
   head: () => ({
@@ -62,7 +62,20 @@ function Agente() {
   const pending = rows.filter((t) => t.status === "awaiting_payment");
   const active = rows.filter((t) => ["paid", "processing", "ready_for_pickup"].includes(t.status));
   const done = rows.filter((t) => t.status === "completed");
-  const commissions = done.reduce((a, t) => a + Number(t.agent_commission_mxn ?? 0), 0);
+  const commissions = done.reduce(
+    (acc, t) => {
+      const cur = t.send_currency;
+      acc[cur] = (acc[cur] ?? 0) + Number(t.agent_commission_send ?? 0);
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
+  const commissionsLabel =
+    Object.keys(commissions).length === 0
+      ? "—"
+      : Object.entries(commissions)
+          .map(([cur, val]) => money(val, cur))
+          .join(" · ");
 
   return (
     <div className="mx-auto max-w-5xl space-y-5">
@@ -71,7 +84,7 @@ function Agente() {
       <div className="grid gap-3 sm:grid-cols-3">
         <Stat label="Solicitudes por confirmar" value={String(pending.length)} />
         <Stat label="Operaciones activas" value={String(active.length)} />
-        <Stat label="Comisiones acumuladas" value={mxn(commissions)} />
+        <Stat label="Comisiones acumuladas" value={commissionsLabel} />
       </div>
 
       <Section title="Solicitudes de pago" rows={pending} advance={advance} />
@@ -86,9 +99,13 @@ type Row = {
   reference: string;
   recipient_name: string;
   recipient_city: string;
-  amount_mxn: number;
-  amount_htg: number;
-  agent_commission_mxn: number | null;
+  amount_send: number;
+  amount_receive: number;
+  send_currency: string;
+  receive_currency: string;
+  origin_country: string;
+  destination_country: string;
+  agent_commission_send: number | null;
   status: string;
   created_at: string;
 };
@@ -130,13 +147,16 @@ function Section({
                   {t.recipient_name} · {t.recipient_city}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {t.reference} · {shortDate(t.created_at)} · comisión{" "}
-                  {mxn(Number(t.agent_commission_mxn ?? 0))}
+                  {t.reference} · {t.origin_country} → {t.destination_country} ·{" "}
+                  {shortDate(t.created_at)} · comisión{" "}
+                  {money(Number(t.agent_commission_send ?? 0), t.send_currency)}
                 </p>
               </div>
               <div className="text-right">
-                <p className="font-semibold">{mxn(Number(t.amount_mxn))}</p>
-                <p className="text-xs text-muted-foreground">{htg(Number(t.amount_htg))}</p>
+                <p className="font-semibold">{money(Number(t.amount_send), t.send_currency)}</p>
+                <p className="text-xs text-muted-foreground">
+                  {money(Number(t.amount_receive), t.receive_currency)}
+                </p>
               </div>
               <Badge className={STATUS_TONE[t.status as TransferStatus]} variant="secondary">
                 {STATUS_LABEL[t.status as TransferStatus]}
