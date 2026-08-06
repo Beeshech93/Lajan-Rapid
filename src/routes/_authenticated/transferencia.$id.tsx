@@ -8,14 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  mxn,
-  htg,
+  money,
   shortDate,
   STATUS_LABEL,
   STATUS_TONE,
   STATUS_FLOW,
-  PAYMENT_METHODS,
-  DELIVERY_METHODS,
+  paymentLabel,
+  deliveryLabel,
   type TransferStatus,
 } from "@/lib/remesa";
 
