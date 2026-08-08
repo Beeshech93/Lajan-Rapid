@@ -192,6 +192,8 @@ export function BazikPanel() {
                   {api?.hasSecret ? "Secret activo" : "Sin Secret"}
                 </Badge>
               </div>
+              <p className="text-xs text-muted-foreground">{desc}</p>
+
               <div className="space-y-1.5">
                 <Label htmlFor={k}>API Key</Label>
                 <Input
