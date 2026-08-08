@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/select";
 import { quote, money } from "@/lib/remesa";
 import { useCountries, useRate } from "@/hooks/useCorridors";
+import { useI18n } from "@/lib/i18n";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -36,6 +38,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Landing() {
+  const { t } = useI18n();
   const [origin, setOrigin] = useState("MX");
   const [destination, setDestination] = useState("HT");
   const [amount, setAmount] = useState("2000");
@@ -59,17 +62,18 @@ function Landing() {
       <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5">
         <div className="flex items-center gap-2">
           <span className="grid size-9 place-items-center rounded-xl bg-brand font-display text-lg font-bold text-primary-foreground">
-            R
+            LR
           </span>
           <span className="font-display text-lg font-semibold">Lajan Rapid</span>
         </div>
         <div className="flex items-center gap-2">
+          <LanguageSwitcher className="h-9 w-[132px] text-xs" />
           <Button asChild variant="ghost" size="sm">
-            <Link to="/auth">Iniciar sesión</Link>
+            <Link to="/auth">{t("auth.signin")}</Link>
           </Button>
           <Button asChild size="sm">
             <Link to="/auth" search={{ modo: "registro" }}>
-              Crear cuenta
+              {t("auth.signup")}
             </Link>
           </Button>
         </div>
@@ -78,29 +82,28 @@ function Landing() {
       <section className="mx-auto grid max-w-6xl items-center gap-10 px-5 pb-16 pt-6 lg:grid-cols-2 lg:pt-14">
         <div>
           <span className="inline-flex items-center gap-2 rounded-full bg-accent/15 px-3 py-1 text-xs font-semibold text-accent-foreground">
-            <TrendingUp className="size-3.5" /> América y Europa → Haití y R. Dominicana
+            <TrendingUp className="size-3.5" /> {t("landing.badge")}
           </span>
           <h1 className="mt-5 text-4xl font-bold leading-[1.05] sm:text-5xl lg:text-6xl">
-            Envía dinero a casa sin sorpresas
+            {t("landing.title")}
           </h1>
           <p className="mt-4 max-w-lg text-base text-muted-foreground sm:text-lg">
-            Tipo de cambio claro, comisión visible antes de pagar y seguimiento en tiempo real hasta
-            que tu familia recibe el dinero en Haití o República Dominicana.
+            {t("landing.subtitle")}
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
             <Button asChild size="lg" className="gap-2">
               <Link to="/auth" search={{ modo: "registro" }}>
-                Enviar dinero <ArrowRight className="size-4" />
+                {t("landing.cta")} <ArrowRight className="size-4" />
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline">
-              <Link to="/auth">Ya tengo cuenta</Link>
+              <Link to="/auth">{t("landing.have_account")}</Link>
             </Button>
           </div>
           <dl className="mt-9 grid grid-cols-3 gap-4 border-t pt-6">
-            <Stat icon={Timer} title="Minutos" desc="Entrega típica" />
-            <Stat icon={ShieldCheck} title="KYC" desc="Identidad verificada" />
-            <Stat icon={Wallet} title="+30 países" desc="De origen" />
+            <Stat icon={Timer} title={t("landing.stat_minutes")} desc={t("landing.stat_minutes_desc")} />
+            <Stat icon={ShieldCheck} title="KYC" desc={t("landing.stat_kyc_desc")} />
+            <Stat icon={Wallet} title={t("landing.stat_countries")} desc={t("landing.stat_countries_desc")} />
           </dl>
         </div>
 
@@ -110,7 +113,7 @@ function Landing() {
             <CardContent className="space-y-4 p-5">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <span className="text-xs font-semibold text-muted-foreground">Desde</span>
+                  <span className="text-xs font-semibold text-muted-foreground">{t("landing.from")}</span>
                   <Select value={origin} onValueChange={setOrigin}>
                     <SelectTrigger>
                       <SelectValue />
@@ -125,7 +128,7 @@ function Landing() {
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <span className="text-xs font-semibold text-muted-foreground">Hacia</span>
+                  <span className="text-xs font-semibold text-muted-foreground">{t("landing.to")}</span>
                   <Select value={destination} onValueChange={setDestination}>
                     <SelectTrigger>
                       <SelectValue />
@@ -142,7 +145,7 @@ function Landing() {
               </div>
               <div>
                 <label htmlFor="monto" className="text-xs font-semibold text-muted-foreground">
-                  Tú envías ({sendCurrency})
+                  {t("landing.you_send")} ({sendCurrency})
                 </label>
                 <Input
                   id="monto"
@@ -154,18 +157,18 @@ function Landing() {
               </div>
               <div className="space-y-1.5 rounded-xl bg-secondary p-4 text-sm">
                 <Row
-                  label="Tipo de cambio"
+                  label={t("landing.rate")}
                   value={
                     cfg
                       ? `1 ${sendCurrency} = ${Number(cfg.rate).toFixed(4)} ${receiveCurrency}`
-                      : "No disponible"
+                      : t("landing.unavailable")
                   }
                 />
-                <Row label="Comisión" value={money(q.fee, sendCurrency)} />
-                <Row label="Total a pagar" value={money(q.total, sendCurrency)} strong />
+                <Row label={t("landing.fee")} value={money(q.fee, sendCurrency)} />
+                <Row label={t("landing.total")} value={money(q.total, sendCurrency)} strong />
               </div>
               <div className="rounded-xl bg-mint p-4">
-                <p className="text-xs font-semibold text-accent-foreground/80">Tu familia recibe</p>
+                <p className="text-xs font-semibold text-accent-foreground/80">{t("landing.family_gets")}</p>
                 <p className="font-display text-2xl font-bold text-accent-foreground">
                   {money(q.receives, receiveCurrency)}
                 </p>
@@ -176,7 +179,7 @@ function Landing() {
       </section>
 
       <footer className="border-t py-8 text-center text-sm text-muted-foreground">
-        Lajan Rapid · Remesas hacia Haití y República Dominicana
+        {t("landing.footer")}
       </footer>
     </div>
   );

@@ -100,7 +100,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         <main className="flex-1 px-4 pb-24 pt-5 md:px-8 md:pb-10">{children}</main>
 
-        <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t bg-card md:hidden">
+        <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-6 border-t bg-card md:hidden">
           {baseNav.map((item) => (
             <Link
               key={item.to}
