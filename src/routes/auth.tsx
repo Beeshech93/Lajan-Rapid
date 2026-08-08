@@ -51,6 +51,13 @@ function AuthPage() {
   const [tab, setTab] = useState(modo === "registro" ? "registro" : "ingreso");
   const [loading, setLoading] = useState(false);
   const [dial, setDial] = useState("HT");
+  const [phoneInput, setPhoneInput] = useState("");
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+
+  const country = DIAL_COUNTRIES.find((c) => c.code === dial);
+  const check = validatePhone(dial, country?.dial ?? "+509", phoneInput);
+  const lens = expectedLengths(dial);
+  const digitsHint = lens.length ? lens.join(" o ") : "5–14";
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
