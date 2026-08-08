@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCountries } from "@/hooks/useCorridors";
+import { WalletsCardsPanel } from "@/components/admin/WalletsCardsPanel";
 import {
   money,
   shortDate,
@@ -59,6 +60,7 @@ function Admin() {
           <TabsTrigger value="kyc">KYC</TabsTrigger>
           <TabsTrigger value="tx">Transacciones</TabsTrigger>
           <TabsTrigger value="usuarios">Usuarios</TabsTrigger>
+          <TabsTrigger value="billeteras">Billeteras y tarjetas</TabsTrigger>
           <TabsTrigger value="tarifas">Tarifas</TabsTrigger>
         </TabsList>
         <TabsContent value="resumen" className="mt-4">
@@ -72,6 +74,9 @@ function Admin() {
         </TabsContent>
         <TabsContent value="usuarios" className="mt-4">
           <UsersPanel />
+        </TabsContent>
+        <TabsContent value="billeteras" className="mt-4">
+          <WalletsCardsPanel />
         </TabsContent>
         <TabsContent value="tarifas" className="mt-4">
           <RatesPanel />

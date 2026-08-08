@@ -14,11 +14,13 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAgenteRouteImport } from './routes/_authenticated/agente'
+import { Route as AuthenticatedBilleteraRouteImport } from './routes/_authenticated/billetera'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedEnviarRouteImport } from './routes/_authenticated/enviar'
 import { Route as AuthenticatedHistorialRouteImport } from './routes/_authenticated/historial'
 import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
 import { Route as AuthenticatedSoporteRouteImport } from './routes/_authenticated/soporte'
+import { Route as AuthenticatedTarjetaRouteImport } from './routes/_authenticated/tarjeta'
 import { Route as AuthenticatedTransferenciaIdRouteImport } from './routes/_authenticated/transferencia.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -43,6 +45,11 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
 const AuthenticatedAgenteRoute = AuthenticatedAgenteRouteImport.update({
   id: '/agente',
   path: '/agente',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedBilleteraRoute = AuthenticatedBilleteraRouteImport.update({
+  id: '/billetera',
+  path: '/billetera',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
@@ -70,6 +77,11 @@ const AuthenticatedSoporteRoute = AuthenticatedSoporteRouteImport.update({
   path: '/soporte',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTarjetaRoute = AuthenticatedTarjetaRouteImport.update({
+  id: '/tarjeta',
+  path: '/tarjeta',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedTransferenciaIdRoute =
   AuthenticatedTransferenciaIdRouteImport.update({
     id: '/transferencia/$id',
@@ -82,11 +94,13 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/agente': typeof AuthenticatedAgenteRoute
+  '/billetera': typeof AuthenticatedBilleteraRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/enviar': typeof AuthenticatedEnviarRoute
   '/historial': typeof AuthenticatedHistorialRoute
   '/perfil': typeof AuthenticatedPerfilRoute
   '/soporte': typeof AuthenticatedSoporteRoute
+  '/tarjeta': typeof AuthenticatedTarjetaRoute
   '/transferencia/$id': typeof AuthenticatedTransferenciaIdRoute
 }
 export interface FileRoutesByTo {
@@ -94,11 +108,13 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/agente': typeof AuthenticatedAgenteRoute
+  '/billetera': typeof AuthenticatedBilleteraRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/enviar': typeof AuthenticatedEnviarRoute
   '/historial': typeof AuthenticatedHistorialRoute
   '/perfil': typeof AuthenticatedPerfilRoute
   '/soporte': typeof AuthenticatedSoporteRoute
+  '/tarjeta': typeof AuthenticatedTarjetaRoute
   '/transferencia/$id': typeof AuthenticatedTransferenciaIdRoute
 }
 export interface FileRoutesById {
@@ -108,11 +124,13 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/agente': typeof AuthenticatedAgenteRoute
+  '/_authenticated/billetera': typeof AuthenticatedBilleteraRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/enviar': typeof AuthenticatedEnviarRoute
   '/_authenticated/historial': typeof AuthenticatedHistorialRoute
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
   '/_authenticated/soporte': typeof AuthenticatedSoporteRoute
+  '/_authenticated/tarjeta': typeof AuthenticatedTarjetaRoute
   '/_authenticated/transferencia/$id': typeof AuthenticatedTransferenciaIdRoute
 }
 export interface FileRouteTypes {
@@ -122,11 +140,13 @@ export interface FileRouteTypes {
     | '/auth'
     | '/admin'
     | '/agente'
+    | '/billetera'
     | '/dashboard'
     | '/enviar'
     | '/historial'
     | '/perfil'
     | '/soporte'
+    | '/tarjeta'
     | '/transferencia/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -134,11 +154,13 @@ export interface FileRouteTypes {
     | '/auth'
     | '/admin'
     | '/agente'
+    | '/billetera'
     | '/dashboard'
     | '/enviar'
     | '/historial'
     | '/perfil'
     | '/soporte'
+    | '/tarjeta'
     | '/transferencia/$id'
   id:
     | '__root__'
@@ -147,11 +169,13 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/admin'
     | '/_authenticated/agente'
+    | '/_authenticated/billetera'
     | '/_authenticated/dashboard'
     | '/_authenticated/enviar'
     | '/_authenticated/historial'
     | '/_authenticated/perfil'
     | '/_authenticated/soporte'
+    | '/_authenticated/tarjeta'
     | '/_authenticated/transferencia/$id'
   fileRoutesById: FileRoutesById
 }
@@ -198,6 +222,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAgenteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/billetera': {
+      id: '/_authenticated/billetera'
+      path: '/billetera'
+      fullPath: '/billetera'
+      preLoaderRoute: typeof AuthenticatedBilleteraRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -233,6 +264,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSoporteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/tarjeta': {
+      id: '/_authenticated/tarjeta'
+      path: '/tarjeta'
+      fullPath: '/tarjeta'
+      preLoaderRoute: typeof AuthenticatedTarjetaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/transferencia/$id': {
       id: '/_authenticated/transferencia/$id'
       path: '/transferencia/$id'
@@ -246,22 +284,26 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedAgenteRoute: typeof AuthenticatedAgenteRoute
+  AuthenticatedBilleteraRoute: typeof AuthenticatedBilleteraRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEnviarRoute: typeof AuthenticatedEnviarRoute
   AuthenticatedHistorialRoute: typeof AuthenticatedHistorialRoute
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
   AuthenticatedSoporteRoute: typeof AuthenticatedSoporteRoute
+  AuthenticatedTarjetaRoute: typeof AuthenticatedTarjetaRoute
   AuthenticatedTransferenciaIdRoute: typeof AuthenticatedTransferenciaIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedAgenteRoute: AuthenticatedAgenteRoute,
+  AuthenticatedBilleteraRoute: AuthenticatedBilleteraRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEnviarRoute: AuthenticatedEnviarRoute,
   AuthenticatedHistorialRoute: AuthenticatedHistorialRoute,
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
   AuthenticatedSoporteRoute: AuthenticatedSoporteRoute,
+  AuthenticatedTarjetaRoute: AuthenticatedTarjetaRoute,
   AuthenticatedTransferenciaIdRoute: AuthenticatedTransferenciaIdRoute,
 }
 
@@ -276,3 +318,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

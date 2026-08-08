@@ -5,6 +5,7 @@ import { ArrowRight, Bell, ShieldAlert, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { useCountries, useRate } from "@/hooks/useCorridors";
+import { useWallets } from "@/hooks/useWallet";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -55,6 +56,8 @@ function Dashboard() {
       return data ?? [];
     },
   });
+
+  const { data: wallets } = useWallets();
 
   const { data: notifs } = useQuery({
     queryKey: ["notifs", user?.id],
@@ -157,6 +160,32 @@ function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader className="flex-row items-center justify-between space-y-0">
+          <CardTitle className="text-base">Mi billetera</CardTitle>
+          <Button asChild variant="ghost" size="sm">
+            <Link to="/billetera">Administrar</Link>
+          </Button>
+        </CardHeader>
+        <CardContent className="flex flex-wrap gap-4">
+          {(wallets ?? []).length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              Aún no tienes saldo. Crea tu billetera para recibir remesas y pagar en línea.
+            </p>
+          )}
+          {(wallets ?? []).map((w) => (
+            <div key={w.id} className="rounded-xl border px-4 py-3">
+              <p className="text-xs text-muted-foreground">{w.currency}</p>
+              <p className="font-display text-lg font-semibold">
+                {money(Number(w.balance), w.currency)}
+              </p>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+
 
       <Card>
         <CardHeader className="flex-row items-center justify-between space-y-0">

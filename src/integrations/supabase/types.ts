@@ -14,6 +14,91 @@ export type Database = {
   }
   public: {
     Tables: {
+      card_limits: {
+        Row: {
+          card_id: string
+          created_at: string
+          daily_limit: number
+          id: string
+          monthly_limit: number
+          online_enabled: boolean
+          per_transaction: number
+          updated_at: string
+        }
+        Insert: {
+          card_id: string
+          created_at?: string
+          daily_limit?: number
+          id?: string
+          monthly_limit?: number
+          online_enabled?: boolean
+          per_transaction?: number
+          updated_at?: string
+        }
+        Update: {
+          card_id?: string
+          created_at?: string
+          daily_limit?: number
+          id?: string
+          monthly_limit?: number
+          online_enabled?: boolean
+          per_transaction?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_limits_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: true
+            referencedRelation: "virtual_cards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      card_transactions: {
+        Row: {
+          amount: number
+          card_id: string
+          created_at: string
+          currency: string
+          decline_reason: string | null
+          id: string
+          merchant: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          card_id: string
+          created_at?: string
+          currency: string
+          decline_reason?: string | null
+          id?: string
+          merchant: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          card_id?: string
+          created_at?: string
+          currency?: string
+          decline_reason?: string | null
+          id?: string
+          merchant?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_transactions_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "virtual_cards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       countries: {
         Row: {
           code: string
@@ -325,11 +410,154 @@ export type Database = {
         }
         Relationships: []
       }
+      virtual_cards: {
+        Row: {
+          brand: string
+          created_at: string
+          exp_month: number
+          exp_year: number
+          id: string
+          is_disposable: boolean
+          label: string | null
+          last4: string
+          provider: string
+          provider_card_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          wallet_id: string
+        }
+        Insert: {
+          brand?: string
+          created_at?: string
+          exp_month: number
+          exp_year: number
+          id?: string
+          is_disposable?: boolean
+          label?: string | null
+          last4: string
+          provider?: string
+          provider_card_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          wallet_id: string
+        }
+        Update: {
+          brand?: string
+          created_at?: string
+          exp_month?: number
+          exp_year?: number
+          id?: string
+          is_disposable?: boolean
+          label?: string | null
+          last4?: string
+          provider?: string
+          provider_card_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "virtual_cards_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          description: string | null
+          id: string
+          kind: string
+          user_id: string
+          wallet_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency: string
+          description?: string | null
+          id?: string
+          kind: string
+          user_id: string
+          wallet_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          kind?: string
+          user_id?: string
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_transactions_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallets: {
+        Row: {
+          balance: number
+          created_at: string
+          currency: string
+          id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      admin_adjust_wallet: {
+        Args: { _amount: number; _description?: string; _wallet_id: string }
+        Returns: number
+      }
+      card_purchase: {
+        Args: { _amount: number; _card_id: string; _merchant: string }
+        Returns: string
+      }
+      convert_wallet: {
+        Args: { _amount: number; _from_wallet: string; _to_currency: string }
+        Returns: boolean
+      }
+      ensure_wallet: { Args: { _currency: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -338,6 +566,19 @@ export type Database = {
         Returns: boolean
       }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
+      issue_virtual_card: {
+        Args: {
+          _brand?: string
+          _disposable?: boolean
+          _label?: string
+          _wallet_id: string
+        }
+        Returns: string
+      }
+      set_card_status: {
+        Args: { _card_id: string; _status: string }
+        Returns: boolean
+      }
       set_user_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
