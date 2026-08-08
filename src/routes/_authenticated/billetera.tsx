@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import { ArrowLeftRight, Plus, Wallet as WalletIcon } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { ArrowDownToLine, ArrowLeftRight, Plus, Wallet as WalletIcon } from "lucide-react";
+import { bazikTopupWallet } from "@/lib/bazik.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -58,6 +60,9 @@ function Billetera() {
   const [toCurrency, setToCurrency] = useState("HTG");
   const [amount, setAmount] = useState("");
   const [busy, setBusy] = useState(false);
+  const [topupWallet, setTopupWallet] = useState("");
+  const [topupAmount, setTopupAmount] = useState("");
+  const runTopup = useServerFn(bazikTopupWallet);
 
   const list = wallets ?? [];
 
@@ -95,6 +100,36 @@ function Billetera() {
     refresh();
   };
 
+  const topup = async () => {
+    const wallet = list.find((w) => w.id === topupWallet);
+    const value = Number(topupAmount);
+    if (!wallet || !Number.isFinite(value) || value <= 0) {
+      toast.error("Elige una billetera y un monto válido");
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await runTopup({
+        data: {
+          walletId: wallet.id,
+          amount: value,
+          currency: wallet.currency as "MXN" | "USD" | "HTG" | "DOP" | "EUR",
+        },
+      });
+      if (!res.ok) {
+        toast.error(res.error ?? "No se pudo iniciar la recarga");
+        return;
+      }
+      toast.success(`Recarga iniciada · ${res.reference}`);
+      setTopupAmount("");
+      refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Error al recargar");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <header>
@@ -129,6 +164,50 @@ function Billetera() {
           </Card>
         ))}
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <ArrowDownToLine className="size-4" /> Recargar billetera
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label>Billetera a recargar</Label>
+              <Select value={topupWallet} onValueChange={setTopupWallet}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Elige billetera" />
+                </SelectTrigger>
+                <SelectContent>
+                  {list.map((w) => (
+                    <SelectItem key={w.id} value={w.id}>
+                      {w.currency} · {money(Number(w.balance), w.currency)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="topup-amount">Monto</Label>
+              <Input
+                id="topup-amount"
+                inputMode="decimal"
+                value={topupAmount}
+                onChange={(e) => setTopupAmount(e.target.value)}
+                placeholder="0.00"
+              />
+            </div>
+          </div>
+          <Button className="w-full" disabled={busy || list.length === 0} onClick={topup}>
+            Recargar
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            El cobro se procesa con el proveedor de pagos; el saldo se acredita al confirmarse.
+          </p>
+        </CardContent>
+      </Card>
+
 
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
