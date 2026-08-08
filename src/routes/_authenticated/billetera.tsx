@@ -340,6 +340,72 @@ function Billetera() {
 
       <Card>
         <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Send className="size-4" /> Enviar a otro usuario (P2P)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label>Desde tu billetera</Label>
+              <Select value={p2pWallet} onValueChange={setP2pWallet}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Billetera" />
+                </SelectTrigger>
+                <SelectContent>
+                  {list.map((w) => (
+                    <SelectItem key={w.id} value={w.id}>
+                      {w.currency} · {money(Number(w.balance), w.currency)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="p2p-phone">Teléfono del destinatario</Label>
+              <Input
+                id="p2p-phone"
+                inputMode="tel"
+                placeholder="+509 1234 5678"
+                value={p2pPhone}
+                onChange={(e) => void lookupUser(e.target.value)}
+              />
+              {p2pFound && <p className="text-xs text-success">Usuario: {p2pFound}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="p2p-amount">Monto</Label>
+              <Input
+                id="p2p-amount"
+                inputMode="decimal"
+                placeholder="0.00"
+                value={p2pAmount}
+                onChange={(e) => setP2pAmount(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="p2p-note">Mensaje (opcional)</Label>
+              <Input
+                id="p2p-note"
+                placeholder="Para la comida"
+                value={p2pNote}
+                onChange={(e) => setP2pNote(e.target.value)}
+              />
+            </div>
+          </div>
+          <Button className="w-full" disabled={busy} onClick={sendP2P}>
+            Enviar dinero
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            Transferencia instantánea y sin comisión entre usuarios de Lajan Rapid, en la misma
+            moneda de tu billetera.
+          </p>
+        </CardContent>
+      </Card>
+
+
+
+      <Card>
+        <CardHeader>
           <CardTitle className="text-base">Movimientos</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
