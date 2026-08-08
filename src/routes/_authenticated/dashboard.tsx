@@ -5,6 +5,7 @@ import { ArrowRight, Bell, ShieldAlert, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { useCountries, useRate } from "@/hooks/useCorridors";
+import { useWallets } from "@/hooks/useWallet";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -55,6 +56,8 @@ function Dashboard() {
       return data ?? [];
     },
   });
+
+  const { data: wallets } = useWallets();
 
   const { data: notifs } = useQuery({
     queryKey: ["notifs", user?.id],
