@@ -100,6 +100,36 @@ function Billetera() {
     refresh();
   };
 
+  const topup = async () => {
+    const wallet = list.find((w) => w.id === topupWallet);
+    const value = Number(topupAmount);
+    if (!wallet || !Number.isFinite(value) || value <= 0) {
+      toast.error("Elige una billetera y un monto válido");
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await runTopup({
+        data: {
+          walletId: wallet.id,
+          amount: value,
+          currency: wallet.currency as "MXN" | "USD" | "HTG" | "DOP" | "EUR",
+        },
+      });
+      if (!res.ok) {
+        toast.error(res.error ?? "No se pudo iniciar la recarga");
+        return;
+      }
+      toast.success(`Recarga iniciada · ${res.reference}`);
+      setTopupAmount("");
+      refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Error al recargar");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <header>
