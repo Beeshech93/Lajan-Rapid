@@ -163,8 +163,9 @@ async function callBazik(creds: Creds, path: string, body: unknown): Promise<Baz
 }
 
 /** API #1 — cobro: recargar la billetera del cliente vía Bazik. */
-export function bazikTopup(input: BazikTopupInput) {
-  return callBazik(collectCreds(), "/v1/collections", {
+export async function bazikTopup(input: BazikTopupInput) {
+  const stored = await loadStoredCreds();
+  return callBazik(credsFor(stored, "COLLECT"), "/v1/collections", {
     amount: input.amount,
     currency: input.currency,
     reference: input.reference,
@@ -173,8 +174,9 @@ export function bazikTopup(input: BazikTopupInput) {
 }
 
 /** API #2 — envío: mandar dinero a MonCash o NatCash vía Bazik. */
-export function bazikPayout(input: BazikPayoutInput) {
-  return callBazik(payoutCreds(), "/v1/payouts", {
+export async function bazikPayout(input: BazikPayoutInput) {
+  const stored = await loadStoredCreds();
+  return callBazik(credsFor(stored, "PAYOUT"), "/v1/payouts", {
     provider: input.provider,
     destination: input.phone,
     amount: input.amount,
@@ -182,3 +184,4 @@ export function bazikPayout(input: BazikPayoutInput) {
     reference: input.reference,
   });
 }
+
