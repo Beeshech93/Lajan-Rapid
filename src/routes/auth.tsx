@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/select";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useI18n } from "@/lib/i18n";
-import { DIAL_COUNTRIES, toE164 } from "@/lib/phone";
+import { DIAL_COUNTRIES, expectedLengths, formatNational, validatePhone } from "@/lib/phone";
 
 const searchSchema = z.object({ modo: z.enum(["ingreso", "registro"]).optional() });
 
