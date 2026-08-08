@@ -94,21 +94,36 @@ export function BazikPanel() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <PlugZap className="size-4" /> Conexión Bazik (bazik.io)
+            <PlugZap className="size-4" /> Credenciales Bazik (bazik.io)
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3 text-sm">
-          <div className="flex items-center gap-2">
-            <Badge variant={info?.configured ? "secondary" : "destructive"}>
-              {info?.configured ? "Credencial activa" : "Falta BAZIK_API_KEY"}
-            </Badge>
-            <span className="text-xs text-muted-foreground">{info?.baseUrl}</span>
-          </div>
-          <CopyField label="Endpoint recarga (saliente)" value={info?.topupEndpoint ?? ""} />
-          <CopyField
-            label="Endpoint MonCash/NatCash (saliente)"
-            value={info?.payoutEndpoint ?? ""}
-          />
+        <CardContent className="space-y-4 text-sm">
+          <p className="text-xs text-muted-foreground">
+            Dos APIs separadas. Guarda cada Key y Secret en el formulario seguro del proyecto
+            (Ajustes → Secretos) con los nombres exactos de abajo.
+          </p>
+
+          {[info?.collect, info?.payout].map((api, i) =>
+            api ? (
+              <div key={api.keyName} className="space-y-2 rounded-lg border p-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-medium">
+                    API {i + 1} · {api.label}
+                  </span>
+                  <Badge variant={api.hasKey ? "secondary" : "destructive"}>
+                    {api.hasKey ? "Key activa" : "Falta Key"}
+                  </Badge>
+                  <Badge variant={api.hasSecret ? "secondary" : "outline"}>
+                    {api.hasSecret ? "Secret activo" : "Sin Secret"}
+                  </Badge>
+                </div>
+                <CopyField label="Nombre de la Key" value={api.keyName} />
+                <CopyField label="Nombre del Secret" value={api.secretName} />
+                <CopyField label="Endpoint saliente" value={api.endpoint} />
+              </div>
+            ) : null,
+          )}
+          <p className="text-xs text-muted-foreground">Base: {info?.baseUrl}</p>
         </CardContent>
       </Card>
 
@@ -123,7 +138,7 @@ export function BazikPanel() {
             Copia estas dos URLs y pégalas como webhooks/callbacks en tu panel de bazik.io.
           </p>
           <CopyField
-            label="Atento 1 · Recarga de billetera"
+            label="Atento 1 · Recarga de billetera (cobros)"
             value={`${origin}/api/public/bazik/topup`}
           />
           <CopyField
@@ -132,6 +147,7 @@ export function BazikPanel() {
           />
         </CardContent>
       </Card>
+
 
 
       <Card>
