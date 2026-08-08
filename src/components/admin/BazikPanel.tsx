@@ -64,6 +64,8 @@ export function BazikPanel() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+
   return (
     <div className="space-y-4">
       <Card>
@@ -72,21 +74,42 @@ export function BazikPanel() {
             <PlugZap className="size-4" /> Conexión Bazik (bazik.io)
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2 text-sm">
+        <CardContent className="space-y-3 text-sm">
           <div className="flex items-center gap-2">
             <Badge variant={info?.configured ? "secondary" : "destructive"}>
               {info?.configured ? "Credencial activa" : "Falta BAZIK_API_KEY"}
             </Badge>
             <span className="text-xs text-muted-foreground">{info?.baseUrl}</span>
           </div>
-          <p className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Link2 className="size-3" /> Recarga: {info?.topupEndpoint}
-          </p>
-          <p className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Link2 className="size-3" /> Envío MonCash/NatCash: {info?.payoutEndpoint}
-          </p>
+          <CopyField label="Endpoint recarga (saliente)" value={info?.topupEndpoint ?? ""} />
+          <CopyField
+            label="Endpoint MonCash/NatCash (saliente)"
+            value={info?.payoutEndpoint ?? ""}
+          />
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Link2 className="size-4" /> Atentos para pegar en bazik.io
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            Copia estas dos URLs y pégalas como webhooks/callbacks en tu panel de bazik.io.
+          </p>
+          <CopyField
+            label="Atento 1 · Recarga de billetera"
+            value={`${origin}/api/public/bazik/topup`}
+          />
+          <CopyField
+            label="Atento 2 · Envío MonCash / NatCash"
+            value={`${origin}/api/public/bazik/payout`}
+          />
+        </CardContent>
+      </Card>
+
 
       <Card>
         <CardHeader>
