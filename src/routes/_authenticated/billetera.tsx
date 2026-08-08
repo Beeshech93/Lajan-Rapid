@@ -48,6 +48,8 @@ const KIND_LABEL: Record<string, string> = {
   conversion_in: "Conversión recibida",
   conversion_out: "Conversión enviada",
   card_purchase: "Compra con tarjeta",
+  p2p_out: "Enviado a usuario",
+  p2p_in: "Recibido de usuario",
 };
 
 function Billetera() {
@@ -62,7 +64,47 @@ function Billetera() {
   const [busy, setBusy] = useState(false);
   const [topupWallet, setTopupWallet] = useState("");
   const [topupAmount, setTopupAmount] = useState("");
+  const [p2pWallet, setP2pWallet] = useState("");
+  const [p2pPhone, setP2pPhone] = useState("");
+  const [p2pAmount, setP2pAmount] = useState("");
+  const [p2pNote, setP2pNote] = useState("");
+  const [p2pFound, setP2pFound] = useState<string | null>(null);
   const runTopup = useServerFn(bazikTopupWallet);
+
+  const lookupUser = async (phone: string) => {
+    setP2pPhone(phone);
+    setP2pFound(null);
+    if (phone.replace(/\D/g, "").length < 6) return;
+    const { data } = await supabase.rpc("find_user_by_phone", { _phone: phone });
+    const found = Array.isArray(data) ? data[0] : null;
+    if (found) setP2pFound(found.full_name || "Usuario Lajan Rapid");
+  };
+
+  const sendP2P = async () => {
+    const value = Number(p2pAmount);
+    if (!p2pWallet || !p2pPhone || !Number.isFinite(value) || value <= 0) {
+      toast.error("Elige billetera, número y monto válido");
+      return;
+    }
+    setBusy(true);
+    const { data, error } = await supabase.rpc("p2p_send", {
+      _from_wallet: p2pWallet,
+      _phone: p2pPhone,
+      _amount: value,
+      _note: p2pNote || null,
+    });
+    setBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    const res = data as { recipient?: string } | null;
+    toast.success(`Enviado a ${res?.recipient || "usuario"}`);
+    setP2pAmount("");
+    setP2pNote("");
+    refresh();
+  };
+
 
   const list = wallets ?? [];
 
