@@ -62,7 +62,7 @@ function Enviar() {
   const [destination, setDestination] = useState("HT");
   const [amount, setAmount] = useState("2000");
   const [payment, setPayment] = useState("oxxo");
-  const [delivery, setDelivery] = useState("cash_pickup");
+  const [delivery, setDelivery] = useState("moncash");
   const [city, setCity] = useState("Port-au-Prince");
   const [saving, setSaving] = useState(false);
 
@@ -88,7 +88,7 @@ function Enviar() {
 
   const changeDestination = (code: string) => {
     setDestination(code);
-    setDelivery(deliveryMethods(code)[0]?.value ?? "cash_pickup");
+    setDelivery(deliveryMethods(code)[0]?.value ?? "moncash");
     setCity(citiesFor(code)[0] ?? "");
   };
 
