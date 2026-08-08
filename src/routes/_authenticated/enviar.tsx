@@ -29,13 +29,13 @@ import {
 export const Route = createFileRoute("/_authenticated/enviar")({
   head: () => ({
     meta: [
-      { title: "Enviar dinero — RemesaHaití" },
+      { title: "Enviar dinero — Lajan Rapid" },
       {
         name: "description",
         content:
           "Envía dinero desde América o Europa hacia Haití y República Dominicana con comisión transparente.",
       },
-      { property: "og:title", content: "Enviar dinero — RemesaHaití" },
+      { property: "og:title", content: "Enviar dinero — Lajan Rapid" },
       {
         property: "og:description",
         content: "Calcula, elige método de pago y envía a Haití o República Dominicana.",

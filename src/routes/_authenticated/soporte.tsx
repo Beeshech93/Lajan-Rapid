@@ -11,9 +11,9 @@ import {
 export const Route = createFileRoute("/_authenticated/soporte")({
   head: () => ({
     meta: [
-      { title: "Soporte — RemesaHaití" },
+      { title: "Soporte — Lajan Rapid" },
       { name: "description", content: "Resuelve dudas sobre envíos, pagos y verificación." },
-      { property: "og:title", content: "Soporte — RemesaHaití" },
+      { property: "og:title", content: "Soporte — Lajan Rapid" },
       { property: "og:description", content: "Preguntas frecuentes y canales de atención." },
     ],
   }),

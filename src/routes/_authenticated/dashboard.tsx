@@ -21,9 +21,9 @@ import { money, shortDate, STATUS_LABEL, STATUS_TONE, type TransferStatus } from
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Inicio — RemesaHaití" },
+      { title: "Inicio — Lajan Rapid" },
       { name: "description", content: "Resumen de tus envíos, tipo de cambio y avisos." },
-      { property: "og:title", content: "Inicio — RemesaHaití" },
+      { property: "og:title", content: "Inicio — Lajan Rapid" },
       { property: "og:description", content: "Resumen de tus envíos y tipo de cambio actual." },
     ],
   }),

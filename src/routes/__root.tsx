@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { I18nProvider } from "@/lib/i18n";
 
 function NotFoundComponent() {
   return (
@@ -79,7 +80,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "RemesaHaití — Envía dinero de México a Haití" },
+      { title: "Lajan Rapid — Envía dinero de México a Haití" },
       {
         name: "description",
         content:
@@ -87,8 +88,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { property: "og:title", content: "RemesaHaití — Envía dinero de México a Haití" },
-      { name: "twitter:title", content: "RemesaHaití — Envía dinero de México a Haití" },
+      { property: "og:title", content: "Lajan Rapid — Envía dinero de México a Haití" },
+      { name: "twitter:title", content: "Lajan Rapid — Envía dinero de México a Haití" },
       { property: "og:description", content: "Envía dinero de México a Haití en minutos. Tipo de cambio transparente, comisiones claras y seguimiento en tiempo real." },
       { name: "twitter:description", content: "Envía dinero de México a Haití en minutos. Tipo de cambio transparente, comisiones claras y seguimiento en tiempo real." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/12a98643-608e-4133-90a8-d9091cc3da8a/id-preview-9e63a84a--b7a9baa3-804a-465d-b798-284cc8ac44da.lovable.app-1785963363792.png" },
@@ -140,9 +141,12 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
-      <Toaster position="top-center" richColors />
+      <I18nProvider>
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+        <Toaster position="top-center" richColors />
+      </I18nProvider>
     </QueryClientProvider>
   );
+
 }

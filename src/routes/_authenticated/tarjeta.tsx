@@ -31,13 +31,13 @@ import {
 export const Route = createFileRoute("/_authenticated/tarjeta")({
   head: () => ({
     meta: [
-      { title: "Tarjeta virtual — RemesaHaití" },
+      { title: "Tarjeta virtual — Lajan Rapid" },
       {
         name: "description",
         content:
           "Emite tu tarjeta virtual Visa o Mastercard, congélala al instante y paga en línea con el saldo de tu billetera.",
       },
-      { property: "og:title", content: "Tarjeta virtual — RemesaHaití" },
+      { property: "og:title", content: "Tarjeta virtual — Lajan Rapid" },
       {
         property: "og:description",
         content: "Tarjeta virtual ligada a tu billetera, con límites y control de seguridad.",
@@ -295,7 +295,7 @@ function CardItem({ card, onChange }: { card: VirtualCard; onChange: () => void 
         <div className="rounded-2xl bg-sidebar p-5 text-sidebar-foreground">
           <div className="flex items-start justify-between">
             <span className="text-xs uppercase tracking-widest opacity-70">
-              {card.label || "RemesaHaití"}
+              {card.label || "Lajan Rapid"}
             </span>
             <span className="font-display text-sm font-semibold uppercase">{card.brand}</span>
           </div>

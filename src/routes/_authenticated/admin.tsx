@@ -32,9 +32,9 @@ import {
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
     meta: [
-      { title: "Administración — RemesaHaití" },
+      { title: "Administración — Lajan Rapid" },
       { name: "description", content: "Gestiona usuarios, KYC, tipos de cambio y transacciones." },
-      { property: "og:title", content: "Administración — RemesaHaití" },
+      { property: "og:title", content: "Administración — Lajan Rapid" },
       { property: "og:description", content: "Panel de control de la operación de remesas." },
     ],
   }),
