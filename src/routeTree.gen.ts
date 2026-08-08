@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAgenteRouteImport } from './routes/_authenticated/agente'
+import { Route as AuthenticatedBilleteraRouteImport } from './routes/_authenticated/billetera'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedEnviarRouteImport } from './routes/_authenticated/enviar'
 import { Route as AuthenticatedHistorialRouteImport } from './routes/_authenticated/historial'
@@ -43,6 +44,11 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
 const AuthenticatedAgenteRoute = AuthenticatedAgenteRouteImport.update({
   id: '/agente',
   path: '/agente',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedBilleteraRoute = AuthenticatedBilleteraRouteImport.update({
+  id: '/billetera',
+  path: '/billetera',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/agente': typeof AuthenticatedAgenteRoute
+  '/billetera': typeof AuthenticatedBilleteraRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/enviar': typeof AuthenticatedEnviarRoute
   '/historial': typeof AuthenticatedHistorialRoute
@@ -94,6 +101,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/agente': typeof AuthenticatedAgenteRoute
+  '/billetera': typeof AuthenticatedBilleteraRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/enviar': typeof AuthenticatedEnviarRoute
   '/historial': typeof AuthenticatedHistorialRoute
@@ -108,6 +116,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/agente': typeof AuthenticatedAgenteRoute
+  '/_authenticated/billetera': typeof AuthenticatedBilleteraRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/enviar': typeof AuthenticatedEnviarRoute
   '/_authenticated/historial': typeof AuthenticatedHistorialRoute
@@ -122,6 +131,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/admin'
     | '/agente'
+    | '/billetera'
     | '/dashboard'
     | '/enviar'
     | '/historial'
@@ -134,6 +144,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/admin'
     | '/agente'
+    | '/billetera'
     | '/dashboard'
     | '/enviar'
     | '/historial'
@@ -147,6 +158,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/admin'
     | '/_authenticated/agente'
+    | '/_authenticated/billetera'
     | '/_authenticated/dashboard'
     | '/_authenticated/enviar'
     | '/_authenticated/historial'
@@ -198,6 +210,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAgenteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/billetera': {
+      id: '/_authenticated/billetera'
+      path: '/billetera'
+      fullPath: '/billetera'
+      preLoaderRoute: typeof AuthenticatedBilleteraRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -246,6 +265,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedAgenteRoute: typeof AuthenticatedAgenteRoute
+  AuthenticatedBilleteraRoute: typeof AuthenticatedBilleteraRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEnviarRoute: typeof AuthenticatedEnviarRoute
   AuthenticatedHistorialRoute: typeof AuthenticatedHistorialRoute
@@ -257,6 +277,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedAgenteRoute: AuthenticatedAgenteRoute,
+  AuthenticatedBilleteraRoute: AuthenticatedBilleteraRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEnviarRoute: AuthenticatedEnviarRoute,
   AuthenticatedHistorialRoute: AuthenticatedHistorialRoute,
