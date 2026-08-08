@@ -83,13 +83,12 @@ function AuthPage() {
 
     let phone = "";
     if (mode === "registro") {
-      const country = DIAL_COUNTRIES.find((c) => c.code === dial);
-      const e164 = toE164(country?.dial ?? "+509", String(form.get("phone") ?? ""));
-      if (!e164) {
+      if (!check.ok || !check.e164) {
+        setPhoneError(t("auth.invalid_phone"));
         toast.error(t("auth.invalid_phone"));
         return;
       }
-      phone = e164;
+      phone = check.e164;
     }
 
     setLoading(true);
