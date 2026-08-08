@@ -30,40 +30,75 @@ export type BazikResult = {
 
 type Creds = { baseUrl: string; apiKey?: string; apiSecret?: string };
 
-function baseUrl() {
-  return (process.env["BAZIK_BASE_URL"] ?? "https://api.bazik.io").replace(/\/$/, "");
+export const BAZIK_CRED_NAMES = [
+  "BAZIK_BASE_URL",
+  "BAZIK_COLLECT_API_KEY",
+  "BAZIK_COLLECT_API_SECRET",
+  "BAZIK_PAYOUT_API_KEY",
+  "BAZIK_PAYOUT_API_SECRET",
+] as const;
+
+export type BazikCredName = (typeof BAZIK_CRED_NAMES)[number];
+
+/** Lee las credenciales guardadas manualmente desde el panel de administración. */
+export async function loadStoredCreds(): Promise<Record<string, string>> {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin
+      .from("integration_credentials")
+      .select("name, value")
+      .in("name", [...BAZIK_CRED_NAMES]);
+    const out: Record<string, string> = {};
+    for (const row of data ?? []) if (row.value) out[row.name] = row.value;
+    return out;
+  } catch (e) {
+    console.error("No se pudieron leer las credenciales guardadas", e);
+    return {};
+  }
 }
 
-/** Credencial de la API de COBROS (recarga de billetera). */
-function collectCreds(): Creds {
-  const key = process.env["BAZIK_COLLECT_API_KEY"] ?? process.env["BAZIK_API_KEY"];
-  const secret = process.env["BAZIK_COLLECT_API_SECRET"] ?? process.env["BAZIK_API_SECRET"];
-  return {
-    baseUrl: baseUrl(),
-    ...(key ? { apiKey: key } : {}),
-    ...(secret ? { apiSecret: secret } : {}),
-  };
+/** Guarda (o borra si el valor viene vacío) una credencial. */
+export async function saveStoredCred(name: string, value: string, userId: string) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  if (!value) {
+    await supabaseAdmin.from("integration_credentials").delete().eq("name", name);
+    return;
+  }
+  await supabaseAdmin
+    .from("integration_credentials")
+    .upsert({ name, value, updated_at: new Date().toISOString(), updated_by: userId });
 }
 
-/** Credencial de la API de ENVÍOS (MonCash / NatCash). */
-function payoutCreds(): Creds {
-  const key = process.env["BAZIK_PAYOUT_API_KEY"] ?? process.env["BAZIK_API_KEY"];
-  const secret = process.env["BAZIK_PAYOUT_API_SECRET"] ?? process.env["BAZIK_API_SECRET"];
+function pick(stored: Record<string, string>, ...names: string[]) {
+  for (const n of names) {
+    const v = process.env[n] ?? stored[n];
+    if (v) return v;
+  }
+  return undefined;
+}
+
+function baseUrlFrom(stored: Record<string, string>) {
+  return (pick(stored, "BAZIK_BASE_URL") ?? "https://api.bazik.io").replace(/\/$/, "");
+}
+
+function credsFor(stored: Record<string, string>, kind: "COLLECT" | "PAYOUT"): Creds {
+  const key = pick(stored, `BAZIK_${kind}_API_KEY`, "BAZIK_API_KEY");
+  const secret = pick(stored, `BAZIK_${kind}_API_SECRET`, "BAZIK_API_SECRET");
   return {
-    baseUrl: baseUrl(),
+    baseUrl: baseUrlFrom(stored),
     ...(key ? { apiKey: key } : {}),
     ...(secret ? { apiSecret: secret } : {}),
   };
 }
 
 /** Estado de ambas conexiones Bazik para el panel de administración. */
-export function bazikStatusInfo() {
-  const url = baseUrl();
-  const collect = collectCreds();
-  const payout = payoutCreds();
+export async function bazikStatusInfo() {
+  const stored = await loadStoredCreds();
+  const url = baseUrlFrom(stored);
+  const collect = credsFor(stored, "COLLECT");
+  const payout = credsFor(stored, "PAYOUT");
   return {
     baseUrl: url,
-    // compatibilidad con la UI anterior
     configured: Boolean(collect.apiKey && payout.apiKey),
     topupEndpoint: `${url}/v1/collections`,
     payoutEndpoint: `${url}/v1/payouts`,
@@ -85,6 +120,7 @@ export function bazikStatusInfo() {
     },
   };
 }
+
 
 async function callBazik(creds: Creds, path: string, body: unknown): Promise<BazikResult> {
   if (!creds.apiKey) {
@@ -127,8 +163,9 @@ async function callBazik(creds: Creds, path: string, body: unknown): Promise<Baz
 }
 
 /** API #1 — cobro: recargar la billetera del cliente vía Bazik. */
-export function bazikTopup(input: BazikTopupInput) {
-  return callBazik(collectCreds(), "/v1/collections", {
+export async function bazikTopup(input: BazikTopupInput) {
+  const stored = await loadStoredCreds();
+  return callBazik(credsFor(stored, "COLLECT"), "/v1/collections", {
     amount: input.amount,
     currency: input.currency,
     reference: input.reference,
@@ -137,8 +174,9 @@ export function bazikTopup(input: BazikTopupInput) {
 }
 
 /** API #2 — envío: mandar dinero a MonCash o NatCash vía Bazik. */
-export function bazikPayout(input: BazikPayoutInput) {
-  return callBazik(payoutCreds(), "/v1/payouts", {
+export async function bazikPayout(input: BazikPayoutInput) {
+  const stored = await loadStoredCreds();
+  return callBazik(credsFor(stored, "PAYOUT"), "/v1/payouts", {
     provider: input.provider,
     destination: input.phone,
     amount: input.amount,
@@ -146,3 +184,4 @@ export function bazikPayout(input: BazikPayoutInput) {
     reference: input.reference,
   });
 }
+

@@ -1,8 +1,8 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { Copy, Link2, PlugZap, Send } from "lucide-react";
+import { Copy, Link2, PlugZap, Save, Send } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,10 +16,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  bazikSaveCredentials,
   bazikSendMobileMoney,
   bazikStatus,
   bazikTopupWallet,
 } from "@/lib/bazik.functions";
+
 
 function CopyField({ label, value }: { label: string; value: string }) {
   return (
@@ -44,15 +46,58 @@ function CopyField({ label, value }: { label: string; value: string }) {
   );
 }
 
+const CRED_KEYS = [
+  "BAZIK_BASE_URL",
+  "BAZIK_COLLECT_API_KEY",
+  "BAZIK_COLLECT_API_SECRET",
+  "BAZIK_PAYOUT_API_KEY",
+  "BAZIK_PAYOUT_API_SECRET",
+] as const;
+type CredKey = (typeof CRED_KEYS)[number];
+
 export function BazikPanel() {
   const status = useServerFn(bazikStatus);
   const topup = useServerFn(bazikTopupWallet);
   const payout = useServerFn(bazikSendMobileMoney);
+  const saveCreds = useServerFn(bazikSaveCredentials);
+  const queryClient = useQueryClient();
 
   const { data: info } = useQuery({
     queryKey: ["bazik_status"],
     queryFn: () => status(),
   });
+
+  const [creds, setCreds] = useState<Record<CredKey, string>>({
+    BAZIK_BASE_URL: "",
+    BAZIK_COLLECT_API_KEY: "",
+    BAZIK_COLLECT_API_SECRET: "",
+    BAZIK_PAYOUT_API_KEY: "",
+    BAZIK_PAYOUT_API_SECRET: "",
+  });
+  const setCred = (k: CredKey, v: string) => setCreds((p) => ({ ...p, [k]: v }));
+
+  const saveMut = useMutation({
+    mutationFn: () => {
+      const payloadEntries = CRED_KEYS.filter((k) => creds[k].trim().length > 0).map(
+        (k) => [k, creds[k].trim()] as const,
+      );
+      if (payloadEntries.length === 0) throw new Error("Nada que guardar");
+      return saveCreds({ data: Object.fromEntries(payloadEntries) });
+    },
+    onSuccess: () => {
+      toast.success("Credenciales guardadas");
+      setCreds({
+        BAZIK_BASE_URL: "",
+        BAZIK_COLLECT_API_KEY: "",
+        BAZIK_COLLECT_API_SECRET: "",
+        BAZIK_PAYOUT_API_KEY: "",
+        BAZIK_PAYOUT_API_SECRET: "",
+      });
+      void queryClient.invalidateQueries({ queryKey: ["bazik_status"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
 
   const [walletId, setWalletId] = useState("");
   const [topAmount, setTopAmount] = useState("");
@@ -99,33 +144,74 @@ export function BazikPanel() {
         </CardHeader>
         <CardContent className="space-y-4 text-sm">
           <p className="text-xs text-muted-foreground">
-            Dos APIs separadas. Guarda cada Key y Secret en el formulario seguro del proyecto
-            (Ajustes → Secretos) con los nombres exactos de abajo.
+            Pega aquí las credenciales de tus dos APIs de Bazik. Se guardan cifradas en el backend
+            y nunca se muestran de vuelta.
           </p>
 
-          {[info?.collect, info?.payout].map((api, i) =>
-            api ? (
-              <div key={api.keyName} className="space-y-2 rounded-lg border p-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-medium">
-                    API {i + 1} · {api.label}
-                  </span>
-                  <Badge variant={api.hasKey ? "secondary" : "destructive"}>
-                    {api.hasKey ? "Key activa" : "Falta Key"}
-                  </Badge>
-                  <Badge variant={api.hasSecret ? "secondary" : "outline"}>
-                    {api.hasSecret ? "Secret activo" : "Sin Secret"}
-                  </Badge>
-                </div>
-                <CopyField label="Nombre de la Key" value={api.keyName} />
-                <CopyField label="Nombre del Secret" value={api.secretName} />
-                <CopyField label="Endpoint saliente" value={api.endpoint} />
+          <div className="space-y-1.5">
+            <Label htmlFor="bazik-base">URL base (opcional)</Label>
+            <Input
+              id="bazik-base"
+              value={creds.BAZIK_BASE_URL}
+              onChange={(e) => setCred("BAZIK_BASE_URL", e.target.value)}
+              placeholder={info?.baseUrl ?? "https://api.bazik.io"}
+            />
+          </div>
+
+          {[
+            { api: info?.collect, n: 1, k: "BAZIK_COLLECT_API_KEY", s: "BAZIK_COLLECT_API_SECRET" },
+            { api: info?.payout, n: 2, k: "BAZIK_PAYOUT_API_KEY", s: "BAZIK_PAYOUT_API_SECRET" },
+          ].map(({ api, n, k, s }) => (
+            <div key={k} className="space-y-3 rounded-lg border p-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-medium">
+                  API {n} ·{" "}
+                  {api?.label ??
+                    (n === 1 ? "API de cobros (recargar billetera)" : "API de envíos (MonCash / NatCash)")}
+                </span>
+                <Badge variant={api?.hasKey ? "secondary" : "destructive"}>
+                  {api?.hasKey ? "Key activa" : "Falta Key"}
+                </Badge>
+                <Badge variant={api?.hasSecret ? "secondary" : "outline"}>
+                  {api?.hasSecret ? "Secret activo" : "Sin Secret"}
+                </Badge>
               </div>
-            ) : null,
-          )}
-          <p className="text-xs text-muted-foreground">Base: {info?.baseUrl}</p>
+              <div className="space-y-1.5">
+                <Label htmlFor={k}>API Key</Label>
+                <Input
+                  id={k}
+                  type="password"
+                  autoComplete="off"
+                  value={creds[k as CredKey]}
+                  onChange={(e) => setCred(k as CredKey, e.target.value)}
+                  placeholder="pegar aquí"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor={s}>API Secret</Label>
+                <Input
+                  id={s}
+                  type="password"
+                  autoComplete="off"
+                  value={creds[s as CredKey]}
+                  onChange={(e) => setCred(s as CredKey, e.target.value)}
+                  placeholder="pegar aquí"
+                />
+              </div>
+              {api ? <CopyField label="Endpoint saliente" value={api.endpoint} /> : null}
+            </div>
+          ))}
+
+          <Button
+            className="w-full"
+            disabled={saveMut.isPending}
+            onClick={() => saveMut.mutate()}
+          >
+            <Save className="mr-2 size-4" /> Guardar credenciales
+          </Button>
         </CardContent>
       </Card>
+
 
       <Card>
         <CardHeader>
