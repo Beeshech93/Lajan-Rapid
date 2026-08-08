@@ -22,6 +22,8 @@ import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedSoporteRouteImport } from './routes/_authenticated/soporte'
 import { Route as AuthenticatedTarjetaRouteImport } from './routes/_authenticated/tarjeta'
 import { Route as AuthenticatedTransferenciaIdRouteImport } from './routes/_authenticated/transferencia.$id'
+import { Route as ApiPublicBazikPayoutRouteImport } from './routes/api/public/bazik/payout'
+import { Route as ApiPublicBazikTopupRouteImport } from './routes/api/public/bazik/topup'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -88,6 +90,16 @@ const AuthenticatedTransferenciaIdRoute =
     path: '/transferencia/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicBazikPayoutRoute = ApiPublicBazikPayoutRouteImport.update({
+  id: '/api/public/bazik/payout',
+  path: '/api/public/bazik/payout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicBazikTopupRoute = ApiPublicBazikTopupRouteImport.update({
+  id: '/api/public/bazik/topup',
+  path: '/api/public/bazik/topup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -102,6 +114,8 @@ export interface FileRoutesByFullPath {
   '/soporte': typeof AuthenticatedSoporteRoute
   '/tarjeta': typeof AuthenticatedTarjetaRoute
   '/transferencia/$id': typeof AuthenticatedTransferenciaIdRoute
+  '/api/public/bazik/payout': typeof ApiPublicBazikPayoutRoute
+  '/api/public/bazik/topup': typeof ApiPublicBazikTopupRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -116,6 +130,8 @@ export interface FileRoutesByTo {
   '/soporte': typeof AuthenticatedSoporteRoute
   '/tarjeta': typeof AuthenticatedTarjetaRoute
   '/transferencia/$id': typeof AuthenticatedTransferenciaIdRoute
+  '/api/public/bazik/payout': typeof ApiPublicBazikPayoutRoute
+  '/api/public/bazik/topup': typeof ApiPublicBazikTopupRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -132,6 +148,8 @@ export interface FileRoutesById {
   '/_authenticated/soporte': typeof AuthenticatedSoporteRoute
   '/_authenticated/tarjeta': typeof AuthenticatedTarjetaRoute
   '/_authenticated/transferencia/$id': typeof AuthenticatedTransferenciaIdRoute
+  '/api/public/bazik/payout': typeof ApiPublicBazikPayoutRoute
+  '/api/public/bazik/topup': typeof ApiPublicBazikTopupRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -148,6 +166,8 @@ export interface FileRouteTypes {
     | '/soporte'
     | '/tarjeta'
     | '/transferencia/$id'
+    | '/api/public/bazik/payout'
+    | '/api/public/bazik/topup'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -162,6 +182,8 @@ export interface FileRouteTypes {
     | '/soporte'
     | '/tarjeta'
     | '/transferencia/$id'
+    | '/api/public/bazik/payout'
+    | '/api/public/bazik/topup'
   id:
     | '__root__'
     | '/'
@@ -177,12 +199,16 @@ export interface FileRouteTypes {
     | '/_authenticated/soporte'
     | '/_authenticated/tarjeta'
     | '/_authenticated/transferencia/$id'
+    | '/api/public/bazik/payout'
+    | '/api/public/bazik/topup'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiPublicBazikPayoutRoute: typeof ApiPublicBazikPayoutRoute
+  ApiPublicBazikTopupRoute: typeof ApiPublicBazikTopupRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -278,6 +304,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTransferenciaIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/bazik/payout': {
+      id: '/api/public/bazik/payout'
+      path: '/api/public/bazik/payout'
+      fullPath: '/api/public/bazik/payout'
+      preLoaderRoute: typeof ApiPublicBazikPayoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/bazik/topup': {
+      id: '/api/public/bazik/topup'
+      path: '/api/public/bazik/topup'
+      fullPath: '/api/public/bazik/topup'
+      preLoaderRoute: typeof ApiPublicBazikTopupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -314,6 +354,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiPublicBazikPayoutRoute: ApiPublicBazikPayoutRoute,
+  ApiPublicBazikTopupRoute: ApiPublicBazikTopupRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
