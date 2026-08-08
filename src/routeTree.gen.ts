@@ -20,6 +20,7 @@ import { Route as AuthenticatedEnviarRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedHistorialRouteImport } from './routes/_authenticated/historial'
 import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
 import { Route as AuthenticatedSoporteRouteImport } from './routes/_authenticated/soporte'
+import { Route as AuthenticatedTarjetaRouteImport } from './routes/_authenticated/tarjeta'
 import { Route as AuthenticatedTransferenciaIdRouteImport } from './routes/_authenticated/transferencia.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -76,6 +77,11 @@ const AuthenticatedSoporteRoute = AuthenticatedSoporteRouteImport.update({
   path: '/soporte',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTarjetaRoute = AuthenticatedTarjetaRouteImport.update({
+  id: '/tarjeta',
+  path: '/tarjeta',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedTransferenciaIdRoute =
   AuthenticatedTransferenciaIdRouteImport.update({
     id: '/transferencia/$id',
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/historial': typeof AuthenticatedHistorialRoute
   '/perfil': typeof AuthenticatedPerfilRoute
   '/soporte': typeof AuthenticatedSoporteRoute
+  '/tarjeta': typeof AuthenticatedTarjetaRoute
   '/transferencia/$id': typeof AuthenticatedTransferenciaIdRoute
 }
 export interface FileRoutesByTo {
@@ -107,6 +114,7 @@ export interface FileRoutesByTo {
   '/historial': typeof AuthenticatedHistorialRoute
   '/perfil': typeof AuthenticatedPerfilRoute
   '/soporte': typeof AuthenticatedSoporteRoute
+  '/tarjeta': typeof AuthenticatedTarjetaRoute
   '/transferencia/$id': typeof AuthenticatedTransferenciaIdRoute
 }
 export interface FileRoutesById {
@@ -122,6 +130,7 @@ export interface FileRoutesById {
   '/_authenticated/historial': typeof AuthenticatedHistorialRoute
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
   '/_authenticated/soporte': typeof AuthenticatedSoporteRoute
+  '/_authenticated/tarjeta': typeof AuthenticatedTarjetaRoute
   '/_authenticated/transferencia/$id': typeof AuthenticatedTransferenciaIdRoute
 }
 export interface FileRouteTypes {
@@ -137,6 +146,7 @@ export interface FileRouteTypes {
     | '/historial'
     | '/perfil'
     | '/soporte'
+    | '/tarjeta'
     | '/transferencia/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -150,6 +160,7 @@ export interface FileRouteTypes {
     | '/historial'
     | '/perfil'
     | '/soporte'
+    | '/tarjeta'
     | '/transferencia/$id'
   id:
     | '__root__'
@@ -164,6 +175,7 @@ export interface FileRouteTypes {
     | '/_authenticated/historial'
     | '/_authenticated/perfil'
     | '/_authenticated/soporte'
+    | '/_authenticated/tarjeta'
     | '/_authenticated/transferencia/$id'
   fileRoutesById: FileRoutesById
 }
@@ -252,6 +264,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSoporteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/tarjeta': {
+      id: '/_authenticated/tarjeta'
+      path: '/tarjeta'
+      fullPath: '/tarjeta'
+      preLoaderRoute: typeof AuthenticatedTarjetaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/transferencia/$id': {
       id: '/_authenticated/transferencia/$id'
       path: '/transferencia/$id'
@@ -271,6 +290,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedHistorialRoute: typeof AuthenticatedHistorialRoute
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
   AuthenticatedSoporteRoute: typeof AuthenticatedSoporteRoute
+  AuthenticatedTarjetaRoute: typeof AuthenticatedTarjetaRoute
   AuthenticatedTransferenciaIdRoute: typeof AuthenticatedTransferenciaIdRoute
 }
 
@@ -283,6 +303,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHistorialRoute: AuthenticatedHistorialRoute,
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
   AuthenticatedSoporteRoute: AuthenticatedSoporteRoute,
+  AuthenticatedTarjetaRoute: AuthenticatedTarjetaRoute,
   AuthenticatedTransferenciaIdRoute: AuthenticatedTransferenciaIdRoute,
 }
 
