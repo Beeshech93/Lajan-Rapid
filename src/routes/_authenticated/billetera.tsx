@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowDownToLine, ArrowLeftRight, Plus, Wallet as WalletIcon } from "lucide-react";
+import { ArrowDownToLine, ArrowLeftRight, Plus, Send, Wallet as WalletIcon } from "lucide-react";
 import { bazikTopupWallet } from "@/lib/bazik.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
