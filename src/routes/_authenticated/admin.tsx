@@ -63,6 +63,7 @@ function Admin() {
           <TabsTrigger value="usuarios">Usuarios</TabsTrigger>
           <TabsTrigger value="billeteras">Billeteras y tarjetas</TabsTrigger>
           <TabsTrigger value="tarifas">Tarifas</TabsTrigger>
+          <TabsTrigger value="bazik">Bazik API</TabsTrigger>
         </TabsList>
         <TabsContent value="resumen" className="mt-4">
           <Resumen />
@@ -81,6 +82,9 @@ function Admin() {
         </TabsContent>
         <TabsContent value="tarifas" className="mt-4">
           <RatesPanel />
+        </TabsContent>
+        <TabsContent value="bazik" className="mt-4">
+          <BazikPanel />
         </TabsContent>
       </Tabs>
     </div>
