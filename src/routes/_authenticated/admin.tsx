@@ -56,14 +56,14 @@ function Admin() {
     <div className="mx-auto max-w-6xl space-y-5">
       <h1 className="text-2xl font-bold">Administración</h1>
       <Tabs defaultValue="resumen">
-        <TabsList className="flex-wrap">
+        <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
           <TabsTrigger value="resumen">Resumen</TabsTrigger>
+          <TabsTrigger value="bazik">Bazik API</TabsTrigger>
           <TabsTrigger value="kyc">KYC</TabsTrigger>
           <TabsTrigger value="tx">Transacciones</TabsTrigger>
           <TabsTrigger value="usuarios">Usuarios</TabsTrigger>
           <TabsTrigger value="billeteras">Billeteras y tarjetas</TabsTrigger>
           <TabsTrigger value="tarifas">Tarifas</TabsTrigger>
-          <TabsTrigger value="bazik">Bazik API</TabsTrigger>
         </TabsList>
         <TabsContent value="resumen" className="mt-4">
           <Resumen />
