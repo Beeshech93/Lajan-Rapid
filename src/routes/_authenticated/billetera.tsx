@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowDownToLine, ArrowLeftRight, Plus, Wallet as WalletIcon } from "lucide-react";
+import { ArrowDownToLine, ArrowLeftRight, Plus, Send, Wallet as WalletIcon } from "lucide-react";
 import { bazikTopupWallet } from "@/lib/bazik.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -48,6 +48,8 @@ const KIND_LABEL: Record<string, string> = {
   conversion_in: "Conversión recibida",
   conversion_out: "Conversión enviada",
   card_purchase: "Compra con tarjeta",
+  p2p_out: "Enviado a usuario",
+  p2p_in: "Recibido de usuario",
 };
 
 function Billetera() {
@@ -62,7 +64,48 @@ function Billetera() {
   const [busy, setBusy] = useState(false);
   const [topupWallet, setTopupWallet] = useState("");
   const [topupAmount, setTopupAmount] = useState("");
+  const [p2pWallet, setP2pWallet] = useState("");
+  const [p2pPhone, setP2pPhone] = useState("");
+  const [p2pAmount, setP2pAmount] = useState("");
+  const [p2pNote, setP2pNote] = useState("");
+  const [p2pFound, setP2pFound] = useState<string | null>(null);
   const runTopup = useServerFn(bazikTopupWallet);
+
+  const lookupUser = async (phone: string) => {
+    setP2pPhone(phone);
+    setP2pFound(null);
+    if (phone.replace(/\D/g, "").length < 6) return;
+    const { data } = await supabase.rpc("find_user_by_phone", { _phone: phone });
+    const found = Array.isArray(data) ? data[0] : null;
+    if (found) setP2pFound(found.full_name || "Usuario Lajan Rapid");
+  };
+
+  const sendP2P = async () => {
+    const value = Number(p2pAmount);
+    if (!p2pWallet || !p2pPhone || !Number.isFinite(value) || value <= 0) {
+      toast.error("Elige billetera, número y monto válido");
+      return;
+    }
+    setBusy(true);
+    const { data, error } = await supabase.rpc("p2p_send", {
+      _from_wallet: p2pWallet,
+      _phone: p2pPhone,
+      _amount: value,
+      ...(p2pNote ? { _note: p2pNote } : {}),
+    });
+
+    setBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    const res = data as { recipient?: string } | null;
+    toast.success(`Enviado a ${res?.recipient || "usuario"}`);
+    setP2pAmount("");
+    setP2pNote("");
+    refresh();
+  };
+
 
   const list = wallets ?? [];
 
@@ -294,6 +337,72 @@ function Billetera() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Send className="size-4" /> Enviar a otro usuario (P2P)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label>Desde tu billetera</Label>
+              <Select value={p2pWallet} onValueChange={setP2pWallet}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Billetera" />
+                </SelectTrigger>
+                <SelectContent>
+                  {list.map((w) => (
+                    <SelectItem key={w.id} value={w.id}>
+                      {w.currency} · {money(Number(w.balance), w.currency)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="p2p-phone">Teléfono del destinatario</Label>
+              <Input
+                id="p2p-phone"
+                inputMode="tel"
+                placeholder="+509 1234 5678"
+                value={p2pPhone}
+                onChange={(e) => void lookupUser(e.target.value)}
+              />
+              {p2pFound && <p className="text-xs text-success">Usuario: {p2pFound}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="p2p-amount">Monto</Label>
+              <Input
+                id="p2p-amount"
+                inputMode="decimal"
+                placeholder="0.00"
+                value={p2pAmount}
+                onChange={(e) => setP2pAmount(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="p2p-note">Mensaje (opcional)</Label>
+              <Input
+                id="p2p-note"
+                placeholder="Para la comida"
+                value={p2pNote}
+                onChange={(e) => setP2pNote(e.target.value)}
+              />
+            </div>
+          </div>
+          <Button className="w-full" disabled={busy} onClick={sendP2P}>
+            Enviar dinero
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            Transferencia instantánea y sin comisión entre usuarios de Lajan Rapid, en la misma
+            moneda de tu billetera.
+          </p>
+        </CardContent>
+      </Card>
+
+
 
       <Card>
         <CardHeader>

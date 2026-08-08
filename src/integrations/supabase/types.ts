@@ -579,6 +579,13 @@ export type Database = {
         Returns: boolean
       }
       ensure_wallet: { Args: { _currency: string }; Returns: string }
+      find_user_by_phone: {
+        Args: { _phone: string }
+        Returns: {
+          full_name: string
+          user_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -595,6 +602,15 @@ export type Database = {
           _wallet_id: string
         }
         Returns: string
+      }
+      p2p_send: {
+        Args: {
+          _amount: number
+          _from_wallet: string
+          _note?: string
+          _phone: string
+        }
+        Returns: Json
       }
       set_card_status: {
         Args: { _card_id: string; _status: string }
