@@ -60,6 +60,9 @@ function Billetera() {
   const [toCurrency, setToCurrency] = useState("HTG");
   const [amount, setAmount] = useState("");
   const [busy, setBusy] = useState(false);
+  const [topupWallet, setTopupWallet] = useState("");
+  const [topupAmount, setTopupAmount] = useState("");
+  const runTopup = useServerFn(bazikTopupWallet);
 
   const list = wallets ?? [];
 
