@@ -99,33 +99,74 @@ export function BazikPanel() {
         </CardHeader>
         <CardContent className="space-y-4 text-sm">
           <p className="text-xs text-muted-foreground">
-            Dos APIs separadas. Guarda cada Key y Secret en el formulario seguro del proyecto
-            (Ajustes → Secretos) con los nombres exactos de abajo.
+            Pega aquí las credenciales de tus dos APIs de Bazik. Se guardan cifradas en el backend
+            y nunca se muestran de vuelta.
           </p>
 
-          {[info?.collect, info?.payout].map((api, i) =>
-            api ? (
-              <div key={api.keyName} className="space-y-2 rounded-lg border p-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-medium">
-                    API {i + 1} · {api.label}
-                  </span>
-                  <Badge variant={api.hasKey ? "secondary" : "destructive"}>
-                    {api.hasKey ? "Key activa" : "Falta Key"}
-                  </Badge>
-                  <Badge variant={api.hasSecret ? "secondary" : "outline"}>
-                    {api.hasSecret ? "Secret activo" : "Sin Secret"}
-                  </Badge>
-                </div>
-                <CopyField label="Nombre de la Key" value={api.keyName} />
-                <CopyField label="Nombre del Secret" value={api.secretName} />
-                <CopyField label="Endpoint saliente" value={api.endpoint} />
+          <div className="space-y-1.5">
+            <Label htmlFor="bazik-base">URL base (opcional)</Label>
+            <Input
+              id="bazik-base"
+              value={creds.BAZIK_BASE_URL}
+              onChange={(e) => setCred("BAZIK_BASE_URL", e.target.value)}
+              placeholder={info?.baseUrl ?? "https://api.bazik.io"}
+            />
+          </div>
+
+          {[
+            { api: info?.collect, n: 1, k: "BAZIK_COLLECT_API_KEY", s: "BAZIK_COLLECT_API_SECRET" },
+            { api: info?.payout, n: 2, k: "BAZIK_PAYOUT_API_KEY", s: "BAZIK_PAYOUT_API_SECRET" },
+          ].map(({ api, n, k, s }) => (
+            <div key={k} className="space-y-3 rounded-lg border p-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-medium">
+                  API {n} ·{" "}
+                  {api?.label ??
+                    (n === 1 ? "API de cobros (recargar billetera)" : "API de envíos (MonCash / NatCash)")}
+                </span>
+                <Badge variant={api?.hasKey ? "secondary" : "destructive"}>
+                  {api?.hasKey ? "Key activa" : "Falta Key"}
+                </Badge>
+                <Badge variant={api?.hasSecret ? "secondary" : "outline"}>
+                  {api?.hasSecret ? "Secret activo" : "Sin Secret"}
+                </Badge>
               </div>
-            ) : null,
-          )}
-          <p className="text-xs text-muted-foreground">Base: {info?.baseUrl}</p>
+              <div className="space-y-1.5">
+                <Label htmlFor={k}>API Key</Label>
+                <Input
+                  id={k}
+                  type="password"
+                  autoComplete="off"
+                  value={creds[k as CredKey]}
+                  onChange={(e) => setCred(k as CredKey, e.target.value)}
+                  placeholder="pegar aquí"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor={s}>API Secret</Label>
+                <Input
+                  id={s}
+                  type="password"
+                  autoComplete="off"
+                  value={creds[s as CredKey]}
+                  onChange={(e) => setCred(s as CredKey, e.target.value)}
+                  placeholder="pegar aquí"
+                />
+              </div>
+              {api ? <CopyField label="Endpoint saliente" value={api.endpoint} /> : null}
+            </div>
+          ))}
+
+          <Button
+            className="w-full"
+            disabled={saveMut.isPending}
+            onClick={() => saveMut.mutate()}
+          >
+            <Save className="mr-2 size-4" /> Guardar credenciales
+          </Button>
         </CardContent>
       </Card>
+
 
       <Card>
         <CardHeader>
