@@ -267,6 +267,30 @@ function CardItem({ card, onChange }: { card: VirtualCard; onChange: () => void 
 
 
 
+  const { profile } = useProfile();
+  const { data: wallets } = useWallets();
+  const wallet = (wallets ?? []).find((w) => w.id === card.wallet_id);
+  const holder = profile?.full_name || "Titular Lajan Rapid";
+  const expiry = `${String(card.exp_month).padStart(2, "0")}/${String(card.exp_year).slice(-2)}`;
+
+  const rows: Array<[string, string]> = [
+    ["Nombre de la tarjeta", card.label || "Sin nombre"],
+    ["Titular", holder],
+    ["Marca", card.brand.toUpperCase()],
+    ["Número", `•••• •••• •••• ${card.last4}`],
+    ["Vencimiento", expiry],
+    ["CVV", "Solo visible con el emisor (PCI DSS)"],
+    ["Estado", STATUS_LABEL[card.status] ?? card.status],
+    ["Tipo", card.is_disposable ? "Desechable (un solo uso)" : "Recargable"],
+    [
+      "Billetera",
+      wallet ? `${wallet.currency} · ${money(Number(wallet.balance), wallet.currency)}` : "—",
+    ],
+    ["Emisor", card.provider],
+    ["Emitida", shortDate(card.created_at)],
+    ["ID de tarjeta", card.id],
+  ];
+
   return (
     <Card>
       <CardContent className="space-y-4 p-5">
@@ -278,11 +302,9 @@ function CardItem({ card, onChange }: { card: VirtualCard; onChange: () => void 
             <span className="font-display text-sm font-semibold uppercase">{card.brand}</span>
           </div>
           <p className="mt-6 font-mono text-lg tracking-[0.3em]">•••• •••• •••• {card.last4}</p>
-          <div className="mt-4 flex items-end justify-between text-xs">
-            <span className="opacity-70">
-              Vence {String(card.exp_month).padStart(2, "0")}/{String(card.exp_year).slice(-2)}
-            </span>
-            <span className="opacity-70">CVV en la app del emisor</span>
+          <div className="mt-4 flex items-end justify-between gap-3 text-xs">
+            <span className="truncate uppercase opacity-80">{holder}</span>
+            <span className="opacity-70">Vence {expiry}</span>
           </div>
         </div>
 
@@ -306,12 +328,27 @@ function CardItem({ card, onChange }: { card: VirtualCard; onChange: () => void 
           )}
         </div>
 
+        <dl className="grid gap-x-6 gap-y-2 sm:grid-cols-2">
+          {rows.map(([k, v]) => (
+            <div key={k} className="flex items-baseline justify-between gap-3 border-b py-1.5">
+              <dt className="text-xs text-muted-foreground">{k}</dt>
+              <dd className="truncate text-right text-xs font-medium">{v}</dd>
+            </div>
+          ))}
+        </dl>
+
         {limits && (
-          <p className="text-xs text-muted-foreground">
-            Límites: {Number(limits.per_transaction)} por compra · {Number(limits.daily_limit)}{" "}
-            diario · {Number(limits.monthly_limit)} mensual
-            {limits.online_enabled ? "" : " · compras en línea desactivadas"}
-          </p>
+          <div className="rounded-lg border p-3 text-xs">
+            <p className="mb-1 font-medium">Límites</p>
+            <p className="text-muted-foreground">
+              Por compra: {money(Number(limits.per_transaction), wallet?.currency ?? "USD")} ·
+              Diario: {money(Number(limits.daily_limit), wallet?.currency ?? "USD")} · Mensual:{" "}
+              {money(Number(limits.monthly_limit), wallet?.currency ?? "USD")}
+            </p>
+            <p className="text-muted-foreground">
+              Compras en línea: {limits.online_enabled ? "activadas" : "desactivadas"}
+            </p>
+          </div>
         )}
 
         <p className="text-xs text-muted-foreground">
