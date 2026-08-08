@@ -91,7 +91,7 @@ function Billetera() {
       _from_wallet: p2pWallet,
       _phone: p2pPhone,
       _amount: value,
-      _note: p2pNote || null,
+      _note: p2pNote || undefined,
     });
     setBusy(false);
     if (error) {
