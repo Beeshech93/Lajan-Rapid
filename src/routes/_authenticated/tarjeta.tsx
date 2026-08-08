@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { CreditCard, Lock, ShieldCheck, ShoppingBag, Snowflake } from "lucide-react";
+import { CreditCard, Lock, ShieldCheck, Snowflake } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -235,8 +235,6 @@ function Tarjeta() {
 }
 
 function CardItem({ card, onChange }: { card: VirtualCard; onChange: () => void }) {
-  const [merchant, setMerchant] = useState("");
-  const [amount, setAmount] = useState("");
   const [busy, setBusy] = useState(false);
 
   const { data: limits } = useQuery({
