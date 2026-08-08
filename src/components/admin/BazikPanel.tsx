@@ -159,16 +159,32 @@ export function BazikPanel() {
           </div>
 
           {[
-            { api: info?.collect, n: 1, k: "BAZIK_COLLECT_API_KEY", s: "BAZIK_COLLECT_API_SECRET" },
-            { api: info?.payout, n: 2, k: "BAZIK_PAYOUT_API_KEY", s: "BAZIK_PAYOUT_API_SECRET" },
-          ].map(({ api, n, k, s }) => (
+            {
+              api: info?.collect,
+              n: 1,
+              k: "BAZIK_COLLECT_API_KEY",
+              s: "BAZIK_COLLECT_API_SECRET",
+              title: "RECIBIR PAGOS",
+              desc: "Esta API cobra: los clientes recargan su billetera (entra dinero).",
+              icon: <ArrowDownToLine className="size-4 text-emerald-600" />,
+            },
+            {
+              api: info?.payout,
+              n: 2,
+              k: "BAZIK_PAYOUT_API_KEY",
+              s: "BAZIK_PAYOUT_API_SECRET",
+              title: "ENVIAR DINERO",
+              desc: "Esta API paga: envíos a MonCash / NatCash (sale dinero).",
+              icon: <ArrowUpFromLine className="size-4 text-sky-600" />,
+            },
+          ].map(({ api, n, k, s, title, desc, icon }) => (
             <div key={k} className="space-y-3 rounded-lg border p-3">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="font-medium">
-                  API {n} ·{" "}
-                  {api?.label ??
-                    (n === 1 ? "API de cobros (recargar billetera)" : "API de envíos (MonCash / NatCash)")}
+                {icon}
+                <span className="font-semibold">
+                  API {n} · {title}
                 </span>
+
                 <Badge variant={api?.hasKey ? "secondary" : "destructive"}>
                   {api?.hasKey ? "Key activa" : "Falta Key"}
                 </Badge>
