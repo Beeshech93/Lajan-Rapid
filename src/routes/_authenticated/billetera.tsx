@@ -65,7 +65,10 @@ function Billetera() {
     setBusy(true);
     const { error } = await supabase.rpc("ensure_wallet", { _currency: newCurrency });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success(`Billetera en ${newCurrency} lista`);
     refresh();
   };
@@ -73,7 +76,8 @@ function Billetera() {
   const convert = async () => {
     const value = Number(amount);
     if (!fromWallet || !Number.isFinite(value) || value <= 0) {
-      return toast.error("Elige una billetera y un monto válido");
+      toast.error("Elige una billetera y un monto válido");
+      return;
     }
     setBusy(true);
     const { error } = await supabase.rpc("convert_wallet", {
@@ -82,7 +86,10 @@ function Billetera() {
       _amount: value,
     });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success("Conversión realizada");
     setAmount("");
     refresh();
