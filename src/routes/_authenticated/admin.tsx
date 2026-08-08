@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { useCountries } from "@/hooks/useCorridors";
 import { WalletsCardsPanel } from "@/components/admin/WalletsCardsPanel";
+import { BazikPanel } from "@/components/admin/BazikPanel";
 import {
   money,
   shortDate,
