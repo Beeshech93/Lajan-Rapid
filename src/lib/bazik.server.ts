@@ -24,7 +24,6 @@ export type BazikResult = {
   providerReference?: string;
   status?: string;
   error?: string;
-  raw?: unknown;
 };
 
 function config() {
@@ -68,7 +67,6 @@ async function callBazik(path: string, body: unknown): Promise<BazikResult> {
     configured: true,
     ...(data.id || data.reference ? { providerReference: data.id ?? data.reference! } : {}),
     ...(data.status ? { status: data.status } : {}),
-    raw: parsed,
   };
 }
 
