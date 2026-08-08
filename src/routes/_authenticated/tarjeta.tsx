@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { CreditCard, Lock, ShieldCheck, ShoppingBag, Snowflake } from "lucide-react";
+import { CreditCard, Lock, ShieldCheck, Snowflake } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -235,8 +235,6 @@ function Tarjeta() {
 }
 
 function CardItem({ card, onChange }: { card: VirtualCard; onChange: () => void }) {
-  const [merchant, setMerchant] = useState("");
-  const [amount, setAmount] = useState("");
   const [busy, setBusy] = useState(false);
 
   const { data: limits } = useQuery({
@@ -266,28 +264,8 @@ function CardItem({ card, onChange }: { card: VirtualCard; onChange: () => void 
     onChange();
   };
 
-  const purchase = async () => {
-    const value = Number(amount);
-    if (!merchant || !Number.isFinite(value) || value <= 0) {
-      toast.error("Indica comercio y monto");
-      return;
-    }
-    setBusy(true);
-    const { error } = await supabase.rpc("card_purchase", {
-      _card_id: card.id,
-      _merchant: merchant,
-      _amount: value,
-    });
-    setBusy(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success("Compra procesada");
-    setMerchant("");
-    setAmount("");
-    onChange();
-  };
+
+
 
   return (
     <Card>
@@ -336,25 +314,9 @@ function CardItem({ card, onChange }: { card: VirtualCard; onChange: () => void 
           </p>
         )}
 
-        <div className="grid gap-2 sm:grid-cols-[1fr_140px_auto]">
-          <Input
-            placeholder="Comercio"
-            value={merchant}
-            onChange={(e) => setMerchant(e.target.value)}
-          />
-          <Input
-            placeholder="Monto"
-            inputMode="decimal"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-          />
-          <Button variant="secondary" disabled={busy} onClick={purchase}>
-            <ShoppingBag className="size-4" /> Comprar
-          </Button>
-        </div>
         <p className="text-xs text-muted-foreground">
-          Simulación de compra en línea contra el saldo de tu billetera mientras se conecta el
-          proveedor emisor.
+          Úsala donde quieras: paga en línea o agrégala a Apple Pay / Google Wallet. Las compras se
+          descuentan del saldo de tu billetera.
         </p>
       </CardContent>
     </Card>
