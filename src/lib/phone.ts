@@ -60,9 +60,130 @@ export const DIAL_COUNTRIES: DialCountry[] = [
   { code: "AU", name: "Australia", dial: "+61", flag: "🇦🇺" },
 ];
 
+/** Longitud (dígitos del número nacional) esperada por país. */
+const NATIONAL_LENGTHS: Record<string, number[]> = {
+  HT: [8],
+  DO: [7],
+  PR: [7],
+  JM: [7],
+  US: [10],
+  CA: [10],
+  MX: [10],
+  AR: [10],
+  BO: [8],
+  BR: [10, 11],
+  CL: [9],
+  CO: [10],
+  CR: [8],
+  CU: [8],
+  EC: [9],
+  SV: [8],
+  GT: [8],
+  HN: [8],
+  NI: [8],
+  PA: [8],
+  PY: [9],
+  PE: [9],
+  UY: [8],
+  VE: [10],
+  ES: [9],
+  FR: [9],
+  DE: [10, 11],
+  IT: [9, 10],
+  PT: [9],
+  NL: [9],
+  BE: [9],
+  CH: [9],
+  AT: [10, 11],
+  GB: [10],
+  IE: [9],
+  SE: [9],
+  NO: [8],
+  DK: [8],
+  FI: [9],
+  PL: [9],
+  CZ: [9],
+  RO: [9],
+  GR: [10],
+  TR: [10],
+  MA: [9],
+  SN: [9],
+  CI: [10],
+  CD: [9],
+  NG: [10],
+  ZA: [9],
+  AE: [9],
+  IN: [10],
+  PH: [10],
+  CN: [11],
+  JP: [10],
+  AU: [9],
+};
+
+/** Solo dígitos, sin ceros ni prefijo internacional al inicio. */
+export function normalizeLocal(local: string, dial?: string): string {
+  let digits = local.replace(/\D/g, "");
+  const prefix = dial?.replace(/\D/g, "");
+  if (prefix && digits.startsWith(prefix) && digits.length > prefix.length) {
+    digits = digits.slice(prefix.length);
+  }
+  return digits.replace(/^0+/, "");
+}
+
+export function expectedLengths(countryCode: string): number[] {
+  return NATIONAL_LENGTHS[countryCode] ?? [];
+}
+
+/** Formatea el número nacional en grupos legibles según el país. */
+export function formatNational(countryCode: string, local: string, dial?: string): string {
+  const d = normalizeLocal(local, dial);
+  if (!d) return "";
+  const groups: Record<string, number[]> = {
+    HT: [4, 4],
+    DO: [3, 4],
+    PR: [3, 4],
+    JM: [3, 4],
+    US: [3, 3, 4],
+    CA: [3, 3, 4],
+    MX: [2, 4, 4],
+    FR: [1, 2, 2, 2, 2],
+    ES: [3, 3, 3],
+  };
+  const pattern = groups[countryCode] ?? [3, 3, 4];
+  const out: string[] = [];
+  let i = 0;
+  for (const size of pattern) {
+    if (i >= d.length) break;
+    out.push(d.slice(i, i + size));
+    i += size;
+  }
+  if (i < d.length) out.push(d.slice(i));
+  return out.join(" ");
+}
+
+export type PhoneCheck = { ok: boolean; e164?: string; error?: "empty" | "short" | "long" | "invalid" };
+
+/** Valida el número nacional contra el país y devuelve E.164. */
+export function validatePhone(countryCode: string, dial: string, local: string): PhoneCheck {
+  const digits = normalizeLocal(local, dial);
+  if (!digits) return { ok: false, error: "empty" };
+  const lengths = expectedLengths(countryCode);
+  if (lengths.length) {
+    const min = Math.min(...lengths);
+    const max = Math.max(...lengths);
+    if (digits.length < min) return { ok: false, error: "short" };
+    if (digits.length > max) return { ok: false, error: "long" };
+    if (!lengths.includes(digits.length)) return { ok: false, error: "invalid" };
+  } else if (digits.length < 5 || digits.length > 14) {
+    return { ok: false, error: digits.length < 5 ? "short" : "long" };
+  }
+  const e164 = toE164(dial, digits);
+  return e164 ? { ok: true, e164 } : { ok: false, error: "invalid" };
+}
+
 /** Une código de país y número local en formato E.164. */
 export function toE164(dial: string, local: string): string | null {
-  const digits = local.replace(/\D/g, "").replace(/^0+/, "");
+  const digits = normalizeLocal(local, dial);
   const prefix = dial.replace(/\D/g, "");
   if (digits.length < 5 || digits.length > 14) return null;
   const full = `+${prefix}${digits}`;

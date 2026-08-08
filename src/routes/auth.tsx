@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/select";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useI18n } from "@/lib/i18n";
-import { DIAL_COUNTRIES, toE164 } from "@/lib/phone";
+import { DIAL_COUNTRIES, expectedLengths, formatNational, validatePhone } from "@/lib/phone";
 
 const searchSchema = z.object({ modo: z.enum(["ingreso", "registro"]).optional() });
 
@@ -51,6 +51,13 @@ function AuthPage() {
   const [tab, setTab] = useState(modo === "registro" ? "registro" : "ingreso");
   const [loading, setLoading] = useState(false);
   const [dial, setDial] = useState("HT");
+  const [phoneInput, setPhoneInput] = useState("");
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+
+  const country = DIAL_COUNTRIES.find((c) => c.code === dial);
+  const check = validatePhone(dial, country?.dial ?? "+509", phoneInput);
+  const lens = expectedLengths(dial);
+  const digitsHint = lens.length ? lens.join(" o ") : "5–14";
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -76,13 +83,12 @@ function AuthPage() {
 
     let phone = "";
     if (mode === "registro") {
-      const country = DIAL_COUNTRIES.find((c) => c.code === dial);
-      const e164 = toE164(country?.dial ?? "+509", String(form.get("phone") ?? ""));
-      if (!e164) {
+      if (!check.ok || !check.e164) {
+        setPhoneError(t("auth.invalid_phone"));
         toast.error(t("auth.invalid_phone"));
         return;
       }
-      phone = e164;
+      phone = check.e164;
     }
 
     setLoading(true);
@@ -174,7 +180,15 @@ function AuthPage() {
                   <div className="space-y-1.5">
                     <Label htmlFor="phone-up">{t("auth.phone")}</Label>
                     <div className="flex gap-2">
-                      <Select value={dial} onValueChange={setDial}>
+                      <Select
+                        value={dial}
+                        onValueChange={(v) => {
+                          setDial(v);
+                          setPhoneError(null);
+                          const c = DIAL_COUNTRIES.find((x) => x.code === v);
+                          setPhoneInput(formatNational(v, phoneInput, c?.dial));
+                        }}
+                      >
                         <SelectTrigger className="w-[136px]" aria-label={t("auth.country_code")}>
                           <SelectValue />
                         </SelectTrigger>
@@ -192,13 +206,31 @@ function AuthPage() {
                         type="tel"
                         inputMode="tel"
                         required
-                        maxLength={20}
+                        maxLength={24}
                         className="flex-1"
-                        placeholder="0000 0000"
+                        placeholder={formatNational(dial, "0".repeat(lens[0] ?? 8))}
+                        value={phoneInput}
+                        onChange={(e) => {
+                          setPhoneInput(formatNational(dial, e.target.value, country?.dial));
+                          setPhoneError(null);
+                        }}
+                        onBlur={() => setPhoneError(check.ok ? null : t("auth.invalid_phone"))}
+                        aria-invalid={!!phoneError}
+                        aria-describedby="phone-help"
                       />
                     </div>
-                    <p className="text-xs text-muted-foreground">{t("auth.phone_hint")}</p>
+                    <p
+                      id="phone-help"
+                      className={`text-xs ${phoneError ? "text-destructive" : "text-muted-foreground"}`}
+                    >
+                      {phoneError
+                        ? `${phoneError} (${digitsHint} ${t("auth.digits")})`
+                        : check.ok
+                          ? check.e164
+                          : `${t("auth.phone_hint")} · ${digitsHint} ${t("auth.digits")}`}
+                    </p>
                   </div>
+
 
                   <Field id="email-up" name="email" label={t("auth.email")} type="email" />
                   <Field id="pass-up" name="password" label={t("auth.password")} type="password" />
