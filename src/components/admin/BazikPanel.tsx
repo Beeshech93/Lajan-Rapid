@@ -2,7 +2,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { Link2, PlugZap, Send } from "lucide-react";
+import { Copy, Link2, PlugZap, Send } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,29 @@ import {
   bazikStatus,
   bazikTopupWallet,
 } from "@/lib/bazik.functions";
+
+function CopyField({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="space-y-1.5">
+      <Label>{label}</Label>
+      <div className="flex gap-2">
+        <Input readOnly value={value} className="font-mono text-xs" />
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          aria-label={`Copiar ${label}`}
+          onClick={() => {
+            void navigator.clipboard.writeText(value);
+            toast.success("Copiado");
+          }}
+        >
+          <Copy className="size-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 export function BazikPanel() {
   const status = useServerFn(bazikStatus);
