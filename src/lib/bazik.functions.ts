@@ -1,11 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
+  parseBazikCredentialsInput,
   parseBazikPayoutInput,
   parseBazikTopupInput,
+  type BazikCredentialsInput,
   type BazikPayoutRequest,
   type BazikTopupRequest,
 } from "@/lib/bazik.schemas";
+
 
 /** Recarga de billetera con Bazik. */
 export const bazikTopupWallet = createServerFn({ method: "POST" })
