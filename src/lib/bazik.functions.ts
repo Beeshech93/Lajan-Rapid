@@ -39,3 +39,16 @@ export const bazikSendMobileMoney = createServerFn({ method: "POST" })
     });
     return { ...result, reference, userId: context.userId };
   });
+
+/** Estado de configuración del conector Bazik (solo administradores). */
+export const bazikStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!isAdmin) throw new Error("No autorizado");
+    const { bazikStatusInfo } = await import("@/lib/bazik.server");
+    return bazikStatusInfo();
+  });

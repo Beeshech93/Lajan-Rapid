@@ -32,6 +32,18 @@ function config() {
   return { baseUrl: baseUrl.replace(/\/$/, ""), apiKey };
 }
 
+/** Estado de la conexión Bazik para el panel de administración. */
+export function bazikStatusInfo() {
+  const { baseUrl, apiKey } = config();
+  return {
+    configured: Boolean(apiKey),
+    baseUrl,
+    topupEndpoint: `${baseUrl}/v1/collections`,
+    payoutEndpoint: `${baseUrl}/v1/payouts`,
+  };
+}
+
+
 async function callBazik(path: string, body: unknown): Promise<BazikResult> {
   const { baseUrl, apiKey } = config();
   if (!apiKey) {
