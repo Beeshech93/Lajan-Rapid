@@ -1,5 +1,7 @@
 // Conector Bazik (bazik.io) — capa de acceso al proveedor.
-// Dos puntos de conexión: recarga de billetera y envío a MonCash / NatCash.
+// Dos APIs separadas, cada una con su propia credencial:
+//  1) COBROS  (collections) → los clientes recargan su billetera.
+//  2) ENVÍOS  (payouts)     → enviar dinero a MonCash / NatCash.
 
 export type BazikWallet = "moncash" | "natcash";
 
@@ -26,37 +28,79 @@ export type BazikResult = {
   error?: string;
 };
 
-function config() {
-  const baseUrl = process.env["BAZIK_BASE_URL"] ?? "https://api.bazik.io";
-  const apiKey = process.env["BAZIK_API_KEY"];
-  return { baseUrl: baseUrl.replace(/\/$/, ""), apiKey };
+type Creds = { baseUrl: string; apiKey?: string; apiSecret?: string };
+
+function baseUrl() {
+  return (process.env["BAZIK_BASE_URL"] ?? "https://api.bazik.io").replace(/\/$/, "");
 }
 
-/** Estado de la conexión Bazik para el panel de administración. */
-export function bazikStatusInfo() {
-  const { baseUrl, apiKey } = config();
+/** Credencial de la API de COBROS (recarga de billetera). */
+function collectCreds(): Creds {
+  const key = process.env["BAZIK_COLLECT_API_KEY"] ?? process.env["BAZIK_API_KEY"];
+  const secret = process.env["BAZIK_COLLECT_API_SECRET"] ?? process.env["BAZIK_API_SECRET"];
   return {
-    configured: Boolean(apiKey),
-    baseUrl,
-    topupEndpoint: `${baseUrl}/v1/collections`,
-    payoutEndpoint: `${baseUrl}/v1/payouts`,
+    baseUrl: baseUrl(),
+    ...(key ? { apiKey: key } : {}),
+    ...(secret ? { apiSecret: secret } : {}),
   };
 }
 
+/** Credencial de la API de ENVÍOS (MonCash / NatCash). */
+function payoutCreds(): Creds {
+  const key = process.env["BAZIK_PAYOUT_API_KEY"] ?? process.env["BAZIK_API_KEY"];
+  const secret = process.env["BAZIK_PAYOUT_API_SECRET"] ?? process.env["BAZIK_API_SECRET"];
+  return {
+    baseUrl: baseUrl(),
+    ...(key ? { apiKey: key } : {}),
+    ...(secret ? { apiSecret: secret } : {}),
+  };
+}
 
-async function callBazik(path: string, body: unknown): Promise<BazikResult> {
-  const { baseUrl, apiKey } = config();
-  if (!apiKey) {
-    // Punto de conexión listo: en cuanto se configure BAZIK_API_KEY empieza a operar.
-    return { ok: false, configured: false, error: "BAZIK_API_KEY no configurada" };
+/** Estado de ambas conexiones Bazik para el panel de administración. */
+export function bazikStatusInfo() {
+  const url = baseUrl();
+  const collect = collectCreds();
+  const payout = payoutCreds();
+  return {
+    baseUrl: url,
+    // compatibilidad con la UI anterior
+    configured: Boolean(collect.apiKey && payout.apiKey),
+    topupEndpoint: `${url}/v1/collections`,
+    payoutEndpoint: `${url}/v1/payouts`,
+    collect: {
+      label: "API de cobros (recargar billetera)",
+      endpoint: `${url}/v1/collections`,
+      keyName: "BAZIK_COLLECT_API_KEY",
+      secretName: "BAZIK_COLLECT_API_SECRET",
+      hasKey: Boolean(collect.apiKey),
+      hasSecret: Boolean(collect.apiSecret),
+    },
+    payout: {
+      label: "API de envíos (MonCash / NatCash)",
+      endpoint: `${url}/v1/payouts`,
+      keyName: "BAZIK_PAYOUT_API_KEY",
+      secretName: "BAZIK_PAYOUT_API_SECRET",
+      hasKey: Boolean(payout.apiKey),
+      hasSecret: Boolean(payout.apiSecret),
+    },
+  };
+}
+
+async function callBazik(creds: Creds, path: string, body: unknown): Promise<BazikResult> {
+  if (!creds.apiKey) {
+    return { ok: false, configured: false, error: `Falta la credencial de Bazik para ${path}` };
   }
 
-  const response = await fetch(`${baseUrl}${path}`, {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${creds.apiKey}`,
+    "X-Api-Key": creds.apiKey,
+  };
+  if (creds.apiSecret) headers["X-Api-Secret"] = creds.apiSecret;
+
+  const response = await fetch(`${creds.baseUrl}${path}`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
+    headers,
     body: JSON.stringify(body),
   });
 
@@ -82,9 +126,9 @@ async function callBazik(path: string, body: unknown): Promise<BazikResult> {
   };
 }
 
-/** Punto de conexión #1 — recargar la billetera del cliente vía Bazik. */
+/** API #1 — cobro: recargar la billetera del cliente vía Bazik. */
 export function bazikTopup(input: BazikTopupInput) {
-  return callBazik("/v1/collections", {
+  return callBazik(collectCreds(), "/v1/collections", {
     amount: input.amount,
     currency: input.currency,
     reference: input.reference,
@@ -92,9 +136,9 @@ export function bazikTopup(input: BazikTopupInput) {
   });
 }
 
-/** Punto de conexión #2 — enviar dinero a MonCash o NatCash vía Bazik. */
+/** API #2 — envío: mandar dinero a MonCash o NatCash vía Bazik. */
 export function bazikPayout(input: BazikPayoutInput) {
-  return callBazik("/v1/payouts", {
+  return callBazik(payoutCreds(), "/v1/payouts", {
     provider: input.provider,
     destination: input.phone,
     amount: input.amount,
