@@ -21,9 +21,9 @@ import {
 export const Route = createFileRoute("/_authenticated/transferencia/$id")({
   head: () => ({
     meta: [
-      { title: "Detalle del envío — RemesaHaití" },
+      { title: "Detalle del envío — Lajan Rapid" },
       { name: "description", content: "Sigue en tiempo real el estado de tu envío a Haití." },
-      { property: "og:title", content: "Detalle del envío — RemesaHaití" },
+      { property: "og:title", content: "Detalle del envío — Lajan Rapid" },
       { property: "og:description", content: "Seguimiento en tiempo real de tu remesa." },
     ],
   }),

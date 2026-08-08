@@ -10,9 +10,9 @@ import { money, shortDate, STATUS_LABEL, STATUS_TONE, type TransferStatus } from
 export const Route = createFileRoute("/_authenticated/agente")({
   head: () => ({
     meta: [
-      { title: "Panel de agente — RemesaHaití" },
+      { title: "Panel de agente — Lajan Rapid" },
       { name: "description", content: "Confirma pagos, revisa comisiones y operaciones." },
-      { property: "og:title", content: "Panel de agente — RemesaHaití" },
+      { property: "og:title", content: "Panel de agente — Lajan Rapid" },
       { property: "og:description", content: "Solicitudes, pagos y comisiones del agente." },
     ],
   }),

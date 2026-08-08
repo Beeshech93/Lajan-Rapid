@@ -22,9 +22,9 @@ import { KYC_LABEL, KYC_TONE, type KycStatus } from "@/lib/remesa";
 export const Route = createFileRoute("/_authenticated/perfil")({
   head: () => ({
     meta: [
-      { title: "Mi perfil y verificación — RemesaHaití" },
+      { title: "Mi perfil y verificación — Lajan Rapid" },
       { name: "description", content: "Actualiza tus datos y verifica tu identidad (KYC)." },
-      { property: "og:title", content: "Mi perfil y verificación — RemesaHaití" },
+      { property: "og:title", content: "Mi perfil y verificación — Lajan Rapid" },
       { property: "og:description", content: "Datos personales y estado de verificación KYC." },
     ],
   }),

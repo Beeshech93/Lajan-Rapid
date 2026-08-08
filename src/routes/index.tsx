@@ -18,13 +18,13 @@ import { useCountries, useRate } from "@/hooks/useCorridors";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "RemesaHaití — Envía dinero a Haití y República Dominicana" },
+      { title: "Lajan Rapid — Envía dinero a Haití y República Dominicana" },
       {
         name: "description",
         content:
           "Envía dinero desde América y Europa a Haití y República Dominicana en minutos. Tipo de cambio transparente y seguimiento en tiempo real.",
       },
-      { property: "og:title", content: "RemesaHaití — Envía dinero a Haití y República Dominicana" },
+      { property: "og:title", content: "Lajan Rapid — Envía dinero a Haití y República Dominicana" },
       {
         property: "og:description",
         content:
@@ -61,7 +61,7 @@ function Landing() {
           <span className="grid size-9 place-items-center rounded-xl bg-brand font-display text-lg font-bold text-primary-foreground">
             R
           </span>
-          <span className="font-display text-lg font-semibold">RemesaHaití</span>
+          <span className="font-display text-lg font-semibold">Lajan Rapid</span>
         </div>
         <div className="flex items-center gap-2">
           <Button asChild variant="ghost" size="sm">
@@ -176,7 +176,7 @@ function Landing() {
       </section>
 
       <footer className="border-t py-8 text-center text-sm text-muted-foreground">
-        RemesaHaití · Remesas hacia Haití y República Dominicana
+        Lajan Rapid · Remesas hacia Haití y República Dominicana
       </footer>
     </div>
   );

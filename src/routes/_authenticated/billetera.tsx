@@ -26,12 +26,12 @@ import {
 export const Route = createFileRoute("/_authenticated/billetera")({
   head: () => ({
     meta: [
-      { title: "Billetera — RemesaHaití" },
+      { title: "Billetera — Lajan Rapid" },
       {
         name: "description",
         content: "Consulta tu saldo, convierte entre MXN, USD y HTG y revisa tus movimientos.",
       },
-      { property: "og:title", content: "Billetera — RemesaHaití" },
+      { property: "og:title", content: "Billetera — Lajan Rapid" },
       { property: "og:description", content: "Saldo multidivisa y movimientos de tu billetera." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

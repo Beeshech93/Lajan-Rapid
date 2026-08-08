@@ -51,7 +51,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <span className="grid size-9 place-items-center rounded-xl bg-mint font-display text-lg font-bold text-sidebar-primary-foreground">
             R
           </span>
-          <span className="font-display text-lg font-semibold">RemesaHaití</span>
+          <span className="font-display text-lg font-semibold">Lajan Rapid</span>
         </Link>
         <nav className="flex flex-1 flex-col gap-1">
           {nav.map((item) => (
@@ -84,7 +84,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <span className="grid size-8 place-items-center rounded-lg bg-brand font-display text-sm font-bold text-primary-foreground">
               R
             </span>
-            <span className="font-display font-semibold">RemesaHaití</span>
+            <span className="font-display font-semibold">Lajan Rapid</span>
           </Link>
           <Button variant="ghost" size="icon" onClick={signOut} aria-label="Cerrar sesión">
             <LogOut className="size-4" />

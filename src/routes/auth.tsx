@@ -16,10 +16,10 @@ export const Route = createFileRoute("/auth")({
   validateSearch: searchSchema,
   head: () => ({
     meta: [
-      { title: "Acceder — RemesaHaití" },
+      { title: "Acceder — Lajan Rapid" },
       { name: "description", content: "Inicia sesión o crea tu cuenta para enviar dinero de México a Haití." },
-      { property: "og:title", content: "Acceder — RemesaHaití" },
-      { property: "og:description", content: "Entra a tu cuenta RemesaHaití y envía dinero a Haití." },
+      { property: "og:title", content: "Acceder — Lajan Rapid" },
+      { property: "og:description", content: "Entra a tu cuenta Lajan Rapid y envía dinero a Haití." },
     ],
   }),
   component: AuthPage,
@@ -105,7 +105,7 @@ function AuthPage() {
           <span className="mx-auto grid size-12 place-items-center rounded-2xl bg-mint font-display text-xl font-bold text-accent-foreground">
             R
           </span>
-          <h1 className="mt-3 font-display text-2xl font-bold">RemesaHaití</h1>
+          <h1 className="mt-3 font-display text-2xl font-bold">Lajan Rapid</h1>
           <p className="text-sm opacity-80">México → Haití, sin sorpresas</p>
         </div>
 

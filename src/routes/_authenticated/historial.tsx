@@ -11,9 +11,9 @@ import { money, shortDate, STATUS_LABEL, STATUS_TONE, type TransferStatus } from
 export const Route = createFileRoute("/_authenticated/historial")({
   head: () => ({
     meta: [
-      { title: "Historial de envíos — RemesaHaití" },
+      { title: "Historial de envíos — Lajan Rapid" },
       { name: "description", content: "Consulta todos tus envíos de dinero a Haití y su estado." },
-      { property: "og:title", content: "Historial de envíos — RemesaHaití" },
+      { property: "og:title", content: "Historial de envíos — Lajan Rapid" },
       { property: "og:description", content: "Todos tus envíos y su estado actual." },
     ],
   }),
