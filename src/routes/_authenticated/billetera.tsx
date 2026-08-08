@@ -91,8 +91,9 @@ function Billetera() {
       _from_wallet: p2pWallet,
       _phone: p2pPhone,
       _amount: value,
-      _note: p2pNote || undefined,
+      ...(p2pNote ? { _note: p2pNote } : {}),
     });
+
     setBusy(false);
     if (error) {
       toast.error(error.message);
