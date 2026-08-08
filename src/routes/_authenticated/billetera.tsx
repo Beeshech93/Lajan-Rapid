@@ -165,6 +165,50 @@ function Billetera() {
         ))}
       </div>
 
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <ArrowDownToLine className="size-4" /> Recargar billetera
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label>Billetera a recargar</Label>
+              <Select value={topupWallet} onValueChange={setTopupWallet}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Elige billetera" />
+                </SelectTrigger>
+                <SelectContent>
+                  {list.map((w) => (
+                    <SelectItem key={w.id} value={w.id}>
+                      {w.currency} · {money(Number(w.balance), w.currency)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="topup-amount">Monto</Label>
+              <Input
+                id="topup-amount"
+                inputMode="decimal"
+                value={topupAmount}
+                onChange={(e) => setTopupAmount(e.target.value)}
+                placeholder="0.00"
+              />
+            </div>
+          </div>
+          <Button className="w-full" disabled={busy || list.length === 0} onClick={topup}>
+            Recargar
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            El cobro se procesa con el proveedor de pagos; el saldo se acredita al confirmarse.
+          </p>
+        </CardContent>
+      </Card>
+
+
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>
