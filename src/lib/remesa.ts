@@ -114,37 +114,24 @@ export function paymentLabel(value: string): string {
 /* ---------- Entrega y ciudades por país de destino ---------- */
 
 export const DELIVERY_CATALOG: Record<string, Method> = {
-  cash_pickup: {
-    value: "cash_pickup",
-    label: "Retiro en efectivo",
-    hint: "Sucursal aliada en destino",
+  moncash: {
+    value: "moncash",
+    label: "MonCash",
+    hint: "Billetera móvil Digicel (Haití)",
   },
-  bank_deposit: {
-    value: "bank_deposit",
-    label: "Depósito bancario",
-    hint: "Cuenta en moneda local",
-  },
-  mobile_wallet: {
-    value: "mobile_wallet",
-    label: "Billetera móvil",
-    hint: "MonCash, tPago y similares",
-  },
-  home_delivery: {
-    value: "home_delivery",
-    label: "Entrega a domicilio",
-    hint: "Ciudades principales",
+  natcash: {
+    value: "natcash",
+    label: "NatCash",
+    hint: "Billetera móvil Natcom (Haití)",
   },
 };
 
-const DELIVERY_BY_COUNTRY: Record<string, string[]> = {
-  HT: ["cash_pickup", "bank_deposit", "mobile_wallet"],
-  DO: ["cash_pickup", "bank_deposit", "mobile_wallet", "home_delivery"],
-};
+export const DELIVERY_KEYS = ["moncash", "natcash"] as const;
 
-export function deliveryMethods(countryCode: string | undefined): Method[] {
-  const keys = (countryCode && DELIVERY_BY_COUNTRY[countryCode]) || ["cash_pickup", "bank_deposit"];
-  return keys.map((k) => DELIVERY_CATALOG[k]!).filter(Boolean);
+export function deliveryMethods(_countryCode?: string | undefined): Method[] {
+  return DELIVERY_KEYS.map((k) => DELIVERY_CATALOG[k]!);
 }
+
 
 export function deliveryLabel(value: string): string {
   return DELIVERY_CATALOG[value]?.label ?? value;
