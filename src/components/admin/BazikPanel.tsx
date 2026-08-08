@@ -44,15 +44,58 @@ function CopyField({ label, value }: { label: string; value: string }) {
   );
 }
 
+const CRED_KEYS = [
+  "BAZIK_BASE_URL",
+  "BAZIK_COLLECT_API_KEY",
+  "BAZIK_COLLECT_API_SECRET",
+  "BAZIK_PAYOUT_API_KEY",
+  "BAZIK_PAYOUT_API_SECRET",
+] as const;
+type CredKey = (typeof CRED_KEYS)[number];
+
 export function BazikPanel() {
   const status = useServerFn(bazikStatus);
   const topup = useServerFn(bazikTopupWallet);
   const payout = useServerFn(bazikSendMobileMoney);
+  const saveCreds = useServerFn(bazikSaveCredentials);
+  const queryClient = useQueryClient();
 
   const { data: info } = useQuery({
     queryKey: ["bazik_status"],
     queryFn: () => status(),
   });
+
+  const [creds, setCreds] = useState<Record<CredKey, string>>({
+    BAZIK_BASE_URL: "",
+    BAZIK_COLLECT_API_KEY: "",
+    BAZIK_COLLECT_API_SECRET: "",
+    BAZIK_PAYOUT_API_KEY: "",
+    BAZIK_PAYOUT_API_SECRET: "",
+  });
+  const setCred = (k: CredKey, v: string) => setCreds((p) => ({ ...p, [k]: v }));
+
+  const saveMut = useMutation({
+    mutationFn: () => {
+      const payloadEntries = CRED_KEYS.filter((k) => creds[k].trim().length > 0).map(
+        (k) => [k, creds[k].trim()] as const,
+      );
+      if (payloadEntries.length === 0) throw new Error("Nada que guardar");
+      return saveCreds({ data: Object.fromEntries(payloadEntries) });
+    },
+    onSuccess: () => {
+      toast.success("Credenciales guardadas");
+      setCreds({
+        BAZIK_BASE_URL: "",
+        BAZIK_COLLECT_API_KEY: "",
+        BAZIK_COLLECT_API_SECRET: "",
+        BAZIK_PAYOUT_API_KEY: "",
+        BAZIK_PAYOUT_API_SECRET: "",
+      });
+      void queryClient.invalidateQueries({ queryKey: ["bazik_status"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
 
   const [walletId, setWalletId] = useState("");
   const [topAmount, setTopAmount] = useState("");
