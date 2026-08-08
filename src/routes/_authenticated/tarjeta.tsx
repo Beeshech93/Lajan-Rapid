@@ -81,8 +81,8 @@ function Tarjeta() {
     const { error } = await supabase.rpc("issue_virtual_card", {
       _wallet_id: walletId,
       _brand: brand,
-      _label: label || undefined,
       _disposable: disposable,
+      ...(label ? { _label: label } : {}),
     });
     setBusy(false);
     if (error) {
