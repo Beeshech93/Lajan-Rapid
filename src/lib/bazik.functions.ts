@@ -52,3 +52,22 @@ export const bazikStatus = createServerFn({ method: "POST" })
     const { bazikStatusInfo } = await import("@/lib/bazik.server");
     return bazikStatusInfo();
   });
+
+/** Guardar manualmente las credenciales de Bazik (solo administradores). */
+export const bazikSaveCredentials = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: BazikCredentialsInput) => parseBazikCredentialsInput(input))
+  .handler(async ({ data, context }) => {
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!isAdmin) throw new Error("No autorizado");
+    const { saveStoredCred } = await import("@/lib/bazik.server");
+    for (const [name, value] of Object.entries(data)) {
+      if (value === undefined) continue;
+      await saveStoredCred(name, value.trim(), context.userId);
+    }
+    return { ok: true };
+  });
+
