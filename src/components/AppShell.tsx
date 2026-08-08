@@ -1,5 +1,16 @@
 import { Link, useRouter, useRouterState } from "@tanstack/react-router";
-import { Home, Send, History, User, LifeBuoy, Shield, Briefcase, LogOut } from "lucide-react";
+import {
+  Home,
+  Send,
+  History,
+  User,
+  LifeBuoy,
+  Shield,
+  Briefcase,
+  LogOut,
+  Wallet,
+  CreditCard,
+} from "lucide-react";
 import type { ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
@@ -9,9 +20,12 @@ import { Button } from "@/components/ui/button";
 const baseNav = [
   { to: "/dashboard", label: "Inicio", icon: Home },
   { to: "/enviar", label: "Enviar", icon: Send },
+  { to: "/billetera", label: "Billetera", icon: Wallet },
+  { to: "/tarjeta", label: "Tarjeta", icon: CreditCard },
   { to: "/historial", label: "Historial", icon: History },
   { to: "/perfil", label: "Perfil", icon: User },
 ];
+
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { profile, isAdmin, isAgent } = useProfile();
