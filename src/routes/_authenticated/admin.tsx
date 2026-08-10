@@ -59,6 +59,7 @@ function Admin() {
         <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
           <TabsTrigger value="resumen">Resumen</TabsTrigger>
           <TabsTrigger value="bazik">Bazik API</TabsTrigger>
+          <TabsTrigger value="tarjetas-api">API tarjetas</TabsTrigger>
           <TabsTrigger value="kyc">KYC</TabsTrigger>
           <TabsTrigger value="tx">Transacciones</TabsTrigger>
           <TabsTrigger value="usuarios">Usuarios</TabsTrigger>
