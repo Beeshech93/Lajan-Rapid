@@ -87,6 +87,9 @@ function Admin() {
         <TabsContent value="bazik" className="mt-4">
           <BazikPanel />
         </TabsContent>
+        <TabsContent value="tarjetas-api" className="mt-4">
+          <CardIssuerPanel />
+        </TabsContent>
       </Tabs>
     </div>
   );
