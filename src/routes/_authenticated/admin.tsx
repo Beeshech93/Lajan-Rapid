@@ -19,6 +19,7 @@ import {
 import { useCountries } from "@/hooks/useCorridors";
 import { WalletsCardsPanel } from "@/components/admin/WalletsCardsPanel";
 import { BazikPanel } from "@/components/admin/BazikPanel";
+import { CardIssuerPanel } from "@/components/admin/CardIssuerPanel";
 import {
   money,
   shortDate,
