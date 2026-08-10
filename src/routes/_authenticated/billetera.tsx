@@ -79,6 +79,7 @@ function Billetera() {
   const [p2pAmount, setP2pAmount] = useState("");
   const [p2pNote, setP2pNote] = useState("");
   const [p2pFound, setP2pFound] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const runTopup = useServerFn(bazikTopupWallet);
 
   const lookupUser = async (phone: string) => {
@@ -88,6 +89,15 @@ function Billetera() {
     const { data } = await supabase.rpc("find_user_by_phone", { _phone: phone });
     const found = Array.isArray(data) ? data[0] : null;
     if (found) setP2pFound(found.full_name || "Usuario Lajan Rapid");
+  };
+
+  const reviewP2P = () => {
+    const value = Number(p2pAmount);
+    if (!p2pWallet || !p2pPhone || !Number.isFinite(value) || value <= 0) {
+      toast.error("Elige billetera, número y monto válido");
+      return;
+    }
+    setConfirmOpen(true);
   };
 
   const sendP2P = async () => {
