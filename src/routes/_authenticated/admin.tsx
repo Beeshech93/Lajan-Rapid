@@ -19,6 +19,7 @@ import {
 import { useCountries } from "@/hooks/useCorridors";
 import { WalletsCardsPanel } from "@/components/admin/WalletsCardsPanel";
 import { BazikPanel } from "@/components/admin/BazikPanel";
+import { CardIssuerPanel } from "@/components/admin/CardIssuerPanel";
 import {
   money,
   shortDate,
@@ -59,6 +60,7 @@ function Admin() {
         <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
           <TabsTrigger value="resumen">Resumen</TabsTrigger>
           <TabsTrigger value="bazik">Bazik API</TabsTrigger>
+          <TabsTrigger value="tarjetas-api">API tarjetas</TabsTrigger>
           <TabsTrigger value="kyc">KYC</TabsTrigger>
           <TabsTrigger value="tx">Transacciones</TabsTrigger>
           <TabsTrigger value="usuarios">Usuarios</TabsTrigger>
@@ -85,6 +87,9 @@ function Admin() {
         </TabsContent>
         <TabsContent value="bazik" className="mt-4">
           <BazikPanel />
+        </TabsContent>
+        <TabsContent value="tarjetas-api" className="mt-4">
+          <CardIssuerPanel />
         </TabsContent>
       </Tabs>
     </div>
