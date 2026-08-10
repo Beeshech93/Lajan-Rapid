@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { revealCardDetails } from "@/lib/cards.functions";
 import { useState } from "react";
 import { toast } from "sonner";
-import { CreditCard, Lock, ShieldCheck, Snowflake } from "lucide-react";
+import { CreditCard, Eye, EyeOff, Lock, ShieldCheck, Snowflake } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
