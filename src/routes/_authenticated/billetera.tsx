@@ -413,9 +413,67 @@ function Billetera() {
               />
             </div>
           </div>
-          <Button className="w-full" disabled={busy} onClick={sendP2P}>
-            Enviar dinero
+          <Button className="w-full" disabled={busy} onClick={reviewP2P}>
+            Revisar y enviar
           </Button>
+
+          <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Confirma tu envío</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Revisa los datos antes de enviar. Esta operación es instantánea y no se puede
+                  deshacer.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              {(() => {
+                const w = list.find((x) => x.id === p2pWallet);
+                return (
+                  <div className="space-y-2 rounded-lg border p-4 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Destinatario</span>
+                      <span className="font-medium">{p2pFound ?? "Usuario Lajan Rapid"}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Teléfono</span>
+                      <span className="font-medium">{p2pPhone}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Billetera emisora</span>
+                      <span className="font-medium">
+                        {w ? `${w.currency} · ${money(Number(w.balance), w.currency)}` : "—"}
+                      </span>
+                    </div>
+                    {p2pNote && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Mensaje</span>
+                        <span className="font-medium">{p2pNote}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between border-t pt-2">
+                      <span className="text-muted-foreground">Monto a enviar</span>
+                      <span className="font-display text-lg font-semibold">
+                        {money(Number(p2pAmount) || 0, w?.currency ?? "USD")}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={busy}>Cancelar</AlertDialogCancel>
+                <AlertDialogAction
+                  disabled={busy}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    void sendP2P();
+                  }}
+                >
+                  {busy ? "Enviando…" : "Confirmar envío"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
           <p className="text-xs text-muted-foreground">
             Transferencia instantánea y sin comisión entre usuarios de Lajan Rapid, en la misma
             moneda de tu billetera.
