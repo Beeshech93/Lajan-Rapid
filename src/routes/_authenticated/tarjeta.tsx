@@ -352,7 +352,32 @@ function CardItem({ card, onChange }: { card: VirtualCard; onChange: () => void 
               )}
             </Button>
           )}
+          {card.status !== "cancelled" && (
+            <Button
+              size="sm"
+              variant={secure ? "secondary" : "default"}
+              disabled={loadingSecure}
+              onClick={secure ? () => setSecure(null) : showFull}
+            >
+              {secure ? (
+                <>
+                  <EyeOff className="size-4" /> Ocultar datos
+                </>
+              ) : (
+                <>
+                  <Eye className="size-4" /> {loadingSecure ? "Consultando…" : "Ver datos completos"}
+                </>
+              )}
+            </Button>
+          )}
         </div>
+
+        {secure && (
+          <p className="text-xs text-muted-foreground">
+            Datos entregados por el emisor en este momento; se ocultan solos en 1 minuto y no se
+            guardan en Lajan Rapid.
+          </p>
+        )}
 
         <dl className="grid gap-x-6 gap-y-2 sm:grid-cols-2">
           {rows.map(([k, v]) => (
