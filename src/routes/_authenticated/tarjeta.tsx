@@ -264,22 +264,46 @@ function CardItem({ card, onChange }: { card: VirtualCard; onChange: () => void 
     onChange();
   };
 
+  const reveal = useServerFn(revealCardDetails);
+  const [secure, setSecure] = useState<{ pan?: string; cvv?: string } | null>(null);
+  const [loadingSecure, setLoadingSecure] = useState(false);
 
-
+  const showFull = async () => {
+    setLoadingSecure(true);
+    try {
+      const res = await reveal({ data: { cardId: card.id } });
+      if (!res.ok) {
+        toast.error(res.error ?? "No se pudieron obtener los datos");
+        return;
+      }
+      setSecure({
+        ...(res.pan ? { pan: res.pan } : {}),
+        ...(res.cvv ? { cvv: res.cvv } : {}),
+      });
+      setTimeout(() => setSecure(null), 60_000);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Error al consultar el emisor");
+    } finally {
+      setLoadingSecure(false);
+    }
+  };
 
   const { profile } = useProfile();
   const { data: wallets } = useWallets();
   const wallet = (wallets ?? []).find((w) => w.id === card.wallet_id);
   const holder = profile?.full_name || "Titular Lajan Rapid";
   const expiry = `${String(card.exp_month).padStart(2, "0")}/${String(card.exp_year).slice(-2)}`;
+  const panText = secure?.pan
+    ? secure.pan.replace(/(.{4})/g, "$1 ").trim()
+    : `•••• •••• •••• ${card.last4}`;
 
   const rows: Array<[string, string]> = [
     ["Nombre de la tarjeta", card.label || "Sin nombre"],
     ["Titular", holder],
     ["Marca", card.brand.toUpperCase()],
-    ["Número", `•••• •••• •••• ${card.last4}`],
+    ["Número", panText],
     ["Vencimiento", expiry],
-    ["CVV", "Solo visible con el emisor (PCI DSS)"],
+    ["CVV", secure?.cvv ?? "Oculto · pulsa «Ver datos completos»"],
     ["Estado", STATUS_LABEL[card.status] ?? card.status],
     ["Tipo", card.is_disposable ? "Desechable (un solo uso)" : "Recargable"],
     [
