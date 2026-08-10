@@ -121,6 +121,7 @@ function Billetera() {
     }
     const res = data as { recipient?: string } | null;
     toast.success(`Enviado a ${res?.recipient || "usuario"}`);
+    setConfirmOpen(false);
     setP2pAmount("");
     setP2pNote("");
     refresh();
