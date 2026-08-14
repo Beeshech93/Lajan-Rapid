@@ -297,6 +297,74 @@ export type Database = {
         }
         Relationships: []
       }
+      topups: {
+        Row: {
+          amount: number
+          country_code: string
+          created_at: string
+          currency: string
+          id: string
+          operator: string
+          phone: string
+          provider: string
+          provider_ref: string | null
+          reference: string
+          refunded: boolean
+          sku_code: string
+          status: string
+          status_detail: string | null
+          updated_at: string
+          user_id: string
+          wallet_id: string
+        }
+        Insert: {
+          amount: number
+          country_code?: string
+          created_at?: string
+          currency: string
+          id?: string
+          operator?: string
+          phone: string
+          provider?: string
+          provider_ref?: string | null
+          reference?: string
+          refunded?: boolean
+          sku_code: string
+          status?: string
+          status_detail?: string | null
+          updated_at?: string
+          user_id: string
+          wallet_id: string
+        }
+        Update: {
+          amount?: number
+          country_code?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          operator?: string
+          phone?: string
+          provider?: string
+          provider_ref?: string | null
+          reference?: string
+          refunded?: boolean
+          sku_code?: string
+          status?: string
+          status_detail?: string | null
+          updated_at?: string
+          user_id?: string
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "topups_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transfer_events: {
         Row: {
           actor_id: string | null
@@ -577,6 +645,41 @@ export type Database = {
       convert_wallet: {
         Args: { _amount: number; _from_wallet: string; _to_currency: string }
         Returns: boolean
+      }
+      create_topup: {
+        Args: {
+          _amount: number
+          _country_code: string
+          _operator: string
+          _phone: string
+          _sku_code: string
+          _wallet_id: string
+        }
+        Returns: {
+          amount: number
+          country_code: string
+          created_at: string
+          currency: string
+          id: string
+          operator: string
+          phone: string
+          provider: string
+          provider_ref: string | null
+          reference: string
+          refunded: boolean
+          sku_code: string
+          status: string
+          status_detail: string | null
+          updated_at: string
+          user_id: string
+          wallet_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "topups"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       ensure_wallet: { Args: { _currency: string }; Returns: string }
       find_user_by_phone: {
