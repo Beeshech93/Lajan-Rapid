@@ -21,6 +21,7 @@ import { WalletsCardsPanel } from "@/components/admin/WalletsCardsPanel";
 import { BazikPanel } from "@/components/admin/BazikPanel";
 import { CardIssuerPanel } from "@/components/admin/CardIssuerPanel";
 import { MercadoPagoPanel } from "@/components/admin/MercadoPagoPanel";
+import { DingConnectPanel } from "@/components/admin/DingConnectPanel";
 import { AccountingPanel } from "@/components/admin/AccountingPanel";
 import {
   money,
@@ -64,6 +65,7 @@ function Admin() {
           <TabsTrigger value="contabilidad">Contabilidad</TabsTrigger>
           <TabsTrigger value="bazik">Bazik API</TabsTrigger>
           <TabsTrigger value="mercadopago">Mercado Pago</TabsTrigger>
+          <TabsTrigger value="dingconnect">Recargas (Ding)</TabsTrigger>
           <TabsTrigger value="tarjetas-api">API tarjetas</TabsTrigger>
           <TabsTrigger value="kyc">KYC</TabsTrigger>
           <TabsTrigger value="tx">Transacciones</TabsTrigger>
@@ -100,6 +102,9 @@ function Admin() {
         </TabsContent>
         <TabsContent value="mercadopago" className="mt-4">
           <MercadoPagoPanel />
+        </TabsContent>
+        <TabsContent value="dingconnect" className="mt-4">
+          <DingConnectPanel />
         </TabsContent>
       </Tabs>
     </div>

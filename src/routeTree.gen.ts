@@ -19,11 +19,13 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedEnviarRouteImport } from './routes/_authenticated/enviar'
 import { Route as AuthenticatedHistorialRouteImport } from './routes/_authenticated/historial'
 import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
+import { Route as AuthenticatedRecargasRouteImport } from './routes/_authenticated/recargas'
 import { Route as AuthenticatedSoporteRouteImport } from './routes/_authenticated/soporte'
 import { Route as AuthenticatedTarjetaRouteImport } from './routes/_authenticated/tarjeta'
 import { Route as AuthenticatedTransferenciaIdRouteImport } from './routes/_authenticated/transferencia.$id'
 import { Route as ApiPublicBazikPayoutRouteImport } from './routes/api/public/bazik/payout'
 import { Route as ApiPublicBazikTopupRouteImport } from './routes/api/public/bazik/topup'
+import { Route as ApiPublicDingconnectWebhookRouteImport } from './routes/api/public/dingconnect/webhook'
 import { Route as ApiPublicMercadopagoWebhookRouteImport } from './routes/api/public/mercadopago/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
@@ -77,6 +79,11 @@ const AuthenticatedPerfilRoute = AuthenticatedPerfilRouteImport.update({
   path: '/perfil',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedRecargasRoute = AuthenticatedRecargasRouteImport.update({
+  id: '/recargas',
+  path: '/recargas',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSoporteRoute = AuthenticatedSoporteRouteImport.update({
   id: '/soporte',
   path: '/soporte',
@@ -103,6 +110,12 @@ const ApiPublicBazikTopupRoute = ApiPublicBazikTopupRouteImport.update({
   path: '/api/public/bazik/topup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicDingconnectWebhookRoute =
+  ApiPublicDingconnectWebhookRouteImport.update({
+    id: '/api/public/dingconnect/webhook',
+    path: '/api/public/dingconnect/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicMercadopagoWebhookRoute =
   ApiPublicMercadopagoWebhookRouteImport.update({
     id: '/api/public/mercadopago/webhook',
@@ -130,11 +143,13 @@ export interface FileRoutesByFullPath {
   '/enviar': typeof AuthenticatedEnviarRoute
   '/historial': typeof AuthenticatedHistorialRoute
   '/perfil': typeof AuthenticatedPerfilRoute
+  '/recargas': typeof AuthenticatedRecargasRoute
   '/soporte': typeof AuthenticatedSoporteRoute
   '/tarjeta': typeof AuthenticatedTarjetaRoute
   '/transferencia/$id': typeof AuthenticatedTransferenciaIdRoute
   '/api/public/bazik/payout': typeof ApiPublicBazikPayoutRoute
   '/api/public/bazik/topup': typeof ApiPublicBazikTopupRoute
+  '/api/public/dingconnect/webhook': typeof ApiPublicDingconnectWebhookRoute
   '/api/public/mercadopago/webhook': typeof ApiPublicMercadopagoWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -149,11 +164,13 @@ export interface FileRoutesByTo {
   '/enviar': typeof AuthenticatedEnviarRoute
   '/historial': typeof AuthenticatedHistorialRoute
   '/perfil': typeof AuthenticatedPerfilRoute
+  '/recargas': typeof AuthenticatedRecargasRoute
   '/soporte': typeof AuthenticatedSoporteRoute
   '/tarjeta': typeof AuthenticatedTarjetaRoute
   '/transferencia/$id': typeof AuthenticatedTransferenciaIdRoute
   '/api/public/bazik/payout': typeof ApiPublicBazikPayoutRoute
   '/api/public/bazik/topup': typeof ApiPublicBazikTopupRoute
+  '/api/public/dingconnect/webhook': typeof ApiPublicDingconnectWebhookRoute
   '/api/public/mercadopago/webhook': typeof ApiPublicMercadopagoWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -170,11 +187,13 @@ export interface FileRoutesById {
   '/_authenticated/enviar': typeof AuthenticatedEnviarRoute
   '/_authenticated/historial': typeof AuthenticatedHistorialRoute
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
+  '/_authenticated/recargas': typeof AuthenticatedRecargasRoute
   '/_authenticated/soporte': typeof AuthenticatedSoporteRoute
   '/_authenticated/tarjeta': typeof AuthenticatedTarjetaRoute
   '/_authenticated/transferencia/$id': typeof AuthenticatedTransferenciaIdRoute
   '/api/public/bazik/payout': typeof ApiPublicBazikPayoutRoute
   '/api/public/bazik/topup': typeof ApiPublicBazikTopupRoute
+  '/api/public/dingconnect/webhook': typeof ApiPublicDingconnectWebhookRoute
   '/api/public/mercadopago/webhook': typeof ApiPublicMercadopagoWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -191,11 +210,13 @@ export interface FileRouteTypes {
     | '/enviar'
     | '/historial'
     | '/perfil'
+    | '/recargas'
     | '/soporte'
     | '/tarjeta'
     | '/transferencia/$id'
     | '/api/public/bazik/payout'
     | '/api/public/bazik/topup'
+    | '/api/public/dingconnect/webhook'
     | '/api/public/mercadopago/webhook'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -210,11 +231,13 @@ export interface FileRouteTypes {
     | '/enviar'
     | '/historial'
     | '/perfil'
+    | '/recargas'
     | '/soporte'
     | '/tarjeta'
     | '/transferencia/$id'
     | '/api/public/bazik/payout'
     | '/api/public/bazik/topup'
+    | '/api/public/dingconnect/webhook'
     | '/api/public/mercadopago/webhook'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -230,11 +253,13 @@ export interface FileRouteTypes {
     | '/_authenticated/enviar'
     | '/_authenticated/historial'
     | '/_authenticated/perfil'
+    | '/_authenticated/recargas'
     | '/_authenticated/soporte'
     | '/_authenticated/tarjeta'
     | '/_authenticated/transferencia/$id'
     | '/api/public/bazik/payout'
     | '/api/public/bazik/topup'
+    | '/api/public/dingconnect/webhook'
     | '/api/public/mercadopago/webhook'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -246,6 +271,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ApiPublicBazikPayoutRoute: typeof ApiPublicBazikPayoutRoute
   ApiPublicBazikTopupRoute: typeof ApiPublicBazikTopupRoute
+  ApiPublicDingconnectWebhookRoute: typeof ApiPublicDingconnectWebhookRoute
   ApiPublicMercadopagoWebhookRoute: typeof ApiPublicMercadopagoWebhookRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -323,6 +349,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPerfilRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/recargas': {
+      id: '/_authenticated/recargas'
+      path: '/recargas'
+      fullPath: '/recargas'
+      preLoaderRoute: typeof AuthenticatedRecargasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/soporte': {
       id: '/_authenticated/soporte'
       path: '/soporte'
@@ -358,6 +391,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBazikTopupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/dingconnect/webhook': {
+      id: '/api/public/dingconnect/webhook'
+      path: '/api/public/dingconnect/webhook'
+      fullPath: '/api/public/dingconnect/webhook'
+      preLoaderRoute: typeof ApiPublicDingconnectWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/mercadopago/webhook': {
       id: '/api/public/mercadopago/webhook'
       path: '/api/public/mercadopago/webhook'
@@ -390,6 +430,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedEnviarRoute: typeof AuthenticatedEnviarRoute
   AuthenticatedHistorialRoute: typeof AuthenticatedHistorialRoute
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
+  AuthenticatedRecargasRoute: typeof AuthenticatedRecargasRoute
   AuthenticatedSoporteRoute: typeof AuthenticatedSoporteRoute
   AuthenticatedTarjetaRoute: typeof AuthenticatedTarjetaRoute
   AuthenticatedTransferenciaIdRoute: typeof AuthenticatedTransferenciaIdRoute
@@ -403,6 +444,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedEnviarRoute: AuthenticatedEnviarRoute,
   AuthenticatedHistorialRoute: AuthenticatedHistorialRoute,
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
+  AuthenticatedRecargasRoute: AuthenticatedRecargasRoute,
   AuthenticatedSoporteRoute: AuthenticatedSoporteRoute,
   AuthenticatedTarjetaRoute: AuthenticatedTarjetaRoute,
   AuthenticatedTransferenciaIdRoute: AuthenticatedTransferenciaIdRoute,
@@ -417,6 +459,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ApiPublicBazikPayoutRoute: ApiPublicBazikPayoutRoute,
   ApiPublicBazikTopupRoute: ApiPublicBazikTopupRoute,
+  ApiPublicDingconnectWebhookRoute: ApiPublicDingconnectWebhookRoute,
   ApiPublicMercadopagoWebhookRoute: ApiPublicMercadopagoWebhookRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
