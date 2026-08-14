@@ -23,6 +23,7 @@ import { CardIssuerPanel } from "@/components/admin/CardIssuerPanel";
 import { MercadoPagoPanel } from "@/components/admin/MercadoPagoPanel";
 import { DingConnectPanel } from "@/components/admin/DingConnectPanel";
 import { AccountingPanel } from "@/components/admin/AccountingPanel";
+import { SupportPanel } from "@/components/admin/SupportPanel";
 import {
   money,
   shortDate,
@@ -63,6 +64,7 @@ function Admin() {
         <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
           <TabsTrigger value="resumen">Resumen</TabsTrigger>
           <TabsTrigger value="contabilidad">Contabilidad</TabsTrigger>
+          <TabsTrigger value="soporte">Soporte</TabsTrigger>
           <TabsTrigger value="bazik">Bazik API</TabsTrigger>
           <TabsTrigger value="mercadopago">Mercado Pago</TabsTrigger>
           <TabsTrigger value="dingconnect">Recargas (Ding)</TabsTrigger>
@@ -78,6 +80,9 @@ function Admin() {
         </TabsContent>
         <TabsContent value="contabilidad" className="mt-4">
           <AccountingPanel />
+        </TabsContent>
+        <TabsContent value="soporte" className="mt-4">
+          <SupportPanel />
         </TabsContent>
         <TabsContent value="kyc" className="mt-4">
           <KycPanel />
