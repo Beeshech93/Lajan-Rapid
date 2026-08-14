@@ -10,6 +10,7 @@ import {
   LogOut,
   Wallet,
   CreditCard,
+  Smartphone,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,6 +25,7 @@ const baseNav = [
   { to: "/enviar", key: "nav.send", icon: Send },
   { to: "/billetera", key: "nav.wallet", icon: Wallet },
   { to: "/tarjeta", key: "nav.card", icon: CreditCard },
+  { to: "/recargas", key: "nav.topups", icon: Smartphone },
   { to: "/historial", key: "nav.history", icon: History },
   { to: "/perfil", key: "nav.profile", icon: User },
 ];
