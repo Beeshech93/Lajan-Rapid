@@ -267,7 +267,13 @@ function CardItem({ card, onChange }: { card: VirtualCard; onChange: () => void 
   };
 
   const reveal = useServerFn(revealCardDetails);
-  const [secure, setSecure] = useState<{ pan?: string; cvv?: string } | null>(null);
+  const [secure, setSecure] = useState<{
+    pan?: string;
+    cvv?: string;
+    expMonth?: number;
+    expYear?: number;
+    holder?: string;
+  } | null>(null);
   const [loadingSecure, setLoadingSecure] = useState(false);
 
   const showFull = async () => {
@@ -281,6 +287,9 @@ function CardItem({ card, onChange }: { card: VirtualCard; onChange: () => void 
       setSecure({
         ...(res.pan ? { pan: res.pan } : {}),
         ...(res.cvv ? { cvv: res.cvv } : {}),
+        ...(res.expMonth !== undefined ? { expMonth: res.expMonth } : {}),
+        ...(res.expYear !== undefined ? { expYear: res.expYear } : {}),
+        ...(res.holder ? { holder: res.holder } : {}),
       });
       setTimeout(() => setSecure(null), 60_000);
     } catch (e) {
@@ -293,8 +302,12 @@ function CardItem({ card, onChange }: { card: VirtualCard; onChange: () => void 
   const { profile } = useProfile();
   const { data: wallets } = useWallets();
   const wallet = (wallets ?? []).find((w) => w.id === card.wallet_id);
-  const holder = profile?.full_name || "Titular Lajan Rapid";
-  const expiry = `${String(card.exp_month).padStart(2, "0")}/${String(card.exp_year).slice(-2)}`;
+  const holder = secure?.holder || profile?.full_name || "Titular Lajan Rapid";
+  const expiryFromSecure =
+    secure?.expMonth !== undefined && secure?.expYear !== undefined
+      ? `${String(secure.expMonth).padStart(2, "0")}/${String(secure.expYear).slice(-2)}`
+      : `${String(card.exp_month).padStart(2, "0")}/${String(card.exp_year).slice(-2)}`;
+  const expiry = expiryFromSecure;
   const panText = secure?.pan
     ? secure.pan.replace(/(.{4})/g, "$1 ").trim()
     : `•••• •••• •••• ${card.last4}`;

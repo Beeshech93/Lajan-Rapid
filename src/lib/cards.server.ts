@@ -18,6 +18,93 @@ export type CardSecureDetails = {
   error?: string;
 };
 
+function pickFirstString(value: Record<string, unknown>, names: string[]) {
+  for (const name of names) {
+    const candidate = value[name];
+    if (typeof candidate === "string" && candidate.trim()) return candidate.trim();
+  }
+  return undefined;
+}
+
+function pickFirstNumber(value: Record<string, unknown>, names: string[]) {
+  for (const name of names) {
+    const candidate = value[name];
+    if (typeof candidate === "number" && Number.isFinite(candidate)) return candidate;
+    if (typeof candidate === "string" && candidate.trim()) {
+      const parsed = Number(candidate);
+      if (Number.isFinite(parsed)) return parsed;
+    }
+  }
+  return undefined;
+}
+
+function parseExpiry(value: unknown): { expMonth?: number; expYear?: number } | undefined {
+  if (typeof value !== "string") return undefined;
+  const cleaned = value.trim();
+  if (!cleaned) return undefined;
+
+  const mmSlash = cleaned.match(/^(\d{1,2})\s*[/\-]\s*(\d{2}|\d{4})$/);
+  if (mmSlash) {
+    const month = Number(mmSlash[1]);
+    const yearPart = mmSlash[2];
+    if (month >= 1 && month <= 12) {
+      return {
+        expMonth: month,
+        expYear: yearPart.length === 2 ? 2000 + Number(yearPart) : Number(yearPart),
+      };
+    }
+  }
+
+  const yyyyMm = cleaned.match(/^(\d{4})\s*[-/]\s*(\d{1,2})$/);
+  if (yyyyMm) {
+    const year = Number(yyyyMm[1]);
+    const month = Number(yyyyMm[2]);
+    if (month >= 1 && month <= 12) {
+      return { expMonth: month, expYear: year };
+    }
+  }
+
+  const mmYy = cleaned.match(/^(\d{1,2})\s*(?:\/|-)\s*(\d{2})$/);
+  if (mmYy) {
+    const month = Number(mmYy[1]);
+    const year = Number(mmYy[2]);
+    if (month >= 1 && month <= 12) {
+      return { expMonth: month, expYear: 2000 + year };
+    }
+  }
+
+  return undefined;
+}
+
+function normalizeSecurePayload(raw: Record<string, unknown>): Partial<CardSecureDetails> {
+  const card = ((raw.data ?? raw.details ?? raw.card ?? raw) as Record<string, unknown>) ?? {};
+
+  const expiryFromField = parseExpiry(card["expiry"] ?? card["expiration"] ?? card["exp"]);
+  const month = pickFirstNumber(card, ["exp_month", "expiry_month", "expiration_month", "expMonth"]);
+  const year = pickFirstNumber(card, ["exp_year", "expiry_year", "expiration_year", "expYear"]);
+  const pan = pickFirstString(card, ["pan", "number", "card_number", "full_number", "cardNumber"]);
+  const cvv = pickFirstString(card, ["cvv", "cvc", "security_code", "code"]);
+  const holder = pickFirstString(card, [
+    "holder",
+    "cardholder",
+    "card_holder",
+    "name",
+    "full_name",
+    "fullName",
+    "card_name",
+  ]);
+  const status = pickFirstString(card, ["status", "state"]);
+
+  return {
+    pan: pan ?? undefined,
+    cvv: cvv ?? undefined,
+    expMonth: month ?? expiryFromField?.expMonth,
+    expYear: year ?? expiryFromField?.expYear,
+    holder: holder ?? undefined,
+    status: status ?? undefined,
+  };
+}
+
 async function loadCreds(): Promise<Record<string, string>> {
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -107,16 +194,16 @@ export async function fetchCardSecureDetails(providerCardId: string): Promise<Ca
     } catch {
       return { ok: false, configured: true, error: "Respuesta inválida del emisor" };
     }
-    const d = (parsed["data"] ?? parsed) as Record<string, unknown>;
+    const normalized = normalizeSecurePayload(parsed as Record<string, unknown>);
     return {
       ok: true,
       configured: true,
-      ...(typeof d["pan"] === "string" ? { pan: d["pan"] } : {}),
-      ...(typeof d["cvv"] === "string" ? { cvv: d["cvv"] } : {}),
-      ...(typeof d["exp_month"] === "number" ? { expMonth: d["exp_month"] } : {}),
-      ...(typeof d["exp_year"] === "number" ? { expYear: d["exp_year"] } : {}),
-      ...(typeof d["holder"] === "string" ? { holder: d["holder"] } : {}),
-      ...(typeof d["status"] === "string" ? { status: d["status"] } : {}),
+      ...(normalized.pan ? { pan: normalized.pan } : {}),
+      ...(normalized.cvv ? { cvv: normalized.cvv } : {}),
+      ...(normalized.expMonth !== undefined ? { expMonth: normalized.expMonth } : {}),
+      ...(normalized.expYear !== undefined ? { expYear: normalized.expYear } : {}),
+      ...(normalized.holder ? { holder: normalized.holder } : {}),
+      ...(normalized.status ? { status: normalized.status } : {}),
     };
   } catch (e) {
     console.error("Error llamando al emisor de tarjetas", e);
