@@ -46,8 +46,8 @@ function parseExpiry(value: unknown): { expMonth?: number; expYear?: number } | 
   const mmSlash = cleaned.match(/^(\d{1,2})\s*[/\-]\s*(\d{2}|\d{4})$/);
   if (mmSlash) {
     const month = Number(mmSlash[1]);
-    const yearPart = mmSlash[2];
-    if (month >= 1 && month <= 12) {
+    const yearPart = mmSlash[2] ?? "";
+    if (yearPart && month >= 1 && month <= 12) {
       return {
         expMonth: month,
         expYear: yearPart.length === 2 ? 2000 + Number(yearPart) : Number(yearPart),
@@ -77,7 +77,7 @@ function parseExpiry(value: unknown): { expMonth?: number; expYear?: number } | 
 }
 
 function normalizeSecurePayload(raw: Record<string, unknown>): Partial<CardSecureDetails> {
-  const card = ((raw.data ?? raw.details ?? raw.card ?? raw) as Record<string, unknown>) ?? {};
+  const card = ((raw['data'] ?? raw['details'] ?? raw['card'] ?? raw) as Record<string, unknown>) ?? {};
 
   const expiryFromField = parseExpiry(card["expiry"] ?? card["expiration"] ?? card["exp"]);
   const month = pickFirstNumber(card, ["exp_month", "expiry_month", "expiration_month", "expMonth"]);
@@ -95,13 +95,16 @@ function normalizeSecurePayload(raw: Record<string, unknown>): Partial<CardSecur
   ]);
   const status = pickFirstString(card, ["status", "state"]);
 
+  const expMonth = month ?? expiryFromField?.expMonth;
+  const expYear = year ?? expiryFromField?.expYear;
+
   return {
-    pan: pan ?? undefined,
-    cvv: cvv ?? undefined,
-    expMonth: month ?? expiryFromField?.expMonth,
-    expYear: year ?? expiryFromField?.expYear,
-    holder: holder ?? undefined,
-    status: status ?? undefined,
+    ...(pan ? { pan } : {}),
+    ...(cvv ? { cvv } : {}),
+    ...(expMonth !== undefined ? { expMonth } : {}),
+    ...(expYear !== undefined ? { expYear } : {}),
+    ...(holder ? { holder } : {}),
+    ...(status ? { status } : {}),
   };
 }
 

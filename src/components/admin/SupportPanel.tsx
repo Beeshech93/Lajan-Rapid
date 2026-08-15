@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { MessageCircle, Mail, Save, Clock, Globe } from "lucide-react";
@@ -41,7 +41,7 @@ export function SupportPanel() {
   });
 
   // Update form when config loads
-  React.useEffect(() => {
+  useEffect(() => {
     if (config) {
       setFormData({
         whatsapp_number: config.whatsapp_number || "",
