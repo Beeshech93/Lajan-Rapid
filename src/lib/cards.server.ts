@@ -95,13 +95,16 @@ function normalizeSecurePayload(raw: Record<string, unknown>): Partial<CardSecur
   ]);
   const status = pickFirstString(card, ["status", "state"]);
 
+  const expMonth = month ?? expiryFromField?.expMonth;
+  const expYear = year ?? expiryFromField?.expYear;
+
   return {
-    pan: pan ?? undefined,
-    cvv: cvv ?? undefined,
-    expMonth: month ?? expiryFromField?.expMonth,
-    expYear: year ?? expiryFromField?.expYear,
-    holder: holder ?? undefined,
-    status: status ?? undefined,
+    ...(pan ? { pan } : {}),
+    ...(cvv ? { cvv } : {}),
+    ...(expMonth !== undefined ? { expMonth } : {}),
+    ...(expYear !== undefined ? { expYear } : {}),
+    ...(holder ? { holder } : {}),
+    ...(status ? { status } : {}),
   };
 }
 
