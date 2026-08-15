@@ -77,7 +77,7 @@ function parseExpiry(value: unknown): { expMonth?: number; expYear?: number } | 
 }
 
 function normalizeSecurePayload(raw: Record<string, unknown>): Partial<CardSecureDetails> {
-  const card = ((raw.data ?? raw.details ?? raw.card ?? raw) as Record<string, unknown>) ?? {};
+  const card = ((raw['data'] ?? raw['details'] ?? raw['card'] ?? raw) as Record<string, unknown>) ?? {};
 
   const expiryFromField = parseExpiry(card["expiry"] ?? card["expiration"] ?? card["exp"]);
   const month = pickFirstNumber(card, ["exp_month", "expiry_month", "expiration_month", "expMonth"]);
