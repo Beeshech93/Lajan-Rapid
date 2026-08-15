@@ -91,13 +91,15 @@ function Recargas() {
 
   const countryInfo = findTopupCountry(country);
   const dial = countryInfo?.dialCode ?? "+509";
+  // DO/JM/PR usan +1 con 10 dígitos (código de área incluido), como US.
+  const validationCode = ["DO", "JM", "PR"].includes(country) ? "US" : country;
 
   const phoneCheck = useMemo(
-    () => validatePhone(country, dial, phone),
-    [country, dial, phone],
+    () => validatePhone(validationCode, dial, phone),
+    [validationCode, dial, phone],
   );
   const phoneDigits = normalizeLocal(phone, dial);
-  const lengths = expectedLengths(country);
+  const lengths = expectedLengths(validationCode);
   const phoneError =
     phone.trim() === "" || phoneCheck.ok
       ? null
