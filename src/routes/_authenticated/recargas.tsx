@@ -134,15 +134,24 @@ function Recargas() {
       if (!operator) throw new Error("Elige el operador");
       if (!sku && plans.length > 0) throw new Error("Elige el plan del operador");
       if (!phone.trim()) throw new Error("Escribe el número a recargar");
+      if (!phoneCheck.ok || !phoneCheck.e164)
+        throw new Error(phoneError ?? "Número de teléfono inválido");
       const value = Number(amount);
       if (!Number.isFinite(value) || value <= 0) throw new Error("Monto inválido");
+      if (
+        selected?.minValue != null &&
+        (value < Number(selected.minValue) || value > Number(selected.maxValue))
+      )
+        throw new Error(
+          `El monto debe estar entre ${selected.minValue} y ${selected.maxValue} ${selected.currency}`,
+        );
       return sendTopup({
         data: {
           walletId,
           skuCode: sku || operator,
           operator,
           countryCode: country,
-          phone: phone.trim(),
+          phone: phoneCheck.e164,
           amount: value,
         },
       });
