@@ -46,8 +46,8 @@ function parseExpiry(value: unknown): { expMonth?: number; expYear?: number } | 
   const mmSlash = cleaned.match(/^(\d{1,2})\s*[/\-]\s*(\d{2}|\d{4})$/);
   if (mmSlash) {
     const month = Number(mmSlash[1]);
-    const yearPart = mmSlash[2];
-    if (month >= 1 && month <= 12) {
+    const yearPart = mmSlash[2] ?? "";
+    if (yearPart && month >= 1 && month <= 12) {
       return {
         expMonth: month,
         expYear: yearPart.length === 2 ? 2000 + Number(yearPart) : Number(yearPart),
