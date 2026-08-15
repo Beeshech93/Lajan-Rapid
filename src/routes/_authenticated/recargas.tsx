@@ -20,6 +20,7 @@ import {
 import { useWallets, useRefreshWallet } from "@/hooks/useWallet";
 import { dingListProducts, dingSendTopup } from "@/lib/dingconnect.functions";
 import { money, shortDate } from "@/lib/remesa";
+import { TOPUP_COUNTRIES, findTopupCountry, prettyOperator } from "@/lib/topup-operators";
 
 export const Route = createFileRoute("/_authenticated/recargas")({
   head: () => ({
@@ -50,12 +51,6 @@ const STATUS_LABEL: Record<string, string> = {
   refunded: "Devuelta",
 };
 
-const COUNTRIES = [
-  { code: "HT", label: "🇭🇹 Haití" },
-  { code: "DO", label: "🇩🇴 República Dominicana" },
-  { code: "MX", label: "🇲🇽 México" },
-  { code: "US", label: "🇺🇸 Estados Unidos" },
-];
 
 function Recargas() {
   const qc = useQueryClient();
@@ -66,6 +61,7 @@ function Recargas() {
 
   const [country, setCountry] = useState("HT");
   const [walletId, setWalletId] = useState("");
+  const [operator, setOperator] = useState("");
   const [sku, setSku] = useState("");
   const [phone, setPhone] = useState("");
   const [amount, setAmount] = useState("");
@@ -92,20 +88,41 @@ function Recargas() {
     },
   });
 
+  const countryInfo = findTopupCountry(country);
+
+  // Operadores del país: del catálogo del proveedor si hay, si no del catálogo local.
+  const operators = useMemo(() => {
+    const items = products?.items ?? [];
+    const fromProvider = Array.from(
+      new Set(items.map((p) => prettyOperator(country, p.operator || p.skuCode))),
+    ).filter(Boolean);
+    return fromProvider.length > 0 ? fromProvider : (countryInfo?.operators ?? []);
+  }, [products, country, countryInfo]);
+
+  // Planes/SKUs del operador elegido.
+  const plans = useMemo(
+    () =>
+      (products?.items ?? []).filter(
+        (p) => prettyOperator(country, p.operator || p.skuCode) === operator,
+      ),
+    [products, country, operator],
+  );
+
   const selected = (products?.items ?? []).find((p) => p.skuCode === sku);
 
   const sendMut = useMutation({
     mutationFn: async () => {
       if (!walletId) throw new Error("Elige la billetera de origen");
-      if (!sku) throw new Error("Elige el operador");
+      if (!operator) throw new Error("Elige el operador");
+      if (!sku && plans.length > 0) throw new Error("Elige el plan del operador");
       if (!phone.trim()) throw new Error("Escribe el número a recargar");
       const value = Number(amount);
       if (!Number.isFinite(value) || value <= 0) throw new Error("Monto inválido");
       return sendTopup({
         data: {
           walletId,
-          skuCode: sku,
-          operator: selected?.operator ?? "",
+          skuCode: sku || operator,
+          operator,
           countryCode: country,
           phone: phone.trim(),
           amount: value,
@@ -139,6 +156,7 @@ function Recargas() {
               value={country}
               onValueChange={(v) => {
                 setCountry(v);
+                setOperator("");
                 setSku("");
               }}
             >
@@ -146,7 +164,7 @@ function Recargas() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {COUNTRIES.map((c) => (
+                {TOPUP_COUNTRIES.map((c) => (
                   <SelectItem key={c.code} value={c.code}>
                     {c.label}
                   </SelectItem>
@@ -171,35 +189,67 @@ function Recargas() {
             </Select>
           </div>
 
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label>Operador</Label>
-            <Select value={sku} onValueChange={setSku}>
+          <div className="space-y-1.5">
+            <Label>Operador de {countryInfo?.label ?? country}</Label>
+            <Select
+              value={operator}
+              onValueChange={(v) => {
+                setOperator(v);
+                setSku("");
+              }}
+            >
               <SelectTrigger>
                 <SelectValue
                   placeholder={isFetching ? "Cargando operadores..." : "Elige el operador"}
                 />
               </SelectTrigger>
               <SelectContent>
-                {(products?.items ?? []).map((p) => (
-                  <SelectItem key={p.skuCode} value={p.skuCode}>
-                    {p.operator || p.skuCode}
+                {operators.map((op) => (
+                  <SelectItem key={op} value={op}>
+                    {op}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             {products && !products.ok && (
               <p className="text-xs text-muted-foreground">
-                No se pudo cargar el catálogo del proveedor. Un administrador debe configurar
-                DingConnect.
+                Mostrando los operadores habituales de este país. Un administrador debe configurar
+                DingConnect para ver los planes exactos.
               </p>
             )}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Plan</Label>
+            <Select value={sku} onValueChange={setSku} disabled={plans.length === 0}>
+              <SelectTrigger>
+                <SelectValue
+                  placeholder={
+                    !operator
+                      ? "Elige primero el operador"
+                      : plans.length === 0
+                        ? "Monto libre"
+                        : "Elige el plan"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {plans.map((p) => (
+                  <SelectItem key={p.skuCode} value={p.skuCode}>
+                    {p.minValue != null
+                      ? `${p.minValue} – ${p.maxValue} ${p.currency}`
+                      : p.skuCode}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-1.5">
             <Label htmlFor="tu-phone">Número a recargar</Label>
             <Input
               id="tu-phone"
-              placeholder="+509 1234 5678"
+              placeholder={countryInfo?.placeholder ?? "+509 3412 3456"}
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
             />
