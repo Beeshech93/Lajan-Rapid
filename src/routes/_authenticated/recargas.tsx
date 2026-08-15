@@ -60,6 +60,7 @@ function Recargas() {
 
   const [country, setCountry] = useState("HT");
   const [walletId, setWalletId] = useState("");
+  const [operator, setOperator] = useState("");
   const [sku, setSku] = useState("");
   const [phone, setPhone] = useState("");
   const [amount, setAmount] = useState("");
