@@ -90,6 +90,23 @@ function Recargas() {
   });
 
   const countryInfo = findTopupCountry(country);
+  const dial = countryInfo?.dialCode ?? "+509";
+
+  const phoneCheck = useMemo(
+    () => validatePhone(country, dial, phone),
+    [country, dial, phone],
+  );
+  const phoneDigits = normalizeLocal(phone, dial);
+  const lengths = expectedLengths(country);
+  const phoneError =
+    phone.trim() === "" || phoneCheck.ok
+      ? null
+      : phoneCheck.error === "short"
+        ? `Faltan dígitos: ${countryInfo?.label ?? country} usa ${lengths.join(" o ")} dígitos (llevas ${phoneDigits.length}).`
+        : phoneCheck.error === "long"
+          ? `Sobran dígitos: ${countryInfo?.label ?? country} usa ${lengths.join(" o ")} dígitos (llevas ${phoneDigits.length}).`
+          : `Número inválido para ${countryInfo?.label ?? country}. Debe tener ${lengths.join(" o ")} dígitos.`;
+
 
   // Operadores del país: del catálogo del proveedor si hay, si no del catálogo local.
   const operators = useMemo(() => {
