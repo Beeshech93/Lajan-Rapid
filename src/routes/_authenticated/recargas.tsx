@@ -21,6 +21,7 @@ import { useWallets, useRefreshWallet } from "@/hooks/useWallet";
 import { dingListProducts, dingSendTopup } from "@/lib/dingconnect.functions";
 import { money, shortDate } from "@/lib/remesa";
 import { TOPUP_COUNTRIES, findTopupCountry, prettyOperator } from "@/lib/topup-operators";
+import { validatePhone, formatNational, expectedLengths, normalizeLocal } from "@/lib/phone";
 
 export const Route = createFileRoute("/_authenticated/recargas")({
   head: () => ({
@@ -89,6 +90,25 @@ function Recargas() {
   });
 
   const countryInfo = findTopupCountry(country);
+  const dial = countryInfo?.dialCode ?? "+509";
+  // DO/JM/PR usan +1 con 10 dígitos (código de área incluido), como US.
+  const validationCode = ["DO", "JM", "PR"].includes(country) ? "US" : country;
+
+  const phoneCheck = useMemo(
+    () => validatePhone(validationCode, dial, phone),
+    [validationCode, dial, phone],
+  );
+  const phoneDigits = normalizeLocal(phone, dial);
+  const lengths = expectedLengths(validationCode);
+  const phoneError =
+    phone.trim() === "" || phoneCheck.ok
+      ? null
+      : phoneCheck.error === "short"
+        ? `Faltan dígitos: ${countryInfo?.label ?? country} usa ${lengths.join(" o ")} dígitos (llevas ${phoneDigits.length}).`
+        : phoneCheck.error === "long"
+          ? `Sobran dígitos: ${countryInfo?.label ?? country} usa ${lengths.join(" o ")} dígitos (llevas ${phoneDigits.length}).`
+          : `Número inválido para ${countryInfo?.label ?? country}. Debe tener ${lengths.join(" o ")} dígitos.`;
+
 
   // Operadores del país: del catálogo del proveedor si hay, si no del catálogo local.
   const operators = useMemo(() => {
@@ -116,15 +136,24 @@ function Recargas() {
       if (!operator) throw new Error("Elige el operador");
       if (!sku && plans.length > 0) throw new Error("Elige el plan del operador");
       if (!phone.trim()) throw new Error("Escribe el número a recargar");
+      if (!phoneCheck.ok || !phoneCheck.e164)
+        throw new Error(phoneError ?? "Número de teléfono inválido");
       const value = Number(amount);
       if (!Number.isFinite(value) || value <= 0) throw new Error("Monto inválido");
+      if (
+        selected?.minValue != null &&
+        (value < Number(selected.minValue) || value > Number(selected.maxValue))
+      )
+        throw new Error(
+          `El monto debe estar entre ${selected.minValue} y ${selected.maxValue} ${selected.currency}`,
+        );
       return sendTopup({
         data: {
           walletId,
           skuCode: sku || operator,
           operator,
           countryCode: country,
-          phone: phone.trim(),
+          phone: phoneCheck.e164,
           amount: value,
         },
       });
@@ -247,13 +276,32 @@ function Recargas() {
 
           <div className="space-y-1.5">
             <Label htmlFor="tu-phone">Número a recargar</Label>
-            <Input
-              id="tu-phone"
-              placeholder={countryInfo?.placeholder ?? "+509 3412 3456"}
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-            />
+            <div className="flex items-center gap-2">
+              <span className="rounded-md border bg-muted px-2.5 py-2 text-sm text-muted-foreground">
+                {dial}
+              </span>
+              <Input
+                id="tu-phone"
+                inputMode="tel"
+                autoComplete="tel"
+                maxLength={24}
+                aria-invalid={phoneError ? true : undefined}
+                placeholder={countryInfo?.placeholder ?? "+509 3412 3456"}
+                value={phone}
+                onChange={(e) => setPhone(formatNational(validationCode, e.target.value, dial))}
+              />
+            </div>
+            {phoneError ? (
+              <p className="text-xs text-destructive">{phoneError}</p>
+            ) : phoneCheck.ok ? (
+              <p className="text-xs text-muted-foreground">Se enviará a {phoneCheck.e164}</p>
+            ) : lengths.length ? (
+              <p className="text-xs text-muted-foreground">
+                {lengths.join(" o ")} dígitos para {countryInfo?.label ?? country}
+              </p>
+            ) : null}
           </div>
+
 
           <div className="space-y-1.5">
             <Label htmlFor="tu-amount">
@@ -276,7 +324,7 @@ function Recargas() {
           <div className="sm:col-span-2">
             <Button
               className="w-full"
-              disabled={sendMut.isPending}
+              disabled={sendMut.isPending || !phoneCheck.ok}
               onClick={() => sendMut.mutate()}
             >
               <Send className="mr-2 size-4" />
