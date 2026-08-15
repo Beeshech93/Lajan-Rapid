@@ -113,15 +113,16 @@ function Recargas() {
   const sendMut = useMutation({
     mutationFn: async () => {
       if (!walletId) throw new Error("Elige la billetera de origen");
-      if (!sku) throw new Error("Elige el operador");
+      if (!operator) throw new Error("Elige el operador");
+      if (!sku && plans.length > 0) throw new Error("Elige el plan del operador");
       if (!phone.trim()) throw new Error("Escribe el número a recargar");
       const value = Number(amount);
       if (!Number.isFinite(value) || value <= 0) throw new Error("Monto inválido");
       return sendTopup({
         data: {
           walletId,
-          skuCode: sku,
-          operator: selected?.operator ?? "",
+          skuCode: sku || operator,
+          operator,
           countryCode: country,
           phone: phone.trim(),
           amount: value,
