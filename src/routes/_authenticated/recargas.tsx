@@ -288,7 +288,7 @@ function Recargas() {
                 aria-invalid={phoneError ? true : undefined}
                 placeholder={countryInfo?.placeholder ?? "+509 3412 3456"}
                 value={phone}
-                onChange={(e) => setPhone(formatNational(country, e.target.value, dial))}
+                onChange={(e) => setPhone(formatNational(validationCode, e.target.value, dial))}
               />
             </div>
             {phoneError ? (
