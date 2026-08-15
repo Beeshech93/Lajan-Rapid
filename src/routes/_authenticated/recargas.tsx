@@ -274,13 +274,32 @@ function Recargas() {
 
           <div className="space-y-1.5">
             <Label htmlFor="tu-phone">Número a recargar</Label>
-            <Input
-              id="tu-phone"
-              placeholder={countryInfo?.placeholder ?? "+509 3412 3456"}
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-            />
+            <div className="flex items-center gap-2">
+              <span className="rounded-md border bg-muted px-2.5 py-2 text-sm text-muted-foreground">
+                {dial}
+              </span>
+              <Input
+                id="tu-phone"
+                inputMode="tel"
+                autoComplete="tel"
+                maxLength={24}
+                aria-invalid={phoneError ? true : undefined}
+                placeholder={countryInfo?.placeholder ?? "+509 3412 3456"}
+                value={phone}
+                onChange={(e) => setPhone(formatNational(country, e.target.value, dial))}
+              />
+            </div>
+            {phoneError ? (
+              <p className="text-xs text-destructive">{phoneError}</p>
+            ) : phoneCheck.ok ? (
+              <p className="text-xs text-muted-foreground">Se enviará a {phoneCheck.e164}</p>
+            ) : lengths.length ? (
+              <p className="text-xs text-muted-foreground">
+                {lengths.join(" o ")} dígitos para {countryInfo?.label ?? country}
+              </p>
+            ) : null}
           </div>
+
 
           <div className="space-y-1.5">
             <Label htmlFor="tu-amount">
