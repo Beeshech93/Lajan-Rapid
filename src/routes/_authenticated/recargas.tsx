@@ -189,35 +189,67 @@ function Recargas() {
             </Select>
           </div>
 
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label>Operador</Label>
-            <Select value={sku} onValueChange={setSku}>
+          <div className="space-y-1.5">
+            <Label>Operador de {countryInfo?.label ?? country}</Label>
+            <Select
+              value={operator}
+              onValueChange={(v) => {
+                setOperator(v);
+                setSku("");
+              }}
+            >
               <SelectTrigger>
                 <SelectValue
                   placeholder={isFetching ? "Cargando operadores..." : "Elige el operador"}
                 />
               </SelectTrigger>
               <SelectContent>
-                {(products?.items ?? []).map((p) => (
-                  <SelectItem key={p.skuCode} value={p.skuCode}>
-                    {p.operator || p.skuCode}
+                {operators.map((op) => (
+                  <SelectItem key={op} value={op}>
+                    {op}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             {products && !products.ok && (
               <p className="text-xs text-muted-foreground">
-                No se pudo cargar el catálogo del proveedor. Un administrador debe configurar
-                DingConnect.
+                Mostrando los operadores habituales de este país. Un administrador debe configurar
+                DingConnect para ver los planes exactos.
               </p>
             )}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Plan</Label>
+            <Select value={sku} onValueChange={setSku} disabled={plans.length === 0}>
+              <SelectTrigger>
+                <SelectValue
+                  placeholder={
+                    !operator
+                      ? "Elige primero el operador"
+                      : plans.length === 0
+                        ? "Monto libre"
+                        : "Elige el plan"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {plans.map((p) => (
+                  <SelectItem key={p.skuCode} value={p.skuCode}>
+                    {p.minValue != null
+                      ? `${p.minValue} – ${p.maxValue} ${p.currency}`
+                      : p.skuCode}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-1.5">
             <Label htmlFor="tu-phone">Número a recargar</Label>
             <Input
               id="tu-phone"
-              placeholder="+509 1234 5678"
+              placeholder={countryInfo?.placeholder ?? "+509 3412 3456"}
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
             />
