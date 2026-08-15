@@ -50,12 +50,6 @@ const STATUS_LABEL: Record<string, string> = {
   refunded: "Devuelta",
 };
 
-const COUNTRIES = [
-  { code: "HT", label: "🇭🇹 Haití" },
-  { code: "DO", label: "🇩🇴 República Dominicana" },
-  { code: "MX", label: "🇲🇽 México" },
-  { code: "US", label: "🇺🇸 Estados Unidos" },
-];
 
 function Recargas() {
   const qc = useQueryClient();
