@@ -41,7 +41,7 @@ export function SupportPanel() {
   });
 
   // Update form when config loads
-  React.useEffect(() => {
+  useEffect(() => {
     if (config) {
       setFormData({
         whatsapp_number: config.whatsapp_number || "",
