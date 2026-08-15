@@ -322,7 +322,7 @@ function Recargas() {
           <div className="sm:col-span-2">
             <Button
               className="w-full"
-              disabled={sendMut.isPending}
+              disabled={sendMut.isPending || !phoneCheck.ok}
               onClick={() => sendMut.mutate()}
             >
               <Send className="mr-2 size-4" />
