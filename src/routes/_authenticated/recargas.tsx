@@ -156,6 +156,7 @@ function Recargas() {
               value={country}
               onValueChange={(v) => {
                 setCountry(v);
+                setOperator("");
                 setSku("");
               }}
             >
@@ -163,7 +164,7 @@ function Recargas() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {COUNTRIES.map((c) => (
+                {TOPUP_COUNTRIES.map((c) => (
                   <SelectItem key={c.code} value={c.code}>
                     {c.label}
                   </SelectItem>
