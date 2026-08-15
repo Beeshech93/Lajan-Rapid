@@ -88,6 +88,26 @@ function Recargas() {
     },
   });
 
+  const countryInfo = findTopupCountry(country);
+
+  // Operadores del país: del catálogo del proveedor si hay, si no del catálogo local.
+  const operators = useMemo(() => {
+    const items = products?.items ?? [];
+    const fromProvider = Array.from(
+      new Set(items.map((p) => prettyOperator(country, p.operator || p.skuCode))),
+    ).filter(Boolean);
+    return fromProvider.length > 0 ? fromProvider : (countryInfo?.operators ?? []);
+  }, [products, country, countryInfo]);
+
+  // Planes/SKUs del operador elegido.
+  const plans = useMemo(
+    () =>
+      (products?.items ?? []).filter(
+        (p) => prettyOperator(country, p.operator || p.skuCode) === operator,
+      ),
+    [products, country, operator],
+  );
+
   const selected = (products?.items ?? []).find((p) => p.skuCode === sku);
 
   const sendMut = useMutation({
