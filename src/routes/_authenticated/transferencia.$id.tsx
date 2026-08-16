@@ -124,7 +124,7 @@ function Detalle() {
                 onClick={async () => {
                   setIsInitiating(true);
                   try {
-                    const result = await initiatePayment({ transferId: id });
+                    const result = await initiatePayment({ data: { transferId: id } });
                     window.location.href = result.checkoutUrl;
                   } catch (err) {
                     toast.error((err as Error).message || "Error al iniciar el pago");

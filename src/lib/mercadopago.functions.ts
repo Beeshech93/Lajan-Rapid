@@ -63,10 +63,10 @@ export const mercadoPagoInitiatePayment = createServerFn({ method: "POST" })
       amount: Number(transfer.total_send),
       currency: transfer.send_currency,
       description: `Envío ${transfer.reference} a ${transfer.recipient_name}`,
-      buyerEmail: (await supabase.auth.getUser()).data.user?.email,
-      successUrl: `${process.env.PUBLIC_URL || "http://localhost:5173"}/transferencia/${transfer.id}?payment=success`,
-      pendingUrl: `${process.env.PUBLIC_URL || "http://localhost:5173"}/transferencia/${transfer.id}?payment=pending`,
-      failureUrl: `${process.env.PUBLIC_URL || "http://localhost:5173"}/transferencia/${transfer.id}?payment=failure`,
+      ...(( await supabase.auth.getUser()).data.user?.email ? { buyerEmail: (await supabase.auth.getUser()).data.user!.email as string } : {}),
+      successUrl: `${process.env['PUBLIC_URL'] || "http://localhost:5173"}/transferencia/${transfer.id}?payment=success`,
+      pendingUrl: `${process.env['PUBLIC_URL'] || "http://localhost:5173"}/transferencia/${transfer.id}?payment=pending`,
+      failureUrl: `${process.env['PUBLIC_URL'] || "http://localhost:5173"}/transferencia/${transfer.id}?payment=failure`,
     });
 
     if (!checkoutUrl) {
