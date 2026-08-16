@@ -206,3 +206,69 @@ export async function applyMpPayment(payment: MpPayment) {
 
   return { ok: true, transferId: transfer.id, status: next };
 }
+
+/**
+ * Crea una preferencia de pago en Mercado Pago.
+ * Retorna el `init_point` (URL de checkout) o null si falla.
+ */
+export async function createMpPreference(opts: {
+  transferId: string;
+  reference: string;
+  amount: number;
+  currency: string;
+  description: string;
+  buyerEmail?: string;
+  successUrl?: string;
+  pendingUrl?: string;
+  failureUrl?: string;
+}) {
+  const stored = await loadMpCreds();
+  const token = pick(stored, "MERCADOPAGO_ACCESS_TOKEN");
+  if (!token) {
+    console.error("Mercado Pago: falta MERCADOPAGO_ACCESS_TOKEN");
+    return null;
+  }
+
+  const preference = {
+    items: [
+      {
+        id: opts.reference,
+        title: opts.description,
+        quantity: 1,
+        unit_price: opts.amount,
+        currency_id: opts.currency === "MXN" ? "MXN" : opts.currency === "USD" ? "USD" : "ARS",
+      },
+    ],
+    external_reference: opts.reference,
+    notification_url: `${process.env.PUBLIC_URL || "http://localhost:5173"}/api/public/mercadopago/webhook`,
+    back_urls: {
+      success: opts.successUrl || `${process.env.PUBLIC_URL || "http://localhost:5173"}/transferencia/${opts.transferId}?payment=success`,
+      pending: opts.pendingUrl || `${process.env.PUBLIC_URL || "http://localhost:5173"}/transferencia/${opts.transferId}?payment=pending`,
+      failure: opts.failureUrl || `${process.env.PUBLIC_URL || "http://localhost:5173"}/transferencia/${opts.transferId}?payment=failure`,
+    },
+    payer: opts.buyerEmail ? { email: opts.buyerEmail } : undefined,
+    auto_return: "approved" as const,
+  };
+
+  try {
+    const res = await fetch(`${MP_API}/checkout/preferences`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(preference),
+    });
+
+    if (!res.ok) {
+      console.error(`Mercado Pago: no se pudo crear preferencia [${res.status}]`, await res.text());
+      return null;
+    }
+
+    const data = (await res.json()) as { init_point?: string; id?: string };
+    return data.init_point || null;
+  } catch (e) {
+    console.error("Mercado Pago: error creando preferencia", e);
+    return null;
+  }
+}

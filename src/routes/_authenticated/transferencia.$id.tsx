@@ -1,12 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
-import { Check, Circle, Copy } from "lucide-react";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { Check, Circle, Copy, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { mercadoPagoInitiatePayment } from "@/lib/mercadopago.functions";
 import {
   money,
   shortDate,
@@ -33,6 +35,8 @@ export const Route = createFileRoute("/_authenticated/transferencia/$id")({
 function Detalle() {
   const { id } = Route.useParams();
   const qc = useQueryClient();
+  const initiatePayment = useServerFn(mercadoPagoInitiatePayment);
+  const [isInitiating, setIsInitiating] = useState(false);
 
   const { data: t } = useQuery({
     queryKey: ["transfer", id],
@@ -107,20 +111,43 @@ function Detalle() {
             <div>
               <p className="font-semibold">Completa tu pago con {paymentName}</p>
               <p className="text-sm text-muted-foreground">
-                Usa la referencia {t.reference}. Un agente confirmará el pago.
+                {(t.payment_method === "mercadopago" || t.payment_method === "tarjeta")
+                  ? "Serás redirigido a Mercado Pago para completar el pago."
+                  : `Usa la referencia ${t.reference}. Un agente confirmará el pago.`}
               </p>
             </div>
-            <Button
-              size="sm"
-              variant="secondary"
-              className="gap-2"
-              onClick={() => {
-                void navigator.clipboard.writeText(t.reference);
-                toast.success("Referencia copiada");
-              }}
-            >
-              <Copy className="size-4" /> Copiar referencia
-            </Button>
+            {t.payment_method === "mercadopago" || t.payment_method === "tarjeta" ? (
+              <Button
+                size="sm"
+                className="gap-2"
+                disabled={isInitiating}
+                onClick={async () => {
+                  setIsInitiating(true);
+                  try {
+                    const result = await initiatePayment({ transferId: id });
+                    window.location.href = result.checkoutUrl;
+                  } catch (err) {
+                    toast.error((err as Error).message || "Error al iniciar el pago");
+                    setIsInitiating(false);
+                  }
+                }}
+              >
+                {isInitiating && <Loader2 className="size-4 animate-spin" />}
+                {isInitiating ? "Cargando..." : "Ir a Mercado Pago"}
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                variant="secondary"
+                className="gap-2"
+                onClick={() => {
+                  void navigator.clipboard.writeText(t.reference);
+                  toast.success("Referencia copiada");
+                }}
+              >
+                <Copy className="size-4" /> Copiar referencia
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}

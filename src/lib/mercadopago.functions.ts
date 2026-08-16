@@ -32,3 +32,46 @@ export const mercadoPagoSaveCredentials = createServerFn({ method: "POST" })
     }
     return { ok: true };
   });
+
+/** Inicia el pago en Mercado Pago y retorna la URL de checkout. */
+export const mercadoPagoInitiatePayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { transferId: string }) => input)
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    
+    // Obtener la transferencia
+    const { data: transfer, error } = await supabase
+      .from("transfers")
+      .select("*")
+      .eq("id", data.transferId)
+      .eq("user_id", context.userId)
+      .maybeSingle();
+
+    if (error || !transfer) {
+      throw new Error("Transferencia no encontrada");
+    }
+
+    if (transfer.payment_method !== "mercadopago" && transfer.payment_method !== "tarjeta") {
+      throw new Error("Este método de pago no usa Mercado Pago");
+    }
+
+    const { createMpPreference } = await import("@/lib/mercadopago.server");
+    const checkoutUrl = await createMpPreference({
+      transferId: transfer.id,
+      reference: transfer.reference,
+      amount: Number(transfer.total_send),
+      currency: transfer.send_currency,
+      description: `Envío ${transfer.reference} a ${transfer.recipient_name}`,
+      buyerEmail: (await supabase.auth.getUser()).data.user?.email,
+      successUrl: `${process.env.PUBLIC_URL || "http://localhost:5173"}/transferencia/${transfer.id}?payment=success`,
+      pendingUrl: `${process.env.PUBLIC_URL || "http://localhost:5173"}/transferencia/${transfer.id}?payment=pending`,
+      failureUrl: `${process.env.PUBLIC_URL || "http://localhost:5173"}/transferencia/${transfer.id}?payment=failure`,
+    });
+
+    if (!checkoutUrl) {
+      throw new Error("No se pudo crear la preferencia de pago");
+    }
+
+    return { checkoutUrl };
+  });
