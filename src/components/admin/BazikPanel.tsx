@@ -70,13 +70,10 @@ export function BazikPanel() {
     queryFn: () => status(),
   });
 
-  const [creds, setCreds] = useState<Record<CredKey, string>>({
-    BAZIK_BASE_URL: "",
-    BAZIK_COLLECT_API_KEY: "",
-    BAZIK_COLLECT_API_SECRET: "",
-    BAZIK_PAYOUT_API_KEY: "",
-    BAZIK_PAYOUT_API_SECRET: "",
-  });
+  const emptyCreds = () =>
+    Object.fromEntries(CRED_KEYS.map((k) => [k, ""])) as Record<CredKey, string>;
+
+  const [creds, setCreds] = useState<Record<CredKey, string>>(emptyCreds);
   const setCred = (k: CredKey, v: string) => setCreds((p) => ({ ...p, [k]: v }));
 
   const saveMut = useMutation({
