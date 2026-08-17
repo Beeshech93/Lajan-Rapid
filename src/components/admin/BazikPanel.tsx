@@ -152,6 +152,57 @@ export function BazikPanel() {
             />
           </div>
 
+          <div className="space-y-3 rounded-lg border p-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-semibold">Cuenta Bazik (User ID + Secret Key)</span>
+              <Badge variant={info?.account?.hasUserId ? "secondary" : "destructive"}>
+                {info?.account?.hasUserId ? "User ID activo" : "Falta User ID"}
+              </Badge>
+              <Badge variant={info?.account?.hasSecretKey ? "secondary" : "destructive"}>
+                {info?.account?.hasSecretKey ? "Secret Key activa" : "Falta Secret Key"}
+              </Badge>
+              <Badge variant={info?.account?.hasWebhookSecret ? "secondary" : "outline"}>
+                {info?.account?.hasWebhookSecret ? "Webhook firmado" : "Sin secreto webhook"}
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Si no defines credenciales separadas por API, se usa esta cuenta para cobros y
+              envíos.
+            </p>
+            <div className="space-y-1.5">
+              <Label htmlFor="BAZIK_USER_ID">Bazik User ID</Label>
+              <Input
+                id="BAZIK_USER_ID"
+                autoComplete="off"
+                value={creds.BAZIK_USER_ID}
+                onChange={(e) => setCred("BAZIK_USER_ID", e.target.value)}
+                placeholder="bzk_..."
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="BAZIK_SECRET_KEY">Secret Key</Label>
+              <Input
+                id="BAZIK_SECRET_KEY"
+                type="password"
+                autoComplete="off"
+                value={creds.BAZIK_SECRET_KEY}
+                onChange={(e) => setCred("BAZIK_SECRET_KEY", e.target.value)}
+                placeholder="sk_..."
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="BAZIK_WEBHOOK_SECRET">Webhook Signing Secret</Label>
+              <Input
+                id="BAZIK_WEBHOOK_SECRET"
+                type="password"
+                autoComplete="off"
+                value={creds.BAZIK_WEBHOOK_SECRET}
+                onChange={(e) => setCred("BAZIK_WEBHOOK_SECRET", e.target.value)}
+                placeholder="pegar aquí"
+              />
+            </div>
+          </div>
+
           {[
             {
               api: info?.collect,
