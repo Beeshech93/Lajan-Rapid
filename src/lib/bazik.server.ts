@@ -145,8 +145,10 @@ async function callBazik(creds: Creds, path: string, body: unknown): Promise<Baz
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    Authorization: `Bearer ${creds.apiKey}`,
+    // Con cuenta Bazik (User ID + Secret Key) el bearer es la Secret Key.
+    Authorization: `Bearer ${creds.apiSecret ?? creds.apiKey}`,
     "X-Api-Key": creds.apiKey,
+    "X-User-Id": creds.apiKey,
   };
   if (creds.apiSecret) headers["X-Api-Secret"] = creds.apiSecret;
 
