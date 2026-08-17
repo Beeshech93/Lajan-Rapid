@@ -105,18 +105,22 @@ function Detalle() {
         </CardContent>
       </Card>
 
-      {status === "awaiting_payment" && (
+      {status !== "completed" && status !== "cancelled" && (
         <Card className="border-warning/40 bg-warning/10">
           <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
             <div>
-              <p className="font-semibold">Completa tu pago con {paymentName}</p>
+              <p className="font-semibold">
+                {isCardPayment
+                  ? `Completa tu pago con ${paymentName}`
+                  : `Finalizar envío por ${deliveryName}`}
+              </p>
               <p className="text-sm text-muted-foreground">
-                {(t.payment_method === "mercadopago" || t.payment_method === "tarjeta")
+                {isCardPayment
                   ? "Serás redirigido a Mercado Pago para completar el pago."
-                  : `Usa la referencia ${t.reference}. Un agente confirmará el pago.`}
+                  : `${t.recipient_name} · ${t.recipient_phone} · ${money(Number(t.amount_receive), t.receive_currency)}`}
               </p>
             </div>
-            {t.payment_method === "mercadopago" || t.payment_method === "tarjeta" ? (
+            {isCardPayment ? (
               <Button
                 size="sm"
                 className="gap-2"
@@ -138,19 +142,18 @@ function Detalle() {
             ) : (
               <Button
                 size="sm"
-                variant="secondary"
                 className="gap-2"
-                onClick={() => {
-                  void navigator.clipboard.writeText(t.reference);
-                  toast.success("Referencia copiada");
-                }}
+                disabled={finalize.isPending}
+                onClick={() => finalize.mutate()}
               >
-                <Copy className="size-4" /> Copiar referencia
+                {finalize.isPending && <Loader2 className="size-4 animate-spin" />}
+                {finalize.isPending ? "Enviando…" : `Enviar a ${deliveryName}`}
               </Button>
             )}
           </CardContent>
         </Card>
       )}
+
 
       <Card>
         <CardHeader>
