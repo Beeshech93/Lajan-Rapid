@@ -86,13 +86,7 @@ export function BazikPanel() {
     },
     onSuccess: () => {
       toast.success("Credenciales guardadas");
-      setCreds({
-        BAZIK_BASE_URL: "",
-        BAZIK_COLLECT_API_KEY: "",
-        BAZIK_COLLECT_API_SECRET: "",
-        BAZIK_PAYOUT_API_KEY: "",
-        BAZIK_PAYOUT_API_SECRET: "",
-      });
+      setCreds(emptyCreds());
       void queryClient.invalidateQueries({ queryKey: ["bazik_status"] });
     },
     onError: (e: Error) => toast.error(e.message),
