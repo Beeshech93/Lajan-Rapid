@@ -48,6 +48,9 @@ function CopyField({ label, value }: { label: string; value: string }) {
 
 const CRED_KEYS = [
   "BAZIK_BASE_URL",
+  "BAZIK_USER_ID",
+  "BAZIK_SECRET_KEY",
+  "BAZIK_WEBHOOK_SECRET",
   "BAZIK_COLLECT_API_KEY",
   "BAZIK_COLLECT_API_SECRET",
   "BAZIK_PAYOUT_API_KEY",
