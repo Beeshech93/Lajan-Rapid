@@ -115,6 +115,11 @@ export async function bazikStatusInfo() {
   const payout = credsFor(stored, "PAYOUT");
   return {
     baseUrl: url,
+    account: {
+      hasUserId: Boolean(pick(stored, "BAZIK_USER_ID")),
+      hasSecretKey: Boolean(pick(stored, "BAZIK_SECRET_KEY")),
+      hasWebhookSecret: Boolean(pick(stored, "BAZIK_WEBHOOK_SECRET")),
+    },
     configured: Boolean(collect.apiKey && payout.apiKey),
     topupEndpoint: `${url}/v1/collections`,
     payoutEndpoint: `${url}/v1/payouts`,
