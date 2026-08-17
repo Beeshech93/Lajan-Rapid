@@ -32,6 +32,9 @@ type Creds = { baseUrl: string; apiKey?: string; apiSecret?: string };
 
 export const BAZIK_CRED_NAMES = [
   "BAZIK_BASE_URL",
+  "BAZIK_USER_ID",
+  "BAZIK_SECRET_KEY",
+  "BAZIK_WEBHOOK_SECRET",
   "BAZIK_COLLECT_API_KEY",
   "BAZIK_COLLECT_API_SECRET",
   "BAZIK_PAYOUT_API_KEY",
