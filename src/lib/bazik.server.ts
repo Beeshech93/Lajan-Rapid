@@ -85,13 +85,26 @@ function baseUrlFrom(stored: Record<string, string>) {
 }
 
 function credsFor(stored: Record<string, string>, kind: "COLLECT" | "PAYOUT"): Creds {
-  const key = pick(stored, `BAZIK_${kind}_API_KEY`, "BAZIK_API_KEY");
-  const secret = pick(stored, `BAZIK_${kind}_API_SECRET`, "BAZIK_API_SECRET");
+  // Bazik entrega una sola cuenta (User ID + Secret Key); si no hay credenciales
+  // separadas por API, se usa la cuenta global.
+  const key = pick(stored, `BAZIK_${kind}_API_KEY`, "BAZIK_API_KEY", "BAZIK_USER_ID");
+  const secret = pick(
+    stored,
+    `BAZIK_${kind}_API_SECRET`,
+    "BAZIK_API_SECRET",
+    "BAZIK_SECRET_KEY",
+  );
   return {
     baseUrl: baseUrlFrom(stored),
     ...(key ? { apiKey: key } : {}),
     ...(secret ? { apiSecret: secret } : {}),
   };
+}
+
+/** Secreto de firma de los webhooks de Bazik (env o guardado en el panel). */
+export async function bazikWebhookSecret(): Promise<string | undefined> {
+  const stored = await loadStoredCreds();
+  return pick(stored, "BAZIK_WEBHOOK_SECRET");
 }
 
 /** Estado de ambas conexiones Bazik para el panel de administración. */
