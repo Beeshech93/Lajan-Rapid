@@ -5,7 +5,8 @@ export const Route = createFileRoute("/api/public/bazik/payout")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const secret = process.env["BAZIK_WEBHOOK_SECRET"];
+        const { bazikWebhookSecret } = await import("@/lib/bazik.server");
+        const secret = await bazikWebhookSecret();
         if (secret) {
           const provided = request.headers.get("x-bazik-signature");
           if (provided !== secret) {

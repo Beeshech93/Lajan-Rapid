@@ -48,6 +48,9 @@ function CopyField({ label, value }: { label: string; value: string }) {
 
 const CRED_KEYS = [
   "BAZIK_BASE_URL",
+  "BAZIK_USER_ID",
+  "BAZIK_SECRET_KEY",
+  "BAZIK_WEBHOOK_SECRET",
   "BAZIK_COLLECT_API_KEY",
   "BAZIK_COLLECT_API_SECRET",
   "BAZIK_PAYOUT_API_KEY",
@@ -67,13 +70,10 @@ export function BazikPanel() {
     queryFn: () => status(),
   });
 
-  const [creds, setCreds] = useState<Record<CredKey, string>>({
-    BAZIK_BASE_URL: "",
-    BAZIK_COLLECT_API_KEY: "",
-    BAZIK_COLLECT_API_SECRET: "",
-    BAZIK_PAYOUT_API_KEY: "",
-    BAZIK_PAYOUT_API_SECRET: "",
-  });
+  const emptyCreds = () =>
+    Object.fromEntries(CRED_KEYS.map((k) => [k, ""])) as Record<CredKey, string>;
+
+  const [creds, setCreds] = useState<Record<CredKey, string>>(emptyCreds);
   const setCred = (k: CredKey, v: string) => setCreds((p) => ({ ...p, [k]: v }));
 
   const saveMut = useMutation({
@@ -86,13 +86,7 @@ export function BazikPanel() {
     },
     onSuccess: () => {
       toast.success("Credenciales guardadas");
-      setCreds({
-        BAZIK_BASE_URL: "",
-        BAZIK_COLLECT_API_KEY: "",
-        BAZIK_COLLECT_API_SECRET: "",
-        BAZIK_PAYOUT_API_KEY: "",
-        BAZIK_PAYOUT_API_SECRET: "",
-      });
+      setCreds(emptyCreds());
       void queryClient.invalidateQueries({ queryKey: ["bazik_status"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -156,6 +150,57 @@ export function BazikPanel() {
               onChange={(e) => setCred("BAZIK_BASE_URL", e.target.value)}
               placeholder={info?.baseUrl ?? "https://api.bazik.io"}
             />
+          </div>
+
+          <div className="space-y-3 rounded-lg border p-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-semibold">Cuenta Bazik (User ID + Secret Key)</span>
+              <Badge variant={info?.account?.hasUserId ? "secondary" : "destructive"}>
+                {info?.account?.hasUserId ? "User ID activo" : "Falta User ID"}
+              </Badge>
+              <Badge variant={info?.account?.hasSecretKey ? "secondary" : "destructive"}>
+                {info?.account?.hasSecretKey ? "Secret Key activa" : "Falta Secret Key"}
+              </Badge>
+              <Badge variant={info?.account?.hasWebhookSecret ? "secondary" : "outline"}>
+                {info?.account?.hasWebhookSecret ? "Webhook firmado" : "Sin secreto webhook"}
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Si no defines credenciales separadas por API, se usa esta cuenta para cobros y
+              envíos.
+            </p>
+            <div className="space-y-1.5">
+              <Label htmlFor="BAZIK_USER_ID">Bazik User ID</Label>
+              <Input
+                id="BAZIK_USER_ID"
+                autoComplete="off"
+                value={creds.BAZIK_USER_ID}
+                onChange={(e) => setCred("BAZIK_USER_ID", e.target.value)}
+                placeholder="bzk_..."
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="BAZIK_SECRET_KEY">Secret Key</Label>
+              <Input
+                id="BAZIK_SECRET_KEY"
+                type="password"
+                autoComplete="off"
+                value={creds.BAZIK_SECRET_KEY}
+                onChange={(e) => setCred("BAZIK_SECRET_KEY", e.target.value)}
+                placeholder="sk_..."
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="BAZIK_WEBHOOK_SECRET">Webhook Signing Secret</Label>
+              <Input
+                id="BAZIK_WEBHOOK_SECRET"
+                type="password"
+                autoComplete="off"
+                value={creds.BAZIK_WEBHOOK_SECRET}
+                onChange={(e) => setCred("BAZIK_WEBHOOK_SECRET", e.target.value)}
+                placeholder="pegar aquí"
+              />
+            </div>
           </div>
 
           {[

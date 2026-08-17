@@ -32,6 +32,9 @@ type Creds = { baseUrl: string; apiKey?: string; apiSecret?: string };
 
 export const BAZIK_CRED_NAMES = [
   "BAZIK_BASE_URL",
+  "BAZIK_USER_ID",
+  "BAZIK_SECRET_KEY",
+  "BAZIK_WEBHOOK_SECRET",
   "BAZIK_COLLECT_API_KEY",
   "BAZIK_COLLECT_API_SECRET",
   "BAZIK_PAYOUT_API_KEY",
@@ -82,13 +85,26 @@ function baseUrlFrom(stored: Record<string, string>) {
 }
 
 function credsFor(stored: Record<string, string>, kind: "COLLECT" | "PAYOUT"): Creds {
-  const key = pick(stored, `BAZIK_${kind}_API_KEY`, "BAZIK_API_KEY");
-  const secret = pick(stored, `BAZIK_${kind}_API_SECRET`, "BAZIK_API_SECRET");
+  // Bazik entrega una sola cuenta (User ID + Secret Key); si no hay credenciales
+  // separadas por API, se usa la cuenta global.
+  const key = pick(stored, `BAZIK_${kind}_API_KEY`, "BAZIK_API_KEY", "BAZIK_USER_ID");
+  const secret = pick(
+    stored,
+    `BAZIK_${kind}_API_SECRET`,
+    "BAZIK_API_SECRET",
+    "BAZIK_SECRET_KEY",
+  );
   return {
     baseUrl: baseUrlFrom(stored),
     ...(key ? { apiKey: key } : {}),
     ...(secret ? { apiSecret: secret } : {}),
   };
+}
+
+/** Secreto de firma de los webhooks de Bazik (env o guardado en el panel). */
+export async function bazikWebhookSecret(): Promise<string | undefined> {
+  const stored = await loadStoredCreds();
+  return pick(stored, "BAZIK_WEBHOOK_SECRET");
 }
 
 /** Estado de ambas conexiones Bazik para el panel de administración. */
@@ -99,6 +115,11 @@ export async function bazikStatusInfo() {
   const payout = credsFor(stored, "PAYOUT");
   return {
     baseUrl: url,
+    account: {
+      hasUserId: Boolean(pick(stored, "BAZIK_USER_ID")),
+      hasSecretKey: Boolean(pick(stored, "BAZIK_SECRET_KEY")),
+      hasWebhookSecret: Boolean(pick(stored, "BAZIK_WEBHOOK_SECRET")),
+    },
     configured: Boolean(collect.apiKey && payout.apiKey),
     topupEndpoint: `${url}/v1/collections`,
     payoutEndpoint: `${url}/v1/payouts`,
@@ -129,8 +150,10 @@ async function callBazik(creds: Creds, path: string, body: unknown): Promise<Baz
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    Authorization: `Bearer ${creds.apiKey}`,
+    // Con cuenta Bazik (User ID + Secret Key) el bearer es la Secret Key.
+    Authorization: `Bearer ${creds.apiSecret ?? creds.apiKey}`,
     "X-Api-Key": creds.apiKey,
+    "X-User-Id": creds.apiKey,
   };
   if (creds.apiSecret) headers["X-Api-Secret"] = creds.apiSecret;
 
