@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Check, Circle, Copy, Loader2 } from "lucide-react";
+import { Check, Circle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { mercadoPagoInitiatePayment } from "@/lib/mercadopago.functions";
+import { finalizeTransferPayout } from "@/lib/transfers.functions";
 import {
   money,
   shortDate,
@@ -36,7 +37,18 @@ function Detalle() {
   const { id } = Route.useParams();
   const qc = useQueryClient();
   const initiatePayment = useServerFn(mercadoPagoInitiatePayment);
+  const finalizePayout = useServerFn(finalizeTransferPayout);
   const [isInitiating, setIsInitiating] = useState(false);
+
+  const finalize = useMutation({
+    mutationFn: () => finalizePayout({ data: { transferId: id } }),
+    onSuccess: () => {
+      toast.success("Envío completado");
+      void qc.invalidateQueries({ queryKey: ["transfer", id] });
+      void qc.invalidateQueries({ queryKey: ["transfer-events", id] });
+    },
+    onError: (err: Error) => toast.error(err.message || "No pudimos completar el envío"),
+  });
 
   const { data: t } = useQuery({
     queryKey: ["transfer", id],
@@ -81,6 +93,8 @@ function Detalle() {
   const currentIndex = STATUS_FLOW.indexOf(status);
   const paymentName = paymentLabel(t.payment_method);
   const deliveryName = deliveryLabel(t.delivery_method);
+  const isCardPayment = t.payment_method === "mercadopago" || t.payment_method === "tarjeta";
+
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
@@ -105,18 +119,22 @@ function Detalle() {
         </CardContent>
       </Card>
 
-      {status === "awaiting_payment" && (
+      {status !== "completed" && status !== "cancelled" && (
         <Card className="border-warning/40 bg-warning/10">
           <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
             <div>
-              <p className="font-semibold">Completa tu pago con {paymentName}</p>
+              <p className="font-semibold">
+                {isCardPayment
+                  ? `Completa tu pago con ${paymentName}`
+                  : `Finalizar envío por ${deliveryName}`}
+              </p>
               <p className="text-sm text-muted-foreground">
-                {(t.payment_method === "mercadopago" || t.payment_method === "tarjeta")
+                {isCardPayment
                   ? "Serás redirigido a Mercado Pago para completar el pago."
-                  : `Usa la referencia ${t.reference}. Un agente confirmará el pago.`}
+                  : `${t.recipient_name} · ${t.recipient_phone} · ${money(Number(t.amount_receive), t.receive_currency)}`}
               </p>
             </div>
-            {t.payment_method === "mercadopago" || t.payment_method === "tarjeta" ? (
+            {isCardPayment ? (
               <Button
                 size="sm"
                 className="gap-2"
@@ -138,19 +156,18 @@ function Detalle() {
             ) : (
               <Button
                 size="sm"
-                variant="secondary"
                 className="gap-2"
-                onClick={() => {
-                  void navigator.clipboard.writeText(t.reference);
-                  toast.success("Referencia copiada");
-                }}
+                disabled={finalize.isPending}
+                onClick={() => finalize.mutate()}
               >
-                <Copy className="size-4" /> Copiar referencia
+                {finalize.isPending && <Loader2 className="size-4 animate-spin" />}
+                {finalize.isPending ? "Enviando…" : `Enviar a ${deliveryName}`}
               </Button>
             )}
           </CardContent>
         </Card>
       )}
+
 
       <Card>
         <CardHeader>
