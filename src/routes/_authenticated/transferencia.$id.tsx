@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Check, Circle, Copy, Loader2 } from "lucide-react";
+import { Check, Circle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { mercadoPagoInitiatePayment } from "@/lib/mercadopago.functions";
+import { finalizeTransferPayout } from "@/lib/transfers.functions";
 import {
   money,
   shortDate,
@@ -36,7 +37,18 @@ function Detalle() {
   const { id } = Route.useParams();
   const qc = useQueryClient();
   const initiatePayment = useServerFn(mercadoPagoInitiatePayment);
+  const finalizePayout = useServerFn(finalizeTransferPayout);
   const [isInitiating, setIsInitiating] = useState(false);
+
+  const finalize = useMutation({
+    mutationFn: () => finalizePayout({ data: { transferId: id } }),
+    onSuccess: () => {
+      toast.success("Envío completado");
+      void qc.invalidateQueries({ queryKey: ["transfer", id] });
+      void qc.invalidateQueries({ queryKey: ["transfer-events", id] });
+    },
+    onError: (err: Error) => toast.error(err.message || "No pudimos completar el envío"),
+  });
 
   const { data: t } = useQuery({
     queryKey: ["transfer", id],
@@ -81,6 +93,8 @@ function Detalle() {
   const currentIndex = STATUS_FLOW.indexOf(status);
   const paymentName = paymentLabel(t.payment_method);
   const deliveryName = deliveryLabel(t.delivery_method);
+  const isCardPayment = t.payment_method === "mercadopago" || t.payment_method === "tarjeta";
+
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
