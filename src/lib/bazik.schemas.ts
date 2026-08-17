@@ -17,6 +17,9 @@ const credField = z.string().trim().max(500).optional();
 
 export const bazikCredentialsSchema = z.object({
   BAZIK_BASE_URL: credField,
+  BAZIK_USER_ID: credField,
+  BAZIK_SECRET_KEY: credField,
+  BAZIK_WEBHOOK_SECRET: credField,
   BAZIK_COLLECT_API_KEY: credField,
   BAZIK_COLLECT_API_SECRET: credField,
   BAZIK_PAYOUT_API_KEY: credField,
