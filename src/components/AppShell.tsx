@@ -30,6 +30,15 @@ const baseNav = [
   { to: "/perfil", key: "nav.profile", icon: User },
 ];
 
+const mobileNav = [
+  { to: "/dashboard", key: "nav.home", icon: Home },
+  { to: "/enviar", key: "nav.send", icon: Send },
+  { to: "/billetera", key: "nav.wallet", icon: Wallet },
+  { to: "/tarjeta", key: "nav.card", icon: CreditCard },
+  { to: "/perfil", key: "nav.profile", icon: User },
+];
+
+
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { profile, isAdmin, isAgent } = useProfile();
@@ -85,39 +94,49 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
 
       <div className="flex min-h-screen flex-1 flex-col">
-        <header className="flex items-center justify-between border-b bg-card px-4 py-3 md:hidden">
-          <Link to="/dashboard" className="flex items-center gap-2">
-            <span className="grid size-8 place-items-center rounded-lg bg-brand font-display text-sm font-bold text-primary-foreground">
+        <header className="sticky top-0 z-30 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b bg-card/90 px-4 py-3 pt-[calc(0.75rem+env(safe-area-inset-top))] backdrop-blur-md md:hidden">
+          <Link to="/dashboard" className="flex min-w-0 items-center gap-2">
+            <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-brand font-display text-sm font-bold text-primary-foreground">
               LR
             </span>
-            <span className="font-display font-semibold">Lajan Rapid</span>
+            <span className="truncate font-display font-semibold">Lajan Rapid</span>
           </Link>
-          <div className="flex items-center gap-1">
-            <LanguageSwitcher className="h-9 w-[112px] text-xs" />
-          <Button variant="ghost" size="icon" onClick={signOut} aria-label={t("nav.signout")}>
-            <LogOut className="size-4" />
-          </Button>
+          <div className="flex shrink-0 items-center gap-1">
+            <LanguageSwitcher className="h-9 w-[96px] text-xs" />
+            <Button variant="ghost" size="icon" onClick={signOut} aria-label={t("nav.signout")}>
+              <LogOut className="size-4" />
+            </Button>
           </div>
         </header>
 
-        <main className="flex-1 px-4 pb-24 pt-5 md:px-8 md:pb-10">{children}</main>
+        <main className="flex-1 px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-5 md:px-8 md:pb-10">
+          {children}
+        </main>
 
-        <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-6 border-t bg-card md:hidden">
-          {baseNav.map((item) => (
+        <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden">
+          {mobileNav.map((item) => (
             <Link
               key={item.to}
               to={item.to}
               className={cn(
-                "flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium",
+                "flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium transition-colors",
                 pathname === item.to ? "text-primary" : "text-muted-foreground",
               )}
             >
-              <item.icon className="size-5" />
-              {t(item.key)}
+              <span
+                className={cn(
+                  "grid size-9 place-items-center rounded-xl transition-colors",
+                  pathname === item.to ? "bg-primary/10" : "bg-transparent",
+                )}
+              >
+                <item.icon className="size-5" />
+              </span>
+              <span className="max-w-full truncate px-1">{t(item.key)}</span>
             </Link>
           ))}
         </nav>
       </div>
+
     </div>
   );
 }
