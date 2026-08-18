@@ -62,8 +62,8 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-background md:flex">
       <aside className="hidden w-64 shrink-0 flex-col bg-sidebar p-5 text-sidebar-foreground md:flex">
         <Link to="/dashboard" className="mb-8 flex items-center gap-2">
-          <span className="grid size-9 place-items-center rounded-xl bg-mint font-display text-lg font-bold text-sidebar-primary-foreground">
-            LR
+          <span className="grid size-9 place-items-center overflow-hidden rounded-xl bg-white p-1">
+            <img src={logoAsset.url} alt="Lajan Rapid" className="h-full w-full object-contain" />
           </span>
           <span className="font-display text-lg font-semibold">Lajan Rapid</span>
         </Link>
