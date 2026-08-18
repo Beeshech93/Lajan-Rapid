@@ -13,6 +13,7 @@ import {
   Smartphone,
 } from "lucide-react";
 import type { ReactNode } from "react";
+import logoAsset from "@/assets/lajan-rapid-logo.png.asset.json";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { cn } from "@/lib/utils";
@@ -62,8 +63,8 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-background md:flex">
       <aside className="hidden w-64 shrink-0 flex-col bg-sidebar p-5 text-sidebar-foreground md:flex">
         <Link to="/dashboard" className="mb-8 flex items-center gap-2">
-          <span className="grid size-9 place-items-center rounded-xl bg-mint font-display text-lg font-bold text-sidebar-primary-foreground">
-            LR
+          <span className="grid size-9 place-items-center overflow-hidden rounded-xl bg-white p-1">
+            <img src={logoAsset.url} alt="Lajan Rapid" className="h-full w-full object-contain" />
           </span>
           <span className="font-display text-lg font-semibold">Lajan Rapid</span>
         </Link>
@@ -96,8 +97,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="flex min-h-screen flex-1 flex-col">
         <header className="sticky top-0 z-30 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b bg-card/90 px-4 py-3 pt-[calc(0.75rem+env(safe-area-inset-top))] backdrop-blur-md md:hidden">
           <Link to="/dashboard" className="flex min-w-0 items-center gap-2">
-            <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-brand font-display text-sm font-bold text-primary-foreground">
-              LR
+            <span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-lg bg-white p-0.5">
+              <img src={logoAsset.url} alt="Lajan Rapid" className="h-full w-full object-contain" />
             </span>
             <span className="truncate font-display font-semibold">Lajan Rapid</span>
           </Link>
