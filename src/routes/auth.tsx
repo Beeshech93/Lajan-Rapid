@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import logoAsset from "@/assets/lajan-rapid-logo.png.asset.json";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useI18n } from "@/lib/i18n";
 import { DIAL_COUNTRIES, expectedLengths, formatNational, validatePhone } from "@/lib/phone";
