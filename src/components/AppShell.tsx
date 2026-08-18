@@ -30,6 +30,15 @@ const baseNav = [
   { to: "/perfil", key: "nav.profile", icon: User },
 ];
 
+const mobileNav = [
+  { to: "/dashboard", key: "nav.home", icon: Home },
+  { to: "/enviar", key: "nav.send", icon: Send },
+  { to: "/billetera", key: "nav.wallet", icon: Wallet },
+  { to: "/tarjeta", key: "nav.card", icon: CreditCard },
+  { to: "/perfil", key: "nav.profile", icon: User },
+];
+
+
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { profile, isAdmin, isAgent } = useProfile();
