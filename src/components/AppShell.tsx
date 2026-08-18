@@ -13,6 +13,7 @@ import {
   Smartphone,
 } from "lucide-react";
 import type { ReactNode } from "react";
+import logoAsset from "@/assets/lajan-rapid-logo.png.asset.json";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { cn } from "@/lib/utils";
