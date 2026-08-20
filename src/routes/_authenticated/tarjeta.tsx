@@ -74,27 +74,37 @@ function Tarjeta() {
   const list = cards ?? [];
   const walletList = wallets ?? [];
 
+  const issueFn = useServerFn(issueCard);
+
   const issue = async () => {
     if (!walletId) {
       toast.error("Elige la billetera que financia la tarjeta");
       return;
     }
     setBusy(true);
-    const { error } = await supabase.rpc("issue_virtual_card", {
-      _wallet_id: walletId,
-      _brand: brand,
-      _disposable: disposable,
-      ...(label ? { _label: label } : {}),
-    });
-    setBusy(false);
-    if (error) {
-      toast.error(error.message);
-      return;
+    try {
+      const res = await issueFn({
+        data: {
+          walletId,
+          brand: brand as "visa" | "mastercard",
+          disposable,
+          ...(label ? { label } : {}),
+        },
+      });
+      toast.success(
+        res.simulated
+          ? "Tarjeta emitida en modo sandbox"
+          : `Tarjeta emitida con ${res.provider.toUpperCase()}`,
+      );
+      setLabel("");
+      refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "No se pudo emitir la tarjeta");
+    } finally {
+      setBusy(false);
     }
-    toast.success("Tarjeta emitida");
-    setLabel("");
-    refresh();
   };
+
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
