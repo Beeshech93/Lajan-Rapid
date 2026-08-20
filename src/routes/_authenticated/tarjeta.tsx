@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { revealCardDetails } from "@/lib/cards.functions";
+import { issueCard, revealCardDetails, setCardControl } from "@/lib/cards.functions";
 import { useState } from "react";
 import { toast } from "sonner";
 import { CreditCard, Eye, EyeOff, Lock, ShieldCheck, Snowflake } from "lucide-react";
