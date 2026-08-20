@@ -27,6 +27,7 @@ type Status = Awaited<ReturnType<typeof cardIssuerStatus>>;
 export function CardIssuerPanel() {
   const loadStatus = useServerFn(cardIssuerStatus);
   const saveCreds = useServerFn(cardIssuerSaveCredentials);
+  const saveProgram = useServerFn(cardSaveProgramConfig);
 
   const [status, setStatus] = useState<Status | null>(null);
   const [baseUrl, setBaseUrl] = useState("");
@@ -34,15 +35,61 @@ export function CardIssuerPanel() {
   const [apiSecret, setApiSecret] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const [provider, setProvider] = useState<"mock" | "visa" | "mastercard">("mock");
+  const [visaEnabled, setVisaEnabled] = useState(false);
+  const [mcEnabled, setMcEnabled] = useState(false);
+  const [visaBaseUrl, setVisaBaseUrl] = useState("");
+  const [visaKey, setVisaKey] = useState("");
+  const [visaUserId, setVisaUserId] = useState("");
+  const [mcBaseUrl, setMcBaseUrl] = useState("");
+  const [mcKey, setMcKey] = useState("");
+  const [mcClientId, setMcClientId] = useState("");
+  const [mcClientSecret, setMcClientSecret] = useState("");
+
   const refresh = async () => {
     try {
       const s = await loadStatus({});
       setStatus(s);
       setBaseUrl(s.baseUrl);
+      setProvider(s.program.provider);
+      setVisaEnabled(s.program.visaEnabled);
+      setMcEnabled(s.program.mastercardEnabled);
     } catch {
       /* sin permisos */
     }
   };
+
+  const saveProgramConfig = async () => {
+    setBusy(true);
+    try {
+      const p = await saveProgram({
+        data: {
+          CARD_PROVIDER: provider,
+          VISA_ENABLED: visaEnabled ? "true" : "false",
+          MASTERCARD_ENABLED: mcEnabled ? "true" : "false",
+          ...(visaBaseUrl ? { VISA_BASE_URL: visaBaseUrl } : {}),
+          ...(visaKey ? { VISA_API_KEY: visaKey } : {}),
+          ...(visaUserId ? { VISA_USER_ID: visaUserId } : {}),
+          ...(mcBaseUrl ? { MASTERCARD_BASE_URL: mcBaseUrl } : {}),
+          ...(mcKey ? { MASTERCARD_API_KEY: mcKey } : {}),
+          ...(mcClientId ? { MASTERCARD_CLIENT_ID: mcClientId } : {}),
+          ...(mcClientSecret ? { MASTERCARD_CLIENT_SECRET: mcClientSecret } : {}),
+        },
+      });
+      setStatus((prev) => (prev ? { ...prev, program: p } : prev));
+      setVisaKey("");
+      setVisaUserId("");
+      setMcKey("");
+      setMcClientId("");
+      setMcClientSecret("");
+      toast.success("Programa de tarjetas actualizado");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "No se pudo guardar");
+    } finally {
+      setBusy(false);
+    }
+  };
+
 
   useEffect(() => {
     void refresh();
