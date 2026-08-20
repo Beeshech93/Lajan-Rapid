@@ -261,20 +261,36 @@ function CardItem({ card, onChange }: { card: VirtualCard; onChange: () => void 
     },
   });
 
+  const control = useServerFn(setCardControl);
+
   const toggleFreeze = async () => {
     setBusy(true);
-    const { error } = await supabase.rpc("set_card_status", {
-      _card_id: card.id,
-      _status: card.status === "active" ? "frozen" : "active",
-    });
-    setBusy(false);
-    if (error) {
-      toast.error(error.message);
-      return;
+    try {
+      await control({
+        data: { cardId: card.id, action: card.status === "active" ? "freeze" : "unfreeze" },
+      });
+      toast.success(card.status === "active" ? "Tarjeta congelada" : "Tarjeta desbloqueada");
+      onChange();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "No se pudo actualizar la tarjeta");
+    } finally {
+      setBusy(false);
     }
-    toast.success(card.status === "active" ? "Tarjeta congelada" : "Tarjeta desbloqueada");
-    onChange();
   };
+
+  const terminate = async () => {
+    setBusy(true);
+    try {
+      await control({ data: { cardId: card.id, action: "terminate" } });
+      toast.success("Tarjeta terminada");
+      onChange();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "No se pudo terminar la tarjeta");
+    } finally {
+      setBusy(false);
+    }
+  };
+
 
   const reveal = useServerFn(revealCardDetails);
   const [secure, setSecure] = useState<{
