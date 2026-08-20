@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { revealCardDetails } from "@/lib/cards.functions";
+import { issueCard, revealCardDetails, setCardControl } from "@/lib/cards.functions";
 import { useState } from "react";
 import { toast } from "sonner";
-import { CreditCard, Eye, EyeOff, Lock, ShieldCheck, Snowflake } from "lucide-react";
+import { CreditCard, Eye, EyeOff, Lock, ShieldCheck, Snowflake, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -74,27 +74,37 @@ function Tarjeta() {
   const list = cards ?? [];
   const walletList = wallets ?? [];
 
+  const issueFn = useServerFn(issueCard);
+
   const issue = async () => {
     if (!walletId) {
       toast.error("Elige la billetera que financia la tarjeta");
       return;
     }
     setBusy(true);
-    const { error } = await supabase.rpc("issue_virtual_card", {
-      _wallet_id: walletId,
-      _brand: brand,
-      _disposable: disposable,
-      ...(label ? { _label: label } : {}),
-    });
-    setBusy(false);
-    if (error) {
-      toast.error(error.message);
-      return;
+    try {
+      const res = await issueFn({
+        data: {
+          walletId,
+          brand: brand as "visa" | "mastercard",
+          disposable,
+          ...(label ? { label } : {}),
+        },
+      });
+      toast.success(
+        res.simulated
+          ? "Tarjeta emitida en modo sandbox"
+          : `Tarjeta emitida con ${res.provider.toUpperCase()}`,
+      );
+      setLabel("");
+      refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "No se pudo emitir la tarjeta");
+    } finally {
+      setBusy(false);
     }
-    toast.success("Tarjeta emitida");
-    setLabel("");
-    refresh();
   };
+
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -251,20 +261,36 @@ function CardItem({ card, onChange }: { card: VirtualCard; onChange: () => void 
     },
   });
 
+  const control = useServerFn(setCardControl);
+
   const toggleFreeze = async () => {
     setBusy(true);
-    const { error } = await supabase.rpc("set_card_status", {
-      _card_id: card.id,
-      _status: card.status === "active" ? "frozen" : "active",
-    });
-    setBusy(false);
-    if (error) {
-      toast.error(error.message);
-      return;
+    try {
+      await control({
+        data: { cardId: card.id, action: card.status === "active" ? "freeze" : "unfreeze" },
+      });
+      toast.success(card.status === "active" ? "Tarjeta congelada" : "Tarjeta desbloqueada");
+      onChange();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "No se pudo actualizar la tarjeta");
+    } finally {
+      setBusy(false);
     }
-    toast.success(card.status === "active" ? "Tarjeta congelada" : "Tarjeta desbloqueada");
-    onChange();
   };
+
+  const terminate = async () => {
+    setBusy(true);
+    try {
+      await control({ data: { cardId: card.id, action: "terminate" } });
+      toast.success("Tarjeta terminada");
+      onChange();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "No se pudo terminar la tarjeta");
+    } finally {
+      setBusy(false);
+    }
+  };
+
 
   const reveal = useServerFn(revealCardDetails);
   const [secure, setSecure] = useState<{
@@ -383,7 +409,13 @@ function CardItem({ card, onChange }: { card: VirtualCard; onChange: () => void 
               )}
             </Button>
           )}
+          {card.status !== "cancelled" && (
+            <Button size="sm" variant="ghost" disabled={busy} onClick={terminate}>
+              <Trash2 className="size-4" /> Terminar
+            </Button>
+          )}
         </div>
+
 
         {secure && (
           <p className="text-xs text-muted-foreground">
