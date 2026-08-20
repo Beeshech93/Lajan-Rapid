@@ -409,7 +409,13 @@ function CardItem({ card, onChange }: { card: VirtualCard; onChange: () => void 
               )}
             </Button>
           )}
+          {card.status !== "cancelled" && (
+            <Button size="sm" variant="ghost" disabled={busy} onClick={terminate}>
+              <Trash2 className="size-4" /> Terminar
+            </Button>
+          )}
         </div>
+
 
         {secure && (
           <p className="text-xs text-muted-foreground">
