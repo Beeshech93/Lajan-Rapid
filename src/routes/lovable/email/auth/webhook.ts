@@ -9,7 +9,7 @@ import { EmailChangeEmail } from '@/lib/email-templates/email-change'
 import { ReauthenticationEmail } from '@/lib/email-templates/reauthentication'
 
 // Configuration
-const SITE_NAME = "send-hope-global"
+const SITE_NAME = "Lajan Rapid"
 const SENDER_DOMAIN = "notify.lajanrapid.app"
 const ROOT_DOMAIN = "lajanrapid.app"
 const FROM_DOMAIN = "lajanrapid.app"
