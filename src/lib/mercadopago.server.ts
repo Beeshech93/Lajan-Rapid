@@ -383,3 +383,126 @@ export async function createOxxoVoucher(opts: {
     return { ok: false, error: "No pudimos contactar a Mercado Pago." };
   }
 }
+
+/* ------------------------------------------------------------------ *
+ * SPEI — transferencia bancaria con CLABE real (Mercado Pago México)
+ * ------------------------------------------------------------------ */
+
+export type SpeiReference = {
+  paymentId: string;
+  /** CLABE interbancaria a la que el cliente transfiere. */
+  clabe: string;
+  /** Banco receptor informado por Mercado Pago. */
+  bank: string | null;
+  /** Concepto/referencia que debe capturar en su banca en línea. */
+  concept: string;
+  /** Comprobante imprimible (si el emisor lo entrega). */
+  voucherUrl: string | null;
+  expiresAt: string | null;
+  amount: number;
+  currency: string;
+  status: string;
+};
+
+function mapSpei(p: Record<string, unknown>, concept: string): SpeiReference {
+  const td = (p["transaction_details"] ?? {}) as Record<string, unknown>;
+  const clabe =
+    (typeof td["transaction_id"] === "string" && td["transaction_id"]) ||
+    (typeof td["payment_method_reference_id"] === "string" && td["payment_method_reference_id"]) ||
+    (typeof td["verification_code"] === "string" && td["verification_code"]) ||
+    "";
+  return {
+    paymentId: String(p["id"]),
+    clabe: String(clabe),
+    bank:
+      typeof td["financial_institution"] === "string"
+        ? (td["financial_institution"] as string)
+        : null,
+    concept,
+    voucherUrl:
+      typeof td["external_resource_url"] === "string"
+        ? (td["external_resource_url"] as string)
+        : null,
+    expiresAt: typeof p["date_of_expiration"] === "string" ? (p["date_of_expiration"] as string) : null,
+    amount: Number(p["transaction_amount"] ?? 0),
+    currency: String(p["currency_id"] ?? "MXN"),
+    status: String(p["status"] ?? "pending"),
+  };
+}
+
+async function findExistingSpei(
+  token: string,
+  reference: string,
+): Promise<SpeiReference | null> {
+  const url = `${MP_API}/v1/payments/search?external_reference=${encodeURIComponent(reference)}&sort=date_created&criteria=desc&limit=10`;
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  if (!res.ok) return null;
+  const json = (await res.json()) as { results?: Record<string, unknown>[] };
+  for (const p of json.results ?? []) {
+    if (p["payment_method_id"] !== "clabe") continue;
+    if (p["status"] !== "pending") continue;
+    const s = mapSpei(p, reference);
+    if (!s.clabe) continue;
+    if (s.expiresAt && new Date(s.expiresAt).getTime() < Date.now()) continue;
+    return s;
+  }
+  return null;
+}
+
+/** Crea (o reutiliza) una CLABE real de pago SPEI para un envío. */
+export async function createSpeiReference(opts: {
+  reference: string;
+  amount: number;
+  description: string;
+  payerEmail: string;
+  payerFirstName?: string;
+  payerLastName?: string;
+  hoursValid?: number;
+}): Promise<{ ok: true; spei: SpeiReference } | { ok: false; error: string }> {
+  const stored = await loadMpCreds();
+  const token = pick(stored, "MERCADOPAGO_ACCESS_TOKEN");
+  if (!token) return { ok: false, error: "Mercado Pago no está configurado todavía." };
+
+  const existing = await findExistingSpei(token, opts.reference);
+  if (existing) return { ok: true, spei: existing };
+
+  const expires = new Date(Date.now() + (opts.hoursValid ?? 72) * 3600 * 1000);
+  const body = {
+    transaction_amount: Math.round(opts.amount * 100) / 100,
+    description: opts.description,
+    payment_method_id: "clabe",
+    external_reference: opts.reference,
+    date_of_expiration: expires.toISOString().replace("Z", "+00:00"),
+    notification_url: `${process.env['PUBLIC_URL'] || "https://lajanrapid.app"}/api/public/mercadopago/webhook`,
+    payer: {
+      email: opts.payerEmail,
+      first_name: opts.payerFirstName ?? "Cliente",
+      last_name: opts.payerLastName ?? "Lajan",
+    },
+  };
+
+  try {
+    const res = await fetch(`${MP_API}/v1/payments`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "X-Idempotency-Key": `spei-${opts.reference}`,
+      },
+      body: JSON.stringify(body),
+    });
+    const json = (await res.json()) as Record<string, unknown>;
+    if (!res.ok) {
+      console.error("Mercado Pago SPEI: error al crear la CLABE", res.status, json["message"]);
+      return { ok: false, error: "No pudimos generar la CLABE SPEI. Intenta de nuevo." };
+    }
+    const spei = mapSpei(json, opts.reference);
+    if (!spei.clabe) {
+      return { ok: false, error: "Mercado Pago no devolvió una CLABE para este pago." };
+    }
+    return { ok: true, spei };
+  } catch (e) {
+    console.error("Mercado Pago SPEI: error de red", e);
+    return { ok: false, error: "No pudimos contactar a Mercado Pago." };
+  }
+}
