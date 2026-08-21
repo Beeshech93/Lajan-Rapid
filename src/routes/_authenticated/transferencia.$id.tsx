@@ -168,6 +168,12 @@ function Detalle() {
         </Card>
       )}
 
+      {t.payment_method === "oxxo" && status !== "completed" && status !== "cancelled" && (
+        <OxxoVoucherCard transferId={id} amount={money(Number(t.total_send), t.send_currency)} />
+      )}
+
+
+
 
       <Card>
         <CardHeader>
