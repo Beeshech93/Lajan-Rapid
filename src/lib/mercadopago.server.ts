@@ -272,3 +272,114 @@ export async function createMpPreference(opts: {
     return null;
   }
 }
+
+/* ------------------------------------------------------------------ *
+ * OXXO — generación de ficha de pago en efectivo (voucher real)
+ * ------------------------------------------------------------------ */
+
+export type OxxoVoucher = {
+  paymentId: string;
+  /** Código de barras / referencia que el cliente dicta en la caja OXXO. */
+  reference: string;
+  /** URL del comprobante imprimible generado por Mercado Pago. */
+  voucherUrl: string | null;
+  /** Vencimiento en ISO-8601. */
+  expiresAt: string | null;
+  amount: number;
+  currency: string;
+  status: string;
+};
+
+function mapOxxo(p: Record<string, unknown>): OxxoVoucher {
+  const td = (p["transaction_details"] ?? {}) as Record<string, unknown>;
+  const barcode = (p["barcode"] ?? {}) as Record<string, unknown>;
+  const ref =
+    (typeof barcode["content"] === "string" && barcode["content"]) ||
+    (typeof td["payment_method_reference_id"] === "string" && td["payment_method_reference_id"]) ||
+    (typeof td["verification_code"] === "string" && td["verification_code"]) ||
+    String(p["id"]);
+  return {
+    paymentId: String(p["id"]),
+    reference: String(ref),
+    voucherUrl:
+      typeof td["external_resource_url"] === "string" ? (td["external_resource_url"] as string) : null,
+    expiresAt: typeof p["date_of_expiration"] === "string" ? (p["date_of_expiration"] as string) : null,
+    amount: Number(p["transaction_amount"] ?? 0),
+    currency: String(p["currency_id"] ?? "MXN"),
+    status: String(p["status"] ?? "pending"),
+  };
+}
+
+/** Busca una ficha OXXO vigente ya emitida para esta referencia de envío. */
+async function findExistingOxxo(token: string, reference: string): Promise<OxxoVoucher | null> {
+  const url = `${MP_API}/v1/payments/search?external_reference=${encodeURIComponent(reference)}&sort=date_created&criteria=desc&limit=10`;
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  if (!res.ok) return null;
+  const json = (await res.json()) as { results?: Record<string, unknown>[] };
+  for (const p of json.results ?? []) {
+    if (p["payment_method_id"] !== "oxxo") continue;
+    if (p["status"] !== "pending") continue;
+    const v = mapOxxo(p);
+    if (v.expiresAt && new Date(v.expiresAt).getTime() < Date.now()) continue;
+    return v;
+  }
+  return null;
+}
+
+/**
+ * Crea (o reutiliza) una ficha real de pago en OXXO vía Mercado Pago.
+ * No se guardan datos de tarjeta: es un pago en efectivo con referencia.
+ */
+export async function createOxxoVoucher(opts: {
+  reference: string;
+  amount: number;
+  description: string;
+  payerEmail: string;
+  payerFirstName?: string;
+  payerLastName?: string;
+  /** Horas de validez de la ficha (por defecto 72 h). */
+  hoursValid?: number;
+}): Promise<{ ok: true; voucher: OxxoVoucher } | { ok: false; error: string }> {
+  const stored = await loadMpCreds();
+  const token = pick(stored, "MERCADOPAGO_ACCESS_TOKEN");
+  if (!token) return { ok: false, error: "Mercado Pago no está configurado todavía." };
+
+  const existing = await findExistingOxxo(token, opts.reference);
+  if (existing) return { ok: true, voucher: existing };
+
+  const expires = new Date(Date.now() + (opts.hoursValid ?? 72) * 3600 * 1000);
+  const body = {
+    transaction_amount: Math.round(opts.amount * 100) / 100,
+    description: opts.description,
+    payment_method_id: "oxxo",
+    external_reference: opts.reference,
+    date_of_expiration: expires.toISOString().replace("Z", "+00:00"),
+    notification_url: `${process.env['PUBLIC_URL'] || "https://lajanrapid.app"}/api/public/mercadopago/webhook`,
+    payer: {
+      email: opts.payerEmail,
+      first_name: opts.payerFirstName ?? "Cliente",
+      last_name: opts.payerLastName ?? "Lajan",
+    },
+  };
+
+  try {
+    const res = await fetch(`${MP_API}/v1/payments`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "X-Idempotency-Key": `oxxo-${opts.reference}`,
+      },
+      body: JSON.stringify(body),
+    });
+    const json = (await res.json()) as Record<string, unknown>;
+    if (!res.ok) {
+      console.error("Mercado Pago OXXO: error al crear la ficha", res.status, json["message"]);
+      return { ok: false, error: "No pudimos generar la ficha OXXO. Intenta de nuevo." };
+    }
+    return { ok: true, voucher: mapOxxo(json) };
+  } catch (e) {
+    console.error("Mercado Pago OXXO: error de red", e);
+    return { ok: false, error: "No pudimos contactar a Mercado Pago." };
+  }
+}
