@@ -1,14 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Check, Circle, Loader2 } from "lucide-react";
+import { Check, Circle, Copy, Loader2, Store } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { mercadoPagoInitiatePayment } from "@/lib/mercadopago.functions";
+import { mercadoPagoInitiatePayment, mercadoPagoOxxoVoucher } from "@/lib/mercadopago.functions";
 import { finalizeTransferPayout } from "@/lib/transfers.functions";
 import {
   money,
@@ -94,6 +94,7 @@ function Detalle() {
   const paymentName = paymentLabel(t.payment_method);
   const deliveryName = deliveryLabel(t.delivery_method);
   const isCardPayment = t.payment_method === "mercadopago" || t.payment_method === "tarjeta";
+  const isOxxo = t.payment_method === "oxxo";
 
 
   return (
@@ -119,7 +120,7 @@ function Detalle() {
         </CardContent>
       </Card>
 
-      {status !== "completed" && status !== "cancelled" && (
+      {status !== "completed" && status !== "cancelled" && !isOxxo && (
         <Card className="border-warning/40 bg-warning/10">
           <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
             <div>
@@ -167,6 +168,12 @@ function Detalle() {
           </CardContent>
         </Card>
       )}
+
+      {t.payment_method === "oxxo" && status !== "completed" && status !== "cancelled" && (
+        <OxxoVoucherCard transferId={id} amount={money(Number(t.total_send), t.send_currency)} />
+      )}
+
+
 
 
       <Card>
@@ -243,5 +250,103 @@ function Row({ label, value }: { label: string; value: string }) {
       <span className="text-muted-foreground">{label}</span>
       <span className="text-right font-medium">{value}</span>
     </div>
+  );
+}
+
+function OxxoVoucherCard({ transferId, amount }: { transferId: string; amount: string }) {
+  const getVoucher = useServerFn(mercadoPagoOxxoVoucher);
+  const { data, isPending, isError, error, refetch, isFetching } = useQuery({
+    queryKey: ["oxxo-voucher", transferId],
+    queryFn: () => getVoucher({ data: { transferId } }),
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const expires = data?.expiresAt ? new Date(data.expiresAt) : null;
+  const expired = expires ? expires.getTime() < Date.now() : false;
+
+  return (
+    <Card className="border-accent/40">
+      <CardHeader className="flex-row items-center gap-2 space-y-0">
+        <Store className="size-4 text-accent" />
+        <CardTitle className="text-base">Ficha de pago en OXXO</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {isPending && (
+          <p className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="size-4 animate-spin" /> Generando tu referencia…
+          </p>
+        )}
+
+        {isError && (
+          <div className="space-y-3">
+            <p className="text-sm text-destructive">
+              {(error as Error).message || "No pudimos generar la ficha."}
+            </p>
+            <Button size="sm" variant="outline" disabled={isFetching} onClick={() => void refetch()}>
+              Reintentar
+            </Button>
+          </div>
+        )}
+
+        {data && (
+          <>
+            <div className="rounded-xl bg-secondary p-4">
+              <p className="text-xs font-semibold uppercase text-muted-foreground">
+                Referencia OXXO
+              </p>
+              <p className="mt-1 break-all font-display text-2xl font-bold tracking-wider">
+                {data.reference}
+              </p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Monto a pagar: <span className="font-semibold text-foreground">{amount}</span>
+              </p>
+            </div>
+
+            <p className={`text-sm ${expired ? "text-destructive" : "text-muted-foreground"}`}>
+              {expires
+                ? expired
+                  ? `La ficha venció el ${expires.toLocaleString("es-MX")}. Genera una nueva.`
+                  : `Vence el ${expires.toLocaleString("es-MX", {
+                      dateStyle: "long",
+                      timeStyle: "short",
+                    })}`
+                : "Sin fecha de vencimiento informada."}
+            </p>
+
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-2"
+                onClick={() => {
+                  void navigator.clipboard.writeText(data.reference);
+                  toast.success("Referencia copiada");
+                }}
+              >
+                <Copy className="size-4" /> Copiar referencia
+              </Button>
+              {data.voucherUrl && (
+                <Button size="sm" className="gap-2" asChild>
+                  <a href={data.voucherUrl} target="_blank" rel="noreferrer">
+                    Ver comprobante
+                  </a>
+                </Button>
+              )}
+              {expired && (
+                <Button size="sm" variant="secondary" disabled={isFetching} onClick={() => void refetch()}>
+                  Generar nueva ficha
+                </Button>
+              )}
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              Muestra esta referencia en cualquier tienda OXXO. Tu envío se activa automáticamente
+              en cuanto la tienda reporta el pago (puede tardar unos minutos).
+            </p>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }

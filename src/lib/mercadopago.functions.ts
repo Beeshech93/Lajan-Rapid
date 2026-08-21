@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { parseMpCredentialsInput, type MpCredentialsInput } from "@/lib/mercadopago.schemas";
+import { parseMpCredentialsInput, parseOxxoVoucherInput, type MpCredentialsInput } from "@/lib/mercadopago.schemas";
 
 /** Estado de configuración de Mercado Pago (solo administradores). */
 export const mercadoPagoStatus = createServerFn({ method: "POST" })
@@ -74,4 +74,46 @@ export const mercadoPagoInitiatePayment = createServerFn({ method: "POST" })
     }
 
     return { checkoutUrl };
+  });
+
+/** Genera (o recupera) la ficha real de pago en OXXO para un envío propio. */
+export const mercadoPagoOxxoVoucher = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { transferId: string }) => parseOxxoVoucherInput(input))
+  .handler(async ({ data, context }) => {
+    const { data: transfer } = await context.supabase
+      .from("transfers")
+      .select("id, reference, total_send, send_currency, payment_method, status, recipient_name")
+      .eq("id", data.transferId)
+      .eq("user_id", context.userId)
+      .maybeSingle();
+
+    if (!transfer) throw new Error("Transferencia no encontrada");
+    if (transfer.payment_method !== "oxxo") throw new Error("Este envío no se paga en OXXO");
+    if (transfer.status !== "awaiting_payment" && transfer.status !== "created") {
+      throw new Error("Este envío ya no está pendiente de pago");
+    }
+
+    const { data: profile } = await context.supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", context.userId)
+      .maybeSingle();
+    const [firstName, ...rest] = (profile?.full_name || "Cliente Lajan").split(" ");
+
+    const email = context.claims?.email as string | undefined;
+    if (!email) throw new Error("Necesitamos un correo en tu cuenta para emitir la ficha");
+
+    const { createOxxoVoucher } = await import("@/lib/mercadopago.server");
+    const result = await createOxxoVoucher({
+      reference: transfer.reference,
+      amount: Number(transfer.total_send),
+      description: `Envío ${transfer.reference} a ${transfer.recipient_name}`,
+      payerEmail: email,
+      payerFirstName: firstName || "Cliente",
+      payerLastName: rest.join(" ") || "Lajan",
+    });
+
+    if (!result.ok) throw new Error(result.error);
+    return result.voucher;
   });
