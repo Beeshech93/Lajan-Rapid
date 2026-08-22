@@ -221,6 +221,8 @@ export async function createMpPreference(opts: {
   successUrl?: string;
   pendingUrl?: string;
   failureUrl?: string;
+  /** Restringe el checkout a tarjeta (excluye efectivo y transferencias). */
+  cardOnly?: boolean;
 }) {
   const stored = await loadMpCreds();
   const token = pick(stored, "MERCADOPAGO_ACCESS_TOKEN");
