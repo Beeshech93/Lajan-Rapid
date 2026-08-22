@@ -221,6 +221,8 @@ export async function createMpPreference(opts: {
   successUrl?: string;
   pendingUrl?: string;
   failureUrl?: string;
+  /** Restringe el checkout a tarjeta (excluye efectivo y transferencias). */
+  cardOnly?: boolean;
 }) {
   const stored = await loadMpCreds();
   const token = pick(stored, "MERCADOPAGO_ACCESS_TOKEN");
@@ -247,6 +249,19 @@ export async function createMpPreference(opts: {
       failure: opts.failureUrl || `${process.env['PUBLIC_URL'] || "http://localhost:5173"}/transferencia/${opts.transferId}?payment=failure`,
     },
     payer: opts.buyerEmail ? { email: opts.buyerEmail } : undefined,
+    ...(opts.cardOnly
+      ? {
+          payment_methods: {
+            excluded_payment_types: [
+              { id: "ticket" },
+              { id: "atm" },
+              { id: "bank_transfer" },
+              { id: "account_money" },
+            ],
+            installments: 1,
+          },
+        }
+      : {}),
     auto_return: "approved" as const,
   };
 

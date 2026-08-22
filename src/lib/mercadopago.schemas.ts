@@ -14,3 +14,7 @@ export const parseMpCredentialsInput = (input: unknown) => mpCredentialsSchema.p
 export const oxxoVoucherSchema = z.object({ transferId: z.string().uuid() });
 export type OxxoVoucherInput = z.infer<typeof oxxoVoucherSchema>;
 export const parseOxxoVoucherInput = (input: unknown) => oxxoVoucherSchema.parse(input);
+
+export const speiReferenceSchema = z.object({ transferId: z.string().uuid() });
+export type SpeiReferenceInput = z.infer<typeof speiReferenceSchema>;
+export const parseSpeiReferenceInput = (input: unknown) => speiReferenceSchema.parse(input);

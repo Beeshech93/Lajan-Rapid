@@ -1,14 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Check, Circle, Copy, Loader2, Store } from "lucide-react";
+import { Check, Circle, Copy, Landmark, Loader2, Store } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { mercadoPagoInitiatePayment, mercadoPagoOxxoVoucher } from "@/lib/mercadopago.functions";
+import { mercadoPagoInitiatePayment, mercadoPagoOxxoVoucher, mercadoPagoSpeiReference } from "@/lib/mercadopago.functions";
 import { finalizeTransferPayout } from "@/lib/transfers.functions";
 import {
   money,
@@ -93,8 +93,11 @@ function Detalle() {
   const currentIndex = STATUS_FLOW.indexOf(status);
   const paymentName = paymentLabel(t.payment_method);
   const deliveryName = deliveryLabel(t.delivery_method);
-  const isCardPayment = t.payment_method === "mercadopago" || t.payment_method === "tarjeta";
+  const isCardPayment = ["mercado_pago", "mercadopago", "card", "tarjeta"].includes(
+    t.payment_method,
+  );
   const isOxxo = t.payment_method === "oxxo";
+  const isSpei = t.payment_method === "spei";
 
 
   return (
@@ -120,7 +123,7 @@ function Detalle() {
         </CardContent>
       </Card>
 
-      {status !== "completed" && status !== "cancelled" && !isOxxo && (
+      {status !== "completed" && status !== "cancelled" && !isOxxo && !isSpei && (
         <Card className="border-warning/40 bg-warning/10">
           <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
             <div>
@@ -169,9 +172,15 @@ function Detalle() {
         </Card>
       )}
 
-      {t.payment_method === "oxxo" && status !== "completed" && status !== "cancelled" && (
+      {isOxxo && status !== "completed" && status !== "cancelled" && (
         <OxxoVoucherCard transferId={id} amount={money(Number(t.total_send), t.send_currency)} />
       )}
+
+      {isSpei && status !== "completed" && status !== "cancelled" && (
+        <SpeiCard transferId={id} amount={money(Number(t.total_send), t.send_currency)} />
+      )}
+
+
 
 
 
@@ -343,6 +352,116 @@ function OxxoVoucherCard({ transferId, amount }: { transferId: string; amount: s
             <p className="text-xs text-muted-foreground">
               Muestra esta referencia en cualquier tienda OXXO. Tu envío se activa automáticamente
               en cuanto la tienda reporta el pago (puede tardar unos minutos).
+            </p>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function SpeiCard({ transferId, amount }: { transferId: string; amount: string }) {
+  const getSpei = useServerFn(mercadoPagoSpeiReference);
+  const { data, isPending, isError, error, refetch, isFetching } = useQuery({
+    queryKey: ["spei-reference", transferId],
+    queryFn: () => getSpei({ data: { transferId } }),
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const expires = data?.expiresAt ? new Date(data.expiresAt) : null;
+  const expired = expires ? expires.getTime() < Date.now() : false;
+
+  return (
+    <Card className="border-accent/40">
+      <CardHeader className="flex-row items-center gap-2 space-y-0">
+        <Landmark className="size-4 text-accent" />
+        <CardTitle className="text-base">Transferencia SPEI</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {isPending && (
+          <p className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="size-4 animate-spin" /> Generando tu CLABE…
+          </p>
+        )}
+
+        {isError && (
+          <div className="space-y-3">
+            <p className="text-sm text-destructive">
+              {(error as Error).message || "No pudimos generar la CLABE."}
+            </p>
+            <Button size="sm" variant="outline" disabled={isFetching} onClick={() => void refetch()}>
+              Reintentar
+            </Button>
+          </div>
+        )}
+
+        {data && (
+          <>
+            <div className="rounded-xl bg-secondary p-4">
+              <p className="text-xs font-semibold uppercase text-muted-foreground">CLABE interbancaria</p>
+              <p className="mt-1 break-all font-display text-2xl font-bold tracking-wider">
+                {data.clabe}
+              </p>
+              {data.bank && (
+                <p className="mt-1 text-sm text-muted-foreground">Banco receptor: {data.bank}</p>
+              )}
+              <p className="mt-2 text-sm text-muted-foreground">
+                Concepto: <span className="font-semibold text-foreground">{data.concept}</span>
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Monto exacto: <span className="font-semibold text-foreground">{amount}</span>
+              </p>
+            </div>
+
+            <p className={`text-sm ${expired ? "text-destructive" : "text-muted-foreground"}`}>
+              {expires
+                ? expired
+                  ? `La CLABE venció el ${expires.toLocaleString("es-MX")}. Genera una nueva.`
+                  : `Vence el ${expires.toLocaleString("es-MX", { dateStyle: "long", timeStyle: "short" })}`
+                : "Sin fecha de vencimiento informada."}
+            </p>
+
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-2"
+                onClick={() => {
+                  void navigator.clipboard.writeText(data.clabe);
+                  toast.success("CLABE copiada");
+                }}
+              >
+                <Copy className="size-4" /> Copiar CLABE
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-2"
+                onClick={() => {
+                  void navigator.clipboard.writeText(data.concept);
+                  toast.success("Concepto copiado");
+                }}
+              >
+                <Copy className="size-4" /> Copiar concepto
+              </Button>
+              {data.voucherUrl && (
+                <Button size="sm" className="gap-2" asChild>
+                  <a href={data.voucherUrl} target="_blank" rel="noreferrer">
+                    Ver instrucciones
+                  </a>
+                </Button>
+              )}
+              {expired && (
+                <Button size="sm" variant="secondary" disabled={isFetching} onClick={() => void refetch()}>
+                  Generar nueva CLABE
+                </Button>
+              )}
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              Haz la transferencia desde tu banca en línea por el monto exacto. Tu envío se activa
+              automáticamente en cuanto el banco confirma el depósito.
             </p>
           </>
         )}
