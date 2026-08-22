@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { parseMpCredentialsInput, parseOxxoVoucherInput, type MpCredentialsInput } from "@/lib/mercadopago.schemas";
+import { parseMpCredentialsInput, parseOxxoVoucherInput, parseSpeiReferenceInput, type MpCredentialsInput } from "@/lib/mercadopago.schemas";
 
 /** Estado de configuración de Mercado Pago (solo administradores). */
 export const mercadoPagoStatus = createServerFn({ method: "POST" })
