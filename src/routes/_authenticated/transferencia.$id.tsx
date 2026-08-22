@@ -93,8 +93,11 @@ function Detalle() {
   const currentIndex = STATUS_FLOW.indexOf(status);
   const paymentName = paymentLabel(t.payment_method);
   const deliveryName = deliveryLabel(t.delivery_method);
-  const isCardPayment = t.payment_method === "mercadopago" || t.payment_method === "tarjeta";
+  const isCardPayment = ["mercado_pago", "mercadopago", "card", "tarjeta"].includes(
+    t.payment_method,
+  );
   const isOxxo = t.payment_method === "oxxo";
+  const isSpei = t.payment_method === "spei";
 
 
   return (
