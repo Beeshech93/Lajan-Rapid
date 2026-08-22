@@ -123,7 +123,7 @@ function Detalle() {
         </CardContent>
       </Card>
 
-      {status !== "completed" && status !== "cancelled" && !isOxxo && (
+      {status !== "completed" && status !== "cancelled" && !isOxxo && !isSpei && (
         <Card className="border-warning/40 bg-warning/10">
           <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
             <div>
