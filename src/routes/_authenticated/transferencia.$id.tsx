@@ -172,9 +172,15 @@ function Detalle() {
         </Card>
       )}
 
-      {t.payment_method === "oxxo" && status !== "completed" && status !== "cancelled" && (
+      {isOxxo && status !== "completed" && status !== "cancelled" && (
         <OxxoVoucherCard transferId={id} amount={money(Number(t.total_send), t.send_currency)} />
       )}
+
+      {isSpei && status !== "completed" && status !== "cancelled" && (
+        <SpeiCard transferId={id} amount={money(Number(t.total_send), t.send_currency)} />
+      )}
+
+
 
 
 
