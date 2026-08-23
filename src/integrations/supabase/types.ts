@@ -135,6 +135,163 @@ export type Database = {
         }
         Relationships: []
       }
+      crypto_assets: {
+        Row: {
+          code: string
+          created_at: string
+          deposit_address: string
+          fee_percent: number
+          htg_rate: number
+          id: string
+          is_active: boolean
+          min_deposit: number
+          name: string
+          network: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          deposit_address?: string
+          fee_percent?: number
+          htg_rate?: number
+          id?: string
+          is_active?: boolean
+          min_deposit?: number
+          name: string
+          network: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          deposit_address?: string
+          fee_percent?: number
+          htg_rate?: number
+          id?: string
+          is_active?: boolean
+          min_deposit?: number
+          name?: string
+          network?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      crypto_deposits: {
+        Row: {
+          amount_crypto: number
+          amount_htg: number
+          asset_id: string
+          created_at: string
+          id: string
+          rate: number
+          reference: string
+          review_notes: string | null
+          reviewed_by: string | null
+          status: string
+          tx_hash: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_crypto: number
+          amount_htg?: number
+          asset_id: string
+          created_at?: string
+          id?: string
+          rate?: number
+          reference?: string
+          review_notes?: string | null
+          reviewed_by?: string | null
+          status?: string
+          tx_hash: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_crypto?: number
+          amount_htg?: number
+          asset_id?: string
+          created_at?: string
+          id?: string
+          rate?: number
+          reference?: string
+          review_notes?: string | null
+          reviewed_by?: string | null
+          status?: string
+          tx_hash?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crypto_deposits_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "crypto_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crypto_withdrawals: {
+        Row: {
+          amount_crypto: number
+          amount_htg: number
+          asset_id: string | null
+          created_at: string
+          destination: string
+          id: string
+          kind: string
+          provider_ref: string | null
+          rate: number
+          reference: string
+          review_notes: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_crypto?: number
+          amount_htg: number
+          asset_id?: string | null
+          created_at?: string
+          destination: string
+          id?: string
+          kind: string
+          provider_ref?: string | null
+          rate?: number
+          reference?: string
+          review_notes?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_crypto?: number
+          amount_htg?: number
+          asset_id?: string | null
+          created_at?: string
+          destination?: string
+          id?: string
+          kind?: string
+          provider_ref?: string | null
+          rate?: number
+          reference?: string
+          review_notes?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crypto_withdrawals_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "crypto_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exchange_rates: {
         Row: {
           agent_commission_percent: number
@@ -638,6 +795,10 @@ export type Database = {
         Args: { _amount: number; _description?: string; _wallet_id: string }
         Returns: number
       }
+      approve_crypto_deposit: {
+        Args: { _approve: boolean; _deposit_id: string; _notes?: string }
+        Returns: boolean
+      }
       card_purchase: {
         Args: { _amount: number; _card_id: string; _merchant: string }
         Returns: string
@@ -715,6 +876,36 @@ export type Database = {
         }
         Returns: Json
       }
+      request_crypto_withdrawal: {
+        Args: {
+          _amount_htg: number
+          _asset_id?: string
+          _destination: string
+          _kind: string
+        }
+        Returns: {
+          amount_crypto: number
+          amount_htg: number
+          asset_id: string | null
+          created_at: string
+          destination: string
+          id: string
+          kind: string
+          provider_ref: string | null
+          rate: number
+          reference: string
+          review_notes: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "crypto_withdrawals"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       set_card_status: {
         Args: { _card_id: string; _status: string }
         Returns: boolean
@@ -723,6 +914,15 @@ export type Database = {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
+        }
+        Returns: boolean
+      }
+      settle_crypto_withdrawal: {
+        Args: {
+          _id: string
+          _notes?: string
+          _provider_ref?: string
+          _status: string
         }
         Returns: boolean
       }
