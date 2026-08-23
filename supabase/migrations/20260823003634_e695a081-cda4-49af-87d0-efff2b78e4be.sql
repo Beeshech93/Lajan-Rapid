@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.guard_crypto_deposit() FROM public, anon, authenticated;
