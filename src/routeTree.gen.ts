@@ -14,14 +14,12 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAgenteRouteImport } from './routes/_authenticated/agente'
-import { Route as AuthenticatedBilleteraRouteImport } from './routes/_authenticated/billetera'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedEnviarRouteImport } from './routes/_authenticated/enviar'
 import { Route as AuthenticatedHistorialRouteImport } from './routes/_authenticated/historial'
 import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
 import { Route as AuthenticatedRecargasRouteImport } from './routes/_authenticated/recargas'
 import { Route as AuthenticatedSoporteRouteImport } from './routes/_authenticated/soporte'
-import { Route as AuthenticatedTarjetaRouteImport } from './routes/_authenticated/tarjeta'
 import { Route as AuthenticatedTransferenciaIdRouteImport } from './routes/_authenticated/transferencia.$id'
 import { Route as ApiPublicBazikPayoutRouteImport } from './routes/api/public/bazik/payout'
 import { Route as ApiPublicBazikTopupRouteImport } from './routes/api/public/bazik/topup'
@@ -55,11 +53,6 @@ const AuthenticatedAgenteRoute = AuthenticatedAgenteRouteImport.update({
   path: '/agente',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedBilleteraRoute = AuthenticatedBilleteraRouteImport.update({
-  id: '/billetera',
-  path: '/billetera',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -88,11 +81,6 @@ const AuthenticatedRecargasRoute = AuthenticatedRecargasRouteImport.update({
 const AuthenticatedSoporteRoute = AuthenticatedSoporteRouteImport.update({
   id: '/soporte',
   path: '/soporte',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedTarjetaRoute = AuthenticatedTarjetaRouteImport.update({
-  id: '/tarjeta',
-  path: '/tarjeta',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedTransferenciaIdRoute =
@@ -144,14 +132,12 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/agente': typeof AuthenticatedAgenteRoute
-  '/billetera': typeof AuthenticatedBilleteraRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/enviar': typeof AuthenticatedEnviarRoute
   '/historial': typeof AuthenticatedHistorialRoute
   '/perfil': typeof AuthenticatedPerfilRoute
   '/recargas': typeof AuthenticatedRecargasRoute
   '/soporte': typeof AuthenticatedSoporteRoute
-  '/tarjeta': typeof AuthenticatedTarjetaRoute
   '/transferencia/$id': typeof AuthenticatedTransferenciaIdRoute
   '/api/public/bazik/payout': typeof ApiPublicBazikPayoutRoute
   '/api/public/bazik/topup': typeof ApiPublicBazikTopupRoute
@@ -166,14 +152,12 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/agente': typeof AuthenticatedAgenteRoute
-  '/billetera': typeof AuthenticatedBilleteraRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/enviar': typeof AuthenticatedEnviarRoute
   '/historial': typeof AuthenticatedHistorialRoute
   '/perfil': typeof AuthenticatedPerfilRoute
   '/recargas': typeof AuthenticatedRecargasRoute
   '/soporte': typeof AuthenticatedSoporteRoute
-  '/tarjeta': typeof AuthenticatedTarjetaRoute
   '/transferencia/$id': typeof AuthenticatedTransferenciaIdRoute
   '/api/public/bazik/payout': typeof ApiPublicBazikPayoutRoute
   '/api/public/bazik/topup': typeof ApiPublicBazikTopupRoute
@@ -190,14 +174,12 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/agente': typeof AuthenticatedAgenteRoute
-  '/_authenticated/billetera': typeof AuthenticatedBilleteraRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/enviar': typeof AuthenticatedEnviarRoute
   '/_authenticated/historial': typeof AuthenticatedHistorialRoute
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
   '/_authenticated/recargas': typeof AuthenticatedRecargasRoute
   '/_authenticated/soporte': typeof AuthenticatedSoporteRoute
-  '/_authenticated/tarjeta': typeof AuthenticatedTarjetaRoute
   '/_authenticated/transferencia/$id': typeof AuthenticatedTransferenciaIdRoute
   '/api/public/bazik/payout': typeof ApiPublicBazikPayoutRoute
   '/api/public/bazik/topup': typeof ApiPublicBazikTopupRoute
@@ -214,14 +196,12 @@ export interface FileRouteTypes {
     | '/auth'
     | '/admin'
     | '/agente'
-    | '/billetera'
     | '/dashboard'
     | '/enviar'
     | '/historial'
     | '/perfil'
     | '/recargas'
     | '/soporte'
-    | '/tarjeta'
     | '/transferencia/$id'
     | '/api/public/bazik/payout'
     | '/api/public/bazik/topup'
@@ -236,14 +216,12 @@ export interface FileRouteTypes {
     | '/auth'
     | '/admin'
     | '/agente'
-    | '/billetera'
     | '/dashboard'
     | '/enviar'
     | '/historial'
     | '/perfil'
     | '/recargas'
     | '/soporte'
-    | '/tarjeta'
     | '/transferencia/$id'
     | '/api/public/bazik/payout'
     | '/api/public/bazik/topup'
@@ -259,14 +237,12 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/admin'
     | '/_authenticated/agente'
-    | '/_authenticated/billetera'
     | '/_authenticated/dashboard'
     | '/_authenticated/enviar'
     | '/_authenticated/historial'
     | '/_authenticated/perfil'
     | '/_authenticated/recargas'
     | '/_authenticated/soporte'
-    | '/_authenticated/tarjeta'
     | '/_authenticated/transferencia/$id'
     | '/api/public/bazik/payout'
     | '/api/public/bazik/topup'
@@ -327,13 +303,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAgenteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/billetera': {
-      id: '/_authenticated/billetera'
-      path: '/billetera'
-      fullPath: '/billetera'
-      preLoaderRoute: typeof AuthenticatedBilleteraRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -374,13 +343,6 @@ declare module '@tanstack/react-router' {
       path: '/soporte'
       fullPath: '/soporte'
       preLoaderRoute: typeof AuthenticatedSoporteRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/tarjeta': {
-      id: '/_authenticated/tarjeta'
-      path: '/tarjeta'
-      fullPath: '/tarjeta'
-      preLoaderRoute: typeof AuthenticatedTarjetaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/transferencia/$id': {
@@ -445,28 +407,24 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedAgenteRoute: typeof AuthenticatedAgenteRoute
-  AuthenticatedBilleteraRoute: typeof AuthenticatedBilleteraRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEnviarRoute: typeof AuthenticatedEnviarRoute
   AuthenticatedHistorialRoute: typeof AuthenticatedHistorialRoute
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
   AuthenticatedRecargasRoute: typeof AuthenticatedRecargasRoute
   AuthenticatedSoporteRoute: typeof AuthenticatedSoporteRoute
-  AuthenticatedTarjetaRoute: typeof AuthenticatedTarjetaRoute
   AuthenticatedTransferenciaIdRoute: typeof AuthenticatedTransferenciaIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedAgenteRoute: AuthenticatedAgenteRoute,
-  AuthenticatedBilleteraRoute: AuthenticatedBilleteraRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEnviarRoute: AuthenticatedEnviarRoute,
   AuthenticatedHistorialRoute: AuthenticatedHistorialRoute,
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
   AuthenticatedRecargasRoute: AuthenticatedRecargasRoute,
   AuthenticatedSoporteRoute: AuthenticatedSoporteRoute,
-  AuthenticatedTarjetaRoute: AuthenticatedTarjetaRoute,
   AuthenticatedTransferenciaIdRoute: AuthenticatedTransferenciaIdRoute,
 }
 
