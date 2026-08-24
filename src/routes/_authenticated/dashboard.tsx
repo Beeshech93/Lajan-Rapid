@@ -163,15 +163,15 @@ function Dashboard() {
 
       <Card>
         <CardHeader className="flex-row items-center justify-between space-y-0">
-          <CardTitle className="text-base">Mi billetera</CardTitle>
+          <CardTitle className="text-base">Mi saldo</CardTitle>
           <Button asChild variant="ghost" size="sm">
-            <Link to="/billetera">Administrar</Link>
+            <Link to="/cripto">Administrar</Link>
           </Button>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-4">
           {(wallets ?? []).length === 0 && (
             <p className="text-sm text-muted-foreground">
-              Aún no tienes saldo. Crea tu billetera para recibir remesas y pagar en línea.
+              Aún no tienes saldo. Recibe cripto y conviértelo en gourdes desde la sección Cripto.
             </p>
           )}
           {(wallets ?? []).map((w) => (
