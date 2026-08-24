@@ -126,7 +126,7 @@ function DepositsPanel() {
     const { error } = await supabase.rpc("approve_crypto_deposit", {
       _deposit_id: id,
       _approve: approve,
-      _notes: notes[id] ?? undefined,
+      ...(notes[id] ? { _notes: notes[id] as string } : {}),
     });
     setBusy(null);
     if (error) {
@@ -214,8 +214,7 @@ function WithdrawalsPanel() {
     const { error } = await supabase.rpc("settle_crypto_withdrawal", {
       _id: id,
       _status: status,
-      _notes: notes[id] ?? undefined,
-      _provider_ref: null,
+      ...(notes[id] ? { _notes: notes[id] as string } : {}),
     });
     if (error) {
       toast.error(error.message);
