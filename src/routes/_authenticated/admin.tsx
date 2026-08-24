@@ -17,9 +17,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCountries } from "@/hooks/useCorridors";
-import { WalletsCardsPanel } from "@/components/admin/WalletsCardsPanel";
 import { BazikPanel } from "@/components/admin/BazikPanel";
-import { CardIssuerPanel } from "@/components/admin/CardIssuerPanel";
+import { CryptoPanel } from "@/components/admin/CryptoPanel";
 import { MercadoPagoPanel } from "@/components/admin/MercadoPagoPanel";
 import { StripePanel } from "@/components/admin/StripePanel";
 import { DingConnectPanel } from "@/components/admin/DingConnectPanel";
@@ -70,11 +69,10 @@ function Admin() {
           <TabsTrigger value="mercadopago">Mercado Pago</TabsTrigger>
           <TabsTrigger value="stripe">Stripe</TabsTrigger>
           <TabsTrigger value="dingconnect">Recargas (Ding)</TabsTrigger>
-          <TabsTrigger value="tarjetas-api">API tarjetas</TabsTrigger>
+          <TabsTrigger value="cripto">Cripto</TabsTrigger>
           <TabsTrigger value="kyc">KYC</TabsTrigger>
           <TabsTrigger value="tx">Transacciones</TabsTrigger>
           <TabsTrigger value="usuarios">Usuarios</TabsTrigger>
-          <TabsTrigger value="billeteras">Billeteras y tarjetas</TabsTrigger>
           <TabsTrigger value="tarifas">Tarifas</TabsTrigger>
         </TabsList>
         <TabsContent value="resumen" className="mt-4">
@@ -95,17 +93,14 @@ function Admin() {
         <TabsContent value="usuarios" className="mt-4">
           <UsersPanel />
         </TabsContent>
-        <TabsContent value="billeteras" className="mt-4">
-          <WalletsCardsPanel />
-        </TabsContent>
         <TabsContent value="tarifas" className="mt-4">
           <RatesPanel />
         </TabsContent>
         <TabsContent value="bazik" className="mt-4">
           <BazikPanel />
         </TabsContent>
-        <TabsContent value="tarjetas-api" className="mt-4">
-          <CardIssuerPanel />
+        <TabsContent value="cripto" className="mt-4">
+          <CryptoPanel />
         </TabsContent>
         <TabsContent value="mercadopago" className="mt-4">
           <MercadoPagoPanel />
