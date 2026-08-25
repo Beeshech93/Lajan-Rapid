@@ -111,28 +111,28 @@ export function AppShell({ children }: { children: ReactNode }) {
           {children}
         </main>
 
-        <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden">
-          {mobileNav.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              className={cn(
-                "flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium transition-colors",
-                pathname === item.to ? "text-primary" : "text-muted-foreground",
-              )}
-            >
-              <span
-                className={cn(
-                  "grid size-9 place-items-center rounded-xl transition-colors",
-                  pathname === item.to ? "bg-primary/10" : "bg-transparent",
-                )}
+        <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-card/95 pb-[env(safe-area-inset-bottom)] shadow-lift backdrop-blur-xl md:hidden">
+          <ul className="grid grid-cols-5 px-1.5 pt-1.5">
+            {mobileNav.slice(0, 2).map((item) => (
+              <NavItem key={item.to} item={item} active={pathname === item.to} label={t(item.key)} />
+            ))}
+
+            <li className="relative">
+              <Link
+                to="/enviar"
+                aria-label={t("nav.send")}
+                className="press absolute left-1/2 top-[-22px] grid size-14 -translate-x-1/2 place-items-center rounded-2xl bg-brand text-primary-foreground shadow-lift ring-4 ring-card"
               >
-                <item.icon className="size-5" />
-              </span>
-              <span className="max-w-full truncate px-1">{t(item.key)}</span>
-            </Link>
-          ))}
+                <Plus className="size-6" />
+              </Link>
+            </li>
+
+            {mobileNav.slice(2).map((item) => (
+              <NavItem key={item.to} item={item} active={pathname === item.to} label={t(item.key)} />
+            ))}
+          </ul>
         </nav>
+
       </div>
 
     </div>
