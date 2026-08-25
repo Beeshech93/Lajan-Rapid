@@ -10,6 +10,8 @@ import {
   LogOut,
   Coins,
   Smartphone,
+  Plus,
+
 } from "lucide-react";
 import type { ReactNode } from "react";
 import logoAsset from "@/assets/lajan-rapid-logo.png.asset.json";
