@@ -10,6 +10,8 @@ import {
   LogOut,
   Coins,
   Smartphone,
+  Plus,
+
 } from "lucide-react";
 import type { ReactNode } from "react";
 import logoAsset from "@/assets/lajan-rapid-logo.png.asset.json";
@@ -31,10 +33,37 @@ const baseNav = [
 
 const mobileNav = [
   { to: "/dashboard", key: "nav.home", icon: Home },
-  { to: "/enviar", key: "nav.send", icon: Send },
+  { to: "/historial", key: "nav.history", icon: History },
   { to: "/cripto", key: "nav.crypto", icon: Coins },
   { to: "/perfil", key: "nav.profile", icon: User },
 ];
+
+type NavEntry = { to: string; key: string; icon: typeof Home };
+
+function NavItem({ item, active, label }: { item: NavEntry; active: boolean; label: string }) {
+  return (
+    <li>
+      <Link
+        to={item.to}
+        className={cn(
+          "press flex flex-col items-center gap-0.5 py-1.5 text-[10px] font-semibold transition-colors",
+          active ? "text-accent" : "text-muted-foreground",
+        )}
+      >
+        <span
+          className={cn(
+            "grid size-9 place-items-center rounded-xl transition-colors",
+            active ? "bg-accent/12" : "bg-transparent",
+          )}
+        >
+          <item.icon className="size-5" />
+        </span>
+        <span className="max-w-full truncate px-1">{label}</span>
+      </Link>
+    </li>
+  );
+}
+
 
 
 
@@ -111,28 +140,28 @@ export function AppShell({ children }: { children: ReactNode }) {
           {children}
         </main>
 
-        <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden">
-          {mobileNav.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              className={cn(
-                "flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium transition-colors",
-                pathname === item.to ? "text-primary" : "text-muted-foreground",
-              )}
-            >
-              <span
-                className={cn(
-                  "grid size-9 place-items-center rounded-xl transition-colors",
-                  pathname === item.to ? "bg-primary/10" : "bg-transparent",
-                )}
+        <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-card/95 pb-[env(safe-area-inset-bottom)] shadow-lift backdrop-blur-xl md:hidden">
+          <ul className="grid grid-cols-5 px-1.5 pt-1.5">
+            {mobileNav.slice(0, 2).map((item) => (
+              <NavItem key={item.to} item={item} active={pathname === item.to} label={t(item.key)} />
+            ))}
+
+            <li className="relative">
+              <Link
+                to="/enviar"
+                aria-label={t("nav.send")}
+                className="press absolute left-1/2 top-[-22px] grid size-14 -translate-x-1/2 place-items-center rounded-2xl bg-brand text-primary-foreground shadow-lift ring-4 ring-card"
               >
-                <item.icon className="size-5" />
-              </span>
-              <span className="max-w-full truncate px-1">{t(item.key)}</span>
-            </Link>
-          ))}
+                <Plus className="size-6" />
+              </Link>
+            </li>
+
+            {mobileNav.slice(2).map((item) => (
+              <NavItem key={item.to} item={item} active={pathname === item.to} label={t(item.key)} />
+            ))}
+          </ul>
         </nav>
+
       </div>
 
     </div>
