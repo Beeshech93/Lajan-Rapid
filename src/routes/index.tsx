@@ -73,7 +73,7 @@ function Landing() {
             <Button asChild variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground">
               <Link to="/auth">{t("auth.signin")}</Link>
             </Button>
-            <Button asChild size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90">
+            <Button asChild size="sm" className="bg-primary-foreground text-primary hover:bg-primary-foreground/90">
               <Link to="/auth" search={{ modo: "registro" }}>
                 {t("auth.signup")}
               </Link>
@@ -83,7 +83,7 @@ function Landing() {
 
         <section className="mx-auto grid max-w-6xl items-center gap-12 px-5 pb-20 pt-8 lg:grid-cols-[1.05fr_1fr] lg:pb-28 lg:pt-16">
           <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-accent/35 bg-accent/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-accent">
+            <span className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/35 bg-primary-foreground/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-primary-foreground">
               <TrendingUp className="size-3.5" /> {t("landing.badge")}
             </span>
             <h1 className="mt-6 font-display text-4xl font-bold leading-[1.03] sm:text-5xl lg:text-[3.7rem]">
@@ -93,7 +93,7 @@ function Landing() {
               {t("landing.subtitle")}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Button asChild size="lg" className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90">
+              <Button asChild size="lg" className="gap-2 bg-primary-foreground text-primary hover:bg-primary-foreground/90">
                 <Link to="/auth" search={{ modo: "registro" }}>
                   {t("landing.cta")} <ArrowRight className="size-4" />
                 </Link>
@@ -170,10 +170,10 @@ function Landing() {
                   <Row label={t("landing.total")} value={money(q.total, sendCurrency)} strong />
                 </div>
                 <div className="rounded-xl bg-mint p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-accent-foreground/80">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-warning-foreground/80">
                     {t("landing.family_gets")}
                   </p>
-                  <p className="font-display text-3xl font-bold text-accent-foreground">
+                  <p className="font-display text-3xl font-bold text-warning-foreground">
                     {money(q.receives, receiveCurrency)}
                   </p>
                 </div>
@@ -201,7 +201,7 @@ function Landing() {
 function Stat({ icon: Icon, title, desc }: { icon: typeof Timer; title: string; desc: string }) {
   return (
     <div className="rounded-2xl border bg-card p-5 shadow-soft">
-      <span className="grid size-10 place-items-center rounded-xl bg-accent/15 text-accent-foreground">
+      <span className="grid size-10 place-items-center rounded-xl bg-accent/15 text-accent">
         <Icon className="size-5" />
       </span>
       <dt className="mt-4 font-display text-lg font-semibold">{title}</dt>
