@@ -209,8 +209,8 @@ function Enviar() {
             <Line label="Total a pagar" value={money(q.total, sendCur)} strong />
           </div>
           <div className="rounded-xl bg-mint p-4">
-            <p className="text-xs font-semibold text-accent-foreground/80">Tu familia recibe</p>
-            <p className="font-display text-2xl font-bold text-accent-foreground">
+            <p className="text-xs font-semibold text-warning-foreground/80">Tu familia recibe</p>
+            <p className="font-display text-2xl font-bold text-warning-foreground">
               {money(q.receives, recvCur)}
             </p>
           </div>

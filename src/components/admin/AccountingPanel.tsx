@@ -338,7 +338,7 @@ function Kpi({
   return (
     <Card>
       <CardContent className="p-5">
-        <span className="grid size-9 place-items-center rounded-xl bg-accent/15 text-accent-foreground">
+        <span className="grid size-9 place-items-center rounded-xl bg-accent/15 text-accent">
           <Icon className="size-4" />
         </span>
         <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
