@@ -20,8 +20,8 @@ export const STATUS_LABEL: Record<TransferStatus, string> = {
 export const STATUS_TONE: Record<TransferStatus, string> = {
   created: "bg-muted text-muted-foreground",
   awaiting_payment: "bg-warning/15 text-warning-foreground",
-  paid: "bg-accent/15 text-accent-foreground",
-  processing: "bg-accent/15 text-accent-foreground",
+  paid: "bg-accent/15 text-accent",
+  processing: "bg-accent/15 text-accent",
   ready_for_pickup: "bg-primary/10 text-primary",
   completed: "bg-success/15 text-success",
   cancelled: "bg-destructive/10 text-destructive",
