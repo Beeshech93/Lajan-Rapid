@@ -115,7 +115,7 @@
   --muted-foreground: var(--text-muted);
 
   --accent: var(--primary);
-  --accent-foreground: var(--primary);
+  --accent-foreground: oklch(0.99 0.005 300);
 
   --destructive: var(--error);
   --destructive-foreground: oklch(0.99 0 0);
@@ -190,7 +190,7 @@
   --muted-foreground: var(--text-muted);
 
   --accent: var(--primary);
-  --accent-foreground: var(--primary);
+  --accent-foreground: oklch(0.14 0.03 300);
 
   --destructive: var(--error);
   --destructive-foreground: oklch(0.99 0 0);
