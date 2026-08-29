@@ -51,6 +51,8 @@
   --color-error: var(--error);
   --color-surface: var(--surface);
   --color-surface-secondary: var(--surface-secondary);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-border-strong: var(--border-strong);
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
   --color-text-muted: var(--text-muted);
@@ -82,8 +84,9 @@
   --primary-light: oklch(0.28 0.06 155);      /* tinte verde suave sobre navy */
 
   --background: oklch(0.17 0.045 262);        /* azul marino profundo */
-  --surface: oklch(0.22 0.05 262);            /* cards, formularios, sheets */
+  --surface: oklch(0.21 0.05 262);            /* cards, formularios, sheets */
   --surface-secondary: oklch(0.27 0.055 262); /* listas, chips, fills */
+  --surface-elevated: oklch(0.24 0.055 262);  /* modales y popovers sobre cards */
 
   --text-primary: oklch(0.97 0.005 260);      /* blanco: títulos, montos */
   --text-secondary: oklch(0.82 0.02 260);     /* descripciones */
@@ -93,7 +96,8 @@
   --warning: oklch(0.79 0.16 65);             /* naranja */
   --error: oklch(0.68 0.20 25);               /* rojo de error */
 
-  --border: oklch(1 0 0 / 14%);
+  --border: oklch(0.97 0.01 220 / 14%);       /* borde frío sutil, coherente con navy */
+  --border-strong: oklch(0.97 0.01 220 / 24%); /* inputs enfocados, separadores clave */
 
   --card-gradient-start: oklch(0.72 0.19 155);  /* verde */
   --card-gradient-end: oklch(0.60 0.15 220);    /* azul verdoso */
@@ -103,7 +107,7 @@
 
   --card: var(--surface);
   --card-foreground: var(--text-primary);
-  --popover: var(--surface);
+  --popover: var(--surface-elevated);
   --popover-foreground: var(--text-primary);
 
   --primary-foreground: oklch(0.16 0.04 262);
@@ -137,7 +141,7 @@
   --sidebar-primary-foreground: oklch(0.16 0.04 262);
   --sidebar-accent: oklch(0.27 0.055 262);
   --sidebar-accent-foreground: oklch(0.97 0.005 260);
-  --sidebar-border: oklch(1 0 0 / 14%);
+  --sidebar-border: var(--border);
   --sidebar-ring: var(--primary);
 
   --gradient-brand: linear-gradient(
