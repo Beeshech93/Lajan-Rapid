@@ -76,6 +76,82 @@
 :root {
   --radius: 1.25rem;
 
+  /* ---- Design System: variables globales (Navy + Verde + Blanco) ---- */
+  --primary: oklch(0.72 0.19 155);            /* verde vibrante */
+  --primary-dark: oklch(0.55 0.16 155);       /* verde profundo */
+  --primary-light: oklch(0.28 0.06 155);      /* tinte verde suave sobre navy */
+
+  --background: oklch(0.17 0.045 262);        /* azul marino profundo */
+  --surface: oklch(0.22 0.05 262);            /* cards, formularios, sheets */
+  --surface-secondary: oklch(0.27 0.055 262); /* listas, chips, fills */
+
+  --text-primary: oklch(0.97 0.005 260);      /* blanco: títulos, montos */
+  --text-secondary: oklch(0.82 0.02 260);     /* descripciones */
+  --text-muted: oklch(0.70 0.025 260);        /* fechas, info secundaria */
+
+  --success: oklch(0.77 0.18 150);            /* verde éxito */
+  --warning: oklch(0.79 0.16 65);             /* naranja */
+  --error: oklch(0.68 0.20 25);               /* rojo de error */
+
+  --border: oklch(1 0 0 / 14%);
+
+  --card-gradient-start: oklch(0.72 0.19 155);  /* verde */
+  --card-gradient-end: oklch(0.60 0.15 220);    /* azul verdoso */
+
+  /* ---- Mapeo a tokens de componentes (shadcn) ---- */
+  --foreground: var(--text-primary);
+
+  --card: var(--surface);
+  --card-foreground: var(--text-primary);
+  --popover: var(--surface);
+  --popover-foreground: var(--text-primary);
+
+  --primary-foreground: oklch(0.16 0.04 262);
+
+  --secondary: var(--surface-secondary);
+  --secondary-foreground: var(--text-primary);
+
+  --muted: var(--surface-secondary);
+  --muted-foreground: var(--text-muted);
+
+  --accent: var(--primary);
+  --accent-foreground: oklch(0.16 0.04 262);
+
+  --destructive: var(--error);
+  --destructive-foreground: oklch(0.99 0 0);
+  --success-foreground: oklch(0.14 0.04 150);
+  --warning-foreground: oklch(0.18 0.05 62);
+
+  --input: var(--border);
+  --ring: var(--primary);
+
+  --chart-1: var(--primary);
+  --chart-2: oklch(0.65 0.15 220);
+  --chart-3: oklch(0.77 0.18 145);
+  --chart-4: var(--warning);
+  --chart-5: var(--error);
+
+  --sidebar: oklch(0.14 0.04 262);
+  --sidebar-foreground: oklch(0.97 0.005 260);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: oklch(0.16 0.04 262);
+  --sidebar-accent: oklch(0.27 0.055 262);
+  --sidebar-accent-foreground: oklch(0.97 0.005 260);
+  --sidebar-border: oklch(1 0 0 / 14%);
+  --sidebar-ring: var(--primary);
+
+  --gradient-brand: linear-gradient(
+    140deg,
+    oklch(0.30 0.09 255),
+    oklch(0.45 0.14 200) 46%,
+    oklch(0.60 0.18 165) 76%,
+    var(--card-gradient-start)
+  );
+  --gradient-mint: linear-gradient(120deg, oklch(0.60 0.18 165), oklch(0.80 0.19 145));
+  --shadow-soft: 0 1px 2px oklch(0.10 0.03 262 / 0.35), 0 10px 30px -18px oklch(0.10 0.03 262 / 0.55);
+  --shadow-lift: 0 2px 8px oklch(0.10 0.03 262 / 0.40), 0 32px 64px -28px oklch(0.72 0.19 155 / 0.30);
+}
+
   /* ---- Design System: variables globales ---- */
   --primary: oklch(0.541 0.281 302);          /* #AA00FF violeta eléctrico */
   --primary-dark: oklch(0.42 0.21 303);       /* violeta profundo */
