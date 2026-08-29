@@ -90,7 +90,7 @@ function Dashboard() {
         <Card className="border-warning/40 bg-warning/10 shadow-none">
           <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
             <div className="flex items-start gap-3">
-              <ShieldAlert className="mt-0.5 size-5 shrink-0 text-warning-foreground" />
+              <ShieldAlert className="mt-0.5 size-5 shrink-0 text-warning" />
               <div className="min-w-0">
                 <p className="font-semibold">
                   {profile.kyc_status === "pending"
