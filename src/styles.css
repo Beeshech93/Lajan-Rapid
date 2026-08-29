@@ -51,6 +51,8 @@
   --color-error: var(--error);
   --color-surface: var(--surface);
   --color-surface-secondary: var(--surface-secondary);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-border-strong: var(--border-strong);
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
   --color-text-muted: var(--text-muted);
@@ -105,7 +107,7 @@
 
   --card: var(--surface);
   --card-foreground: var(--text-primary);
-  --popover: var(--surface);
+  --popover: var(--surface-elevated);
   --popover-foreground: var(--text-primary);
 
   --primary-foreground: oklch(0.16 0.04 262);
