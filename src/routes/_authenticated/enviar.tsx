@@ -140,7 +140,7 @@ function Enviar() {
       <h1 className="text-2xl font-bold">Enviar dinero</h1>
 
       {profile?.kyc_status !== "approved" && (
-        <p className="rounded-xl bg-warning/10 p-3 text-sm text-warning-foreground">
+        <p className="rounded-xl bg-warning/10 p-3 text-sm text-warning">
           Puedes crear el envío, pero se procesará cuando tu identidad esté verificada.
         </p>
       )}

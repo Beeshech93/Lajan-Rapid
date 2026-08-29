@@ -19,7 +19,7 @@ export const STATUS_LABEL: Record<TransferStatus, string> = {
 
 export const STATUS_TONE: Record<TransferStatus, string> = {
   created: "bg-muted text-muted-foreground",
-  awaiting_payment: "bg-warning/15 text-warning-foreground",
+  awaiting_payment: "bg-warning/15 text-warning",
   paid: "bg-accent/15 text-accent",
   processing: "bg-accent/15 text-accent",
   ready_for_pickup: "bg-primary/10 text-primary",
@@ -46,7 +46,7 @@ export const KYC_LABEL: Record<KycStatus, string> = {
 
 export const KYC_TONE: Record<KycStatus, string> = {
   none: "bg-muted text-muted-foreground",
-  pending: "bg-warning/15 text-warning-foreground",
+  pending: "bg-warning/15 text-warning",
   approved: "bg-success/15 text-success",
   rejected: "bg-destructive/10 text-destructive",
 };
