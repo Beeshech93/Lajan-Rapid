@@ -42,14 +42,23 @@ export const Route = createFileRoute("/api/public/bazik/diag")({
           const r = await fetch(`https://api.bazik.io${p}`, { headers: auth });
           out[p] = { status: r.status, body: (await r.text()).slice(0, 400) };
         }
-        for (const p of ["/moncash/withdraw", "/natcash/transfers", "/transfers/quote"]) {
+        const probes: Array<[string, unknown]> = [
+          ["/transfers/quote", { amount: 100, provider: "moncash" }],
+          ["/transfers/quote", { amount: 100, provider: "natcash" }],
+          ["/moncash/transfers", {}],
+          ["/transfers", {}],
+          ["/natcash/transfers", { gdes: 100, wallet: "50900000000", customerFirstName: "A", customerLastName: "B", dryRun: true }],
+        ];
+        const results: unknown[] = [];
+        for (const [p, b] of probes) {
           const r = await fetch(`https://api.bazik.io${p}`, {
             method: "POST",
             headers: auth,
-            body: JSON.stringify({}),
+            body: JSON.stringify(b),
           });
-          out[p] = { status: r.status, body: (await r.text()).slice(0, 400) };
+          results.push({ p, b, status: r.status, body: (await r.text()).slice(0, 500) });
         }
+        out["probes"] = results;
         return Response.json(out);
       },
     },
