@@ -192,7 +192,12 @@ function Landing() {
       </section>
 
       <footer className="border-t py-8 text-center text-sm text-muted-foreground">
-        {t("landing.footer")}
+        <p>{t("landing.footer")}</p>
+        <p className="mt-2">
+          <Link to="/privacidad" className="underline hover:text-foreground">
+            Política de Privacidad
+          </Link>
+        </p>
       </footer>
     </div>
   );
