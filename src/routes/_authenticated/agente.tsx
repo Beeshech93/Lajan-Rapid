@@ -1,8 +1,10 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
+import { adminConfirmTransfer } from "@/lib/transfers.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -50,14 +52,17 @@ function Agente() {
   });
 
   const advance = async (id: string, status: TransferStatus, message: string) => {
-    const patch = { status };
-    const { error } = await supabase.from("transfers").update(patch).eq("id", id);
-    if (error) {
-      toast.error("No se pudo actualizar");
-      return;
+    try {
+      const result = await adminConfirmTransfer({ transferId: id });
+      if (result.ok) {
+        toast.success(result.message || message);
+        qc.invalidateQueries({ queryKey: ["agent-transfers"] });
+      } else {
+        toast.error("No se pudo actualizar");
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error al procesar");
     }
-    toast.success(message);
-    qc.invalidateQueries({ queryKey: ["agent-transfers"] });
   };
 
   const rows = transfers ?? [];
