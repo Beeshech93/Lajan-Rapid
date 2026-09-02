@@ -8,8 +8,6 @@ import {
   Shield,
   Briefcase,
   LogOut,
-  Wallet,
-  CreditCard,
   Plus,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -24,8 +22,6 @@ import { useI18n } from "@/lib/i18n";
 const baseNav = [
   { to: "/dashboard", key: "nav.home", icon: Home },
   { to: "/enviar", key: "nav.send", icon: Send },
-  { to: "/billetera", key: "nav.wallet", icon: Wallet },
-  { to: "/tarjeta", key: "nav.card", icon: CreditCard },
   { to: "/historial", key: "nav.history", icon: History },
   { to: "/perfil", key: "nav.profile", icon: User },
 ];
@@ -33,7 +29,6 @@ const baseNav = [
 const mobileNav = [
   { to: "/dashboard", key: "nav.home", icon: Home },
   { to: "/historial", key: "nav.history", icon: History },
-  { to: "/billetera", key: "nav.wallet", icon: Wallet },
   { to: "/perfil", key: "nav.profile", icon: User },
 ];
 
