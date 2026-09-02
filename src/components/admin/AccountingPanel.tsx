@@ -33,7 +33,7 @@ const PERIODS = [
   { value: "all", label: "Todo el histórico" },
 ];
 
-const COUNTED = ["processing", "completed"];
+const COUNTED = ["paid", "processing", "ready_for_pickup", "completed"];
 
 function monthKey(iso: string) {
   return iso.slice(0, 7);

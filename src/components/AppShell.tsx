@@ -8,8 +8,10 @@ import {
   Shield,
   Briefcase,
   LogOut,
-  Plus,
+  Coins,
   Smartphone,
+  Plus,
+
 } from "lucide-react";
 import type { ReactNode } from "react";
 import logoAsset from "@/assets/lajan-rapid-logo.png.asset.json";
@@ -23,15 +25,16 @@ import { useI18n } from "@/lib/i18n";
 const baseNav = [
   { to: "/dashboard", key: "nav.home", icon: Home },
   { to: "/enviar", key: "nav.send", icon: Send },
-  { to: "/recargas", key: "nav.topup", icon: Smartphone },
+  { to: "/cripto", key: "nav.crypto", icon: Coins },
+  { to: "/recargas", key: "nav.topups", icon: Smartphone },
   { to: "/historial", key: "nav.history", icon: History },
   { to: "/perfil", key: "nav.profile", icon: User },
 ];
 
 const mobileNav = [
   { to: "/dashboard", key: "nav.home", icon: Home },
-  { to: "/recargas", key: "nav.topup", icon: Smartphone },
   { to: "/historial", key: "nav.history", icon: History },
+  { to: "/cripto", key: "nav.crypto", icon: Coins },
   { to: "/perfil", key: "nav.profile", icon: User },
 ];
 
@@ -60,6 +63,9 @@ function NavItem({ item, active, label }: { item: NavEntry; active: boolean; lab
     </li>
   );
 }
+
+
+
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { profile, isAdmin, isAgent } = useProfile();
@@ -108,12 +114,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="mt-4 space-y-2 border-t border-sidebar-border pt-4">
           <LanguageSwitcher className="w-full bg-sidebar-accent/40 text-sidebar-foreground" />
           <p className="truncate text-sm font-medium">{profile?.full_name || t("nav.account")}</p>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="mt-2 w-full justify-start gap-2 text-sidebar-foreground/70 hover:text-sidebar-accent-foreground"
-            onClick={signOut}
-          >
+          <Button variant="ghost" size="sm" className="mt-2 w-full justify-start gap-2 text-sidebar-foreground/70 hover:text-sidebar-accent-foreground" onClick={signOut}>
             <LogOut className="size-4" /> {t("nav.signout")}
           </Button>
         </div>
@@ -152,6 +153,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             ))}
 
             <li className="relative min-w-0">
+              {/* spacer keeps the row height stable under the floating button */}
               <span className="block h-[3.9rem]" aria-hidden />
               <Link
                 to="/enviar"
@@ -167,7 +169,10 @@ export function AppShell({ children }: { children: ReactNode }) {
             ))}
           </ul>
         </nav>
+
+
       </div>
+
     </div>
   );
 }

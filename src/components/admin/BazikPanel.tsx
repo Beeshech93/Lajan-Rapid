@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowUpFromLine, Copy, Link2, PlugZap, Save, Send } from "lucide-react";
+import { ArrowDownToLine, ArrowUpFromLine, Copy, Link2, PlugZap, Save, Send } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +15,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { bazikSaveCredentials, bazikSendMobileMoney, bazikStatus } from "@/lib/bazik.functions";
+import {
+  bazikSaveCredentials,
+  bazikSendMobileMoney,
+  bazikStatus,
+  bazikTopupWallet,
+} from "@/lib/bazik.functions";
 
 
 function CopyField({ label, value }: { label: string; value: string }) {
@@ -46,6 +51,8 @@ const CRED_KEYS = [
   "BAZIK_USER_ID",
   "BAZIK_SECRET_KEY",
   "BAZIK_WEBHOOK_SECRET",
+  "BAZIK_COLLECT_API_KEY",
+  "BAZIK_COLLECT_API_SECRET",
   "BAZIK_PAYOUT_API_KEY",
   "BAZIK_PAYOUT_API_SECRET",
 ] as const;
@@ -53,6 +60,7 @@ type CredKey = (typeof CRED_KEYS)[number];
 
 export function BazikPanel() {
   const status = useServerFn(bazikStatus);
+  const topup = useServerFn(bazikTopupWallet);
   const payout = useServerFn(bazikSendMobileMoney);
   const saveCreds = useServerFn(bazikSaveCredentials);
   const queryClient = useQueryClient();
@@ -85,10 +93,26 @@ export function BazikPanel() {
   });
 
 
+  const [walletId, setWalletId] = useState("");
+  const [topAmount, setTopAmount] = useState("");
+  const [topCurrency, setTopCurrency] = useState("HTG");
+
   const [provider, setProvider] = useState<"moncash" | "natcash">("moncash");
   const [phone, setPhone] = useState("");
   const [payAmount, setPayAmount] = useState("");
   const [payCurrency, setPayCurrency] = useState("HTG");
+
+  const topupMut = useMutation({
+    mutationFn: () =>
+      topup({
+        data: { walletId, amount: Number(topAmount), currency: topCurrency as "HTG" },
+      }),
+    onSuccess: (r) =>
+      r.ok
+        ? toast.success(`Recarga enviada · ${r.reference}`)
+        : toast.error(r.error ?? "No se pudo recargar"),
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const payoutMut = useMutation({
     mutationFn: () =>
@@ -153,8 +177,8 @@ export function BazikPanel() {
         </CardHeader>
         <CardContent className="space-y-4 text-sm">
           <p className="text-xs text-muted-foreground">
-            Pega aquí las credenciales de Bazik para payouts MonCash / NatCash. Se guardan
-            cifradas en el backend y nunca se muestran de vuelta.
+            Pega aquí las credenciales de tus dos APIs de Bazik. Se guardan cifradas en el backend
+            y nunca se muestran de vuelta.
           </p>
 
           <div className="space-y-1.5">
@@ -181,7 +205,8 @@ export function BazikPanel() {
               </Badge>
             </div>
             <p className="text-xs text-muted-foreground">
-              Se usa esta cuenta para enviar dinero a MonCash y NatCash.
+              Si no defines credenciales separadas por API, se usa esta cuenta para cobros y
+              envíos.
             </p>
             <div className="space-y-1.5">
               <Label htmlFor="BAZIK_USER_ID">Bazik User ID</Label>
@@ -219,12 +244,21 @@ export function BazikPanel() {
 
           {[
             {
-              api: info?.payout,
+              api: info?.collect,
               n: 1,
+              k: "BAZIK_COLLECT_API_KEY",
+              s: "BAZIK_COLLECT_API_SECRET",
+              title: "RECIBIR PAGOS",
+              desc: "Esta API cobra: los clientes recargan su billetera (entra dinero).",
+              icon: <ArrowDownToLine className="size-4 text-emerald-600" />,
+            },
+            {
+              api: info?.payout,
+              n: 2,
               k: "BAZIK_PAYOUT_API_KEY",
               s: "BAZIK_PAYOUT_API_SECRET",
               title: "ENVIAR DINERO",
-              desc: "Esta API paga directamente a MonCash / NatCash.",
+              desc: "Esta API paga: envíos a MonCash / NatCash (sale dinero).",
               icon: <ArrowUpFromLine className="size-4 text-sky-600" />,
             },
           ].map(({ api, n, k, s, title, desc, icon }) => (
@@ -292,16 +326,72 @@ export function BazikPanel() {
             Copia estas dos URLs y pégalas como webhooks/callbacks en tu panel de bazik.io.
           </p>
           <CopyField
-            label="Callback de payout MonCash / NatCash"
+            label="Atento 1 · Recarga de billetera (cobros)"
+            value={`${origin}/api/public/bazik/topup`}
+          />
+          <CopyField
+            label="Atento 2 · Envío MonCash / NatCash"
             value={`${origin}/api/public/bazik/payout`}
           />
+        </CardContent>
+      </Card>
+
+
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Atento 1 · Recargar billetera</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="bazik-wallet">ID de billetera</Label>
+            <Input
+              id="bazik-wallet"
+              value={walletId}
+              onChange={(e) => setWalletId(e.target.value)}
+              placeholder="uuid de la billetera"
+            />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="bazik-top-amount">Monto</Label>
+              <Input
+                id="bazik-top-amount"
+                inputMode="decimal"
+                value={topAmount}
+                onChange={(e) => setTopAmount(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Moneda</Label>
+              <Select value={topCurrency} onValueChange={setTopCurrency}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {["HTG", "USD", "MXN", "DOP", "EUR"].map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <Button
+            className="w-full"
+            disabled={topupMut.isPending}
+            onClick={() => topupMut.mutate()}
+          >
+            Ejecutar recarga
+          </Button>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Send className="size-4" /> Enviar a MonCash / NatCash
+            <Send className="size-4" /> Atento 2 · Enviar a MonCash / NatCash
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">

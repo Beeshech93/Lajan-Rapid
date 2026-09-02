@@ -1,4 +1,13 @@
-// Conector Bazik (bazik.io) — flujo de payout real, orientado a MonCash / NatCash.
+// Conector Bazik (bazik.io) — capa de acceso al proveedor REAL.
+//
+// Contrato verificado contra https://api.bazik.io :
+//   POST /token                 { userID, secretKey } -> { token, expires_at }
+//   GET  /wallet                -> { available, reserved, currency, environment }
+//   POST /transfers/quote       { amount, provider } -> { delivery_amount, fee, total_cost }
+//   POST /moncash/transfers     { gdes, wallet, description, referenceId }
+//   POST /natcash/transfers     { gdes, wallet, description, referenceId, customerFirstName, customerLastName }
+//   GET  /transfers/{id}        -> estado de la transferencia
+//   GET  /balance, POST /moncash/withdraw  -> solo cuentas "online"/"instore"
 
 export type BazikWallet = "moncash" | "natcash";
 
@@ -28,19 +37,20 @@ export type BazikResult = {
   error?: string;
 };
 
-type Creds = { baseUrl: string; userId?: string; apiKey?: string; apiSecret?: string };
-
 export const BAZIK_CRED_NAMES = [
   "BAZIK_BASE_URL",
   "BAZIK_USER_ID",
   "BAZIK_SECRET_KEY",
   "BAZIK_WEBHOOK_SECRET",
+  "BAZIK_COLLECT_API_KEY",
+  "BAZIK_COLLECT_API_SECRET",
   "BAZIK_PAYOUT_API_KEY",
   "BAZIK_PAYOUT_API_SECRET",
 ] as const;
 
 export type BazikCredName = (typeof BAZIK_CRED_NAMES)[number];
 
+/** Lee las credenciales guardadas manualmente desde el panel de administración. */
 export async function loadStoredCreds(): Promise<Record<string, string>> {
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -57,6 +67,7 @@ export async function loadStoredCreds(): Promise<Record<string, string>> {
   }
 }
 
+/** Guarda (o borra si el valor viene vacío) una credencial. */
 export async function saveStoredCred(name: string, value: string, userId: string) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   if (!value) {
@@ -70,9 +81,7 @@ export async function saveStoredCred(name: string, value: string, userId: string
 
 function pick(stored: Record<string, string>, ...names: string[]) {
   for (const n of names) {
-    const v =
-      (globalThis as typeof globalThis & { process?: { env?: Record<string, string | undefined> } })
-        .process?.env?.[n] ?? stored[n];
+    const v = process.env[n]?.trim() ?? stored[n];
     if (v) return v;
   }
   return undefined;
@@ -82,284 +91,257 @@ function baseUrlFrom(stored: Record<string, string>) {
   return (pick(stored, "BAZIK_BASE_URL") ?? "https://api.bazik.io").replace(/\/$/, "");
 }
 
-function credsFor(stored: Record<string, string>): Creds {
-  const userId = pick(stored, "BAZIK_USER_ID");
-  const key = pick(stored, "BAZIK_PAYOUT_API_KEY", "BAZIK_API_KEY");
-  const secret = pick(stored, "BAZIK_PAYOUT_API_SECRET", "BAZIK_API_SECRET", "BAZIK_SECRET_KEY");
-
-  return {
-    baseUrl: baseUrlFrom(stored),
-    ...(userId ? { userId } : {}),
-    ...(key ? { apiKey: key } : {}),
-    ...(secret ? { apiSecret: secret } : {}),
-  };
-}
-
+/** Secreto de firma de los webhooks de Bazik (env o guardado en el panel). */
 export async function bazikWebhookSecret(): Promise<string | undefined> {
   const stored = await loadStoredCreds();
   return pick(stored, "BAZIK_WEBHOOK_SECRET");
 }
 
-export function bazikRequestCandidates() {
-  return ["/transfers", "/payouts", "/v1/payouts", "/v1/transfers"];
+type Session = { baseUrl: string; token: string };
+
+let cached: { token: string; baseUrl: string; expiresAt: number } | null = null;
+
+/** Autenticación real contra Bazik: POST /token con userID + secretKey. */
+async function getSession(): Promise<{ session?: Session; error?: string }> {
+  const stored = await loadStoredCreds();
+  const baseUrl = baseUrlFrom(stored);
+  const userID = pick(stored, "BAZIK_USER_ID", "BAZIK_PAYOUT_API_KEY", "BAZIK_COLLECT_API_KEY");
+  const secretKey = pick(
+    stored,
+    "BAZIK_SECRET_KEY",
+    "BAZIK_PAYOUT_API_SECRET",
+    "BAZIK_COLLECT_API_SECRET",
+  );
+  if (!userID || !secretKey) {
+    return { error: "Faltan las credenciales de Bazik (User ID y Secret Key)" };
+  }
+
+  if (cached && cached.baseUrl === baseUrl && cached.expiresAt > Date.now() + 30_000) {
+    return { session: { baseUrl, token: cached.token } };
+  }
+
+  const res = await fetch(`${baseUrl}/token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userID, secretKey }),
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    console.error(`Bazik /token falló [${res.status}]`);
+    return { error: `Bazik no aceptó las credenciales [${res.status}]` };
+  }
+  let token = "";
+  let expiresAt = Date.now() + 10 * 60_000;
+  try {
+    const j = JSON.parse(text) as Record<string, unknown>;
+    token = String(j["token"] ?? j["access_token"] ?? j["accessToken"] ?? "");
+    const exp = j["expires_at"];
+    if (typeof exp === "string" || typeof exp === "number") {
+      const t = new Date(exp).getTime();
+      if (!Number.isNaN(t)) expiresAt = t;
+    }
+  } catch {
+    /* respuesta no JSON */
+  }
+  if (!token) return { error: "Bazik no devolvió un token válido" };
+  cached = { token, baseUrl, expiresAt };
+  return { session: { baseUrl, token } };
 }
 
-export function bazikStatusLooksSuccessful(status?: string | null): boolean {
-  const value = String(status ?? "").trim().toLowerCase();
-  if (!value) return false;
-  return [
-    "success",
-    "succeeded",
-    "completed",
-    "paid",
-    "approved",
-    "confirmed",
-    "processed",
-    "sent",
-    "finished",
-  ].includes(value) || value.includes("success") || value.includes("complete") || value.includes("paid");
+async function apiCall(
+  session: Session,
+  method: "GET" | "POST",
+  path: string,
+  body?: unknown,
+): Promise<{ status: number; data: Record<string, unknown>; raw: string }> {
+  const res = await fetch(`${session.baseUrl}${path}`, {
+    method,
+    headers: {
+      Authorization: `Bearer ${session.token}`,
+      "Content-Type": "application/json",
+    },
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+  });
+  const raw = await res.text();
+  let data: Record<string, unknown> = {};
+  try {
+    data = JSON.parse(raw) as Record<string, unknown>;
+  } catch {
+    /* respuesta no JSON */
+  }
+  return { status: res.status, data, raw };
 }
 
-export function normaliseBazikResult(payload: unknown): Pick<BazikResult, "providerReference" | "status"> {
-  const data = (payload ?? {}) as Record<string, unknown>;
-  const nested = (data["data"] as Record<string, unknown> | undefined) ?? undefined;
-  const transfer = (data["transfer"] as Record<string, unknown> | undefined) ?? undefined;
-  const payout = (data["payout"] as Record<string, unknown> | undefined) ?? undefined;
+function errorMessage(data: Record<string, unknown>, raw: string, status: number) {
+  const msg = data["message"] ?? data["error"];
+  return typeof msg === "string" ? msg : `Bazik [${status}]: ${raw.slice(0, 200)}`;
+}
 
-  const providerReference =
-    (data["id"] as string | undefined) ??
-    (data["reference"] as string | undefined) ??
-    (data["transaction_id"] as string | undefined) ??
-    (data["transfer_id"] as string | undefined) ??
-    (data["provider_ref"] as string | undefined) ??
-    (nested?.["id"] as string | undefined) ??
-    (nested?.["reference"] as string | undefined) ??
-    (nested?.["transaction_id"] as string | undefined) ??
-    (transfer?.["id"] as string | undefined) ??
-    (transfer?.["reference"] as string | undefined) ??
-    (payout?.["id"] as string | undefined) ??
-    (payout?.["reference"] as string | undefined) ??
-    null;
-
-  const status =
-    (data["status"] as string | undefined) ??
-    (data["state"] as string | undefined) ??
-    (data["transaction_status"] as string | undefined) ??
-    (nested?.["status"] as string | undefined) ??
-    (nested?.["state"] as string | undefined) ??
-    (transfer?.["status"] as string | undefined) ??
-    (payout?.["status"] as string | undefined) ??
-    null;
-
+/** Saldo real de la cuenta Bazik. */
+export async function bazikWallet() {
+  const { session, error } = await getSession();
+  if (!session) return { ok: false as const, error: error ?? "Sin sesión Bazik" };
+  const { status, data, raw } = await apiCall(session, "GET", "/wallet");
+  if (status !== 200) return { ok: false as const, error: errorMessage(data, raw, status) };
   return {
-    ...(providerReference ? { providerReference: String(providerReference) } : {}),
-    ...(status ? { status: String(status) } : {}),
+    ok: true as const,
+    available: Number(data["available"] ?? 0),
+    reserved: Number(data["reserved"] ?? 0),
+    currency: String(data["currency"] ?? "HTG"),
+    environment: String(data["environment"] ?? ""),
   };
 }
 
+/** Cotización real (monto entregado + comisión) para MonCash / NatCash. */
+export async function bazikQuote(amount: number, provider: BazikWallet) {
+  const { session, error } = await getSession();
+  if (!session) return { ok: false as const, error: error ?? "Sin sesión Bazik" };
+  const { status, data, raw } = await apiCall(session, "POST", "/transfers/quote", {
+    amount,
+    provider,
+  });
+  if (status !== 200) return { ok: false as const, error: errorMessage(data, raw, status) };
+  return {
+    ok: true as const,
+    deliveryAmount: Number(data["delivery_amount"] ?? amount),
+    fee: Number(data["fee"] ?? 0),
+    totalCost: Number(data["total_cost"] ?? amount),
+    currency: String(data["currency"] ?? "HTG"),
+  };
+}
+
+/** Estado real de una transferencia Bazik. */
+export async function bazikTransferStatus(transactionId: string) {
+  const { session, error } = await getSession();
+  if (!session) return { ok: false as const, error: error ?? "Sin sesión Bazik" };
+  const { status, data, raw } = await apiCall(
+    session,
+    "GET",
+    `/transfers/${encodeURIComponent(transactionId)}`,
+  );
+  if (status !== 200) return { ok: false as const, error: errorMessage(data, raw, status) };
+  return { ok: true as const, data };
+}
+
+/** Estado de la conexión Bazik para el panel de administración. */
 export async function bazikStatusInfo() {
   const stored = await loadStoredCreds();
   const url = baseUrlFrom(stored);
-  const payout = credsFor(stored);
+  const hasUserId = Boolean(pick(stored, "BAZIK_USER_ID"));
+  const hasSecretKey = Boolean(pick(stored, "BAZIK_SECRET_KEY"));
+
+  const wallet = hasUserId && hasSecretKey ? await bazikWallet() : null;
 
   return {
     baseUrl: url,
     account: {
-      hasUserId: Boolean(pick(stored, "BAZIK_USER_ID")),
-      hasSecretKey: Boolean(pick(stored, "BAZIK_SECRET_KEY")),
+      hasUserId,
+      hasSecretKey,
       hasWebhookSecret: Boolean(pick(stored, "BAZIK_WEBHOOK_SECRET")),
     },
-    configured: Boolean(payout.apiKey && payout.userId),
-    payoutEndpoint: `${url}/transfers`,
+    connected: Boolean(wallet?.ok),
+    connectionError: wallet && !wallet.ok ? wallet.error : undefined,
+    balance: wallet?.ok
+      ? {
+          available: wallet.available,
+          reserved: wallet.reserved,
+          currency: wallet.currency,
+          environment: wallet.environment,
+        }
+      : undefined,
+    configured: Boolean(wallet?.ok),
+    topupEndpoint: `${url}/transfers/quote`,
+    payoutEndpoint: `${url}/moncash/transfers`,
+    collect: {
+      label: "API de cobros (recargar billetera)",
+      endpoint: `${url}/moncash/payments/{referenceId}`,
+      keyName: "BAZIK_COLLECT_API_KEY",
+      secretName: "BAZIK_COLLECT_API_SECRET",
+      hasKey: Boolean(pick(stored, "BAZIK_COLLECT_API_KEY")),
+      hasSecret: Boolean(pick(stored, "BAZIK_COLLECT_API_SECRET")),
+      available: false,
+      note: "Tu cuenta Bazik es de tipo «transfer»: los cobros requieren una cuenta online/instore.",
+    },
     payout: {
-      label: "API de payouts MonCash / NatCash",
-      endpoint: `${url}/transfers`,
+      label: "API de envíos (MonCash / NatCash)",
+      endpoint: `${url}/moncash/transfers`,
       keyName: "BAZIK_PAYOUT_API_KEY",
       secretName: "BAZIK_PAYOUT_API_SECRET",
-      hasKey: Boolean(payout.apiKey),
-      hasSecret: Boolean(payout.apiSecret),
+      hasKey: hasUserId,
+      hasSecret: hasSecretKey,
+      available: Boolean(wallet?.ok),
+      note: "Mínimo NatCash: 3998 HTG. Comisión aproximada 5%.",
     },
   };
 }
 
-export function bazikWebhookState(value?: string | null): "processing" | "completed" | "cancelled" | null {
-  const v = String(value ?? "").trim().toLowerCase();
-  if (!v) return null;
-
-  if (bazikStatusLooksSuccessful(value)) return "completed";
-  if (["pending", "processing", "in_progress", "queued", "submitted", "created", "awaiting"].includes(v) || v.includes("process") || v.includes("pending")) {
-    return "processing";
-  }
-  if (["failed", "rejected", "cancelled", "canceled", "error", "refunded", "declined"].includes(v) || v.includes("fail") || v.includes("cancel")) {
-    return "cancelled";
-  }
-  return null;
+/** Normaliza el teléfono haitiano al formato que espera Bazik (509XXXXXXXX). */
+function normalizeWallet(phone: string) {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.startsWith("509")) return digits;
+  return `509${digits.slice(-8)}`;
 }
 
-export function bazikExtractReference(payload: unknown): string | null {
-  const data = (payload ?? {}) as Record<string, unknown>;
-  const nested = (data["data"] as Record<string, unknown> | undefined) ?? undefined;
-  const transfer = (data["transfer"] as Record<string, unknown> | undefined) ?? undefined;
-  const payout = (data["payout"] as Record<string, unknown> | undefined) ?? undefined;
-
-  const candidate =
-    (data["reference"] as string | undefined) ??
-    (data["ref"] as string | undefined) ??
-    (data["transaction_reference"] as string | undefined) ??
-    (data["provider_reference"] as string | undefined) ??
-    (data["providerRef"] as string | undefined) ??
-    (data["external_reference"] as string | undefined) ??
-    (nested?.["reference"] as string | undefined) ??
-    (nested?.["ref"] as string | undefined) ??
-    (transfer?.["reference"] as string | undefined) ??
-    (payout?.["reference"] as string | undefined) ??
-    (data["id"] as string | undefined);
-
-  return candidate ? String(candidate).trim() : null;
-}
-
-const BAZIK_STATUS_TEXT: Record<"processing" | "completed" | "cancelled", { title: string; body: string }> = {
-  processing: { title: "Pago en proceso", body: "Bazik está procesando el envío a MonCash/NatCash." },
-  completed: { title: "Pago confirmado", body: "Bazik confirmó el envío y ya fue acreditado a la billetera móvil." },
-  cancelled: { title: "Pago rechazado", body: "Bazik no pudo completar el envío." },
-};
-
-export async function applyBazikResult(opts: {
-  reference: string;
-  state: string;
-  providerRef?: string | null;
-  detail?: string | null;
-}) {
-  const next = bazikWebhookState(opts.state);
-  if (!next) return { ok: false, reason: `Estado no manejado: ${opts.state}` };
-
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data: transfer } = await supabaseAdmin
-    .from("transfers")
-    .select("id, user_id, status, reference")
-    .eq("reference", opts.reference)
-    .maybeSingle();
-
-  if (!transfer) return { ok: false, reason: `No existe el envío ${opts.reference}` };
-  if (transfer.status === next) return { ok: true, unchanged: true, transferId: transfer.id };
-  if (["completed", "processing"].includes(transfer.status) && next === "completed") {
-    return { ok: true, unchanged: true, transferId: transfer.id };
-  }
-
-  const { error } = await supabaseAdmin
-    .from("transfers")
-    .update({ status: next })
-    .eq("id", transfer.id);
-
-  if (error) {
-    console.error("Bazik: no se pudo actualizar el envío", error);
-    return { ok: false, reason: error.message };
-  }
-
-  await supabaseAdmin.from("transfer_events").insert({
-    transfer_id: transfer.id,
-    status: next,
-    message: `Bazik: ${BAZIK_STATUS_TEXT[next].title}`,
-  });
-
-  await supabaseAdmin.from("notifications").insert({
-    user_id: transfer.user_id,
-    title: `${BAZIK_STATUS_TEXT[next].title} · ${transfer.reference}`,
-    body: BAZIK_STATUS_TEXT[next].body,
-  });
-
-  return { ok: true, transferId: transfer.id, status: next };
-}
-
-async function callBazik(
-  creds: Creds,
-  paths: string[],
-  body: unknown,
-): Promise<BazikResult> {
-  if (!creds.apiKey || !creds.userId) {
+/** Cobro/recarga: la cuenta actual (tipo transfer) no está autorizada por Bazik. */
+export async function bazikTopup(input: BazikTopupInput): Promise<BazikResult> {
+  const { session, error } = await getSession();
+  if (!session) return { ok: false, configured: false, error: error ?? "Sin sesión Bazik" };
+  const { status, data, raw } = await apiCall(session, "GET", "/balance");
+  if (status === 403) {
     return {
       ok: false,
       configured: true,
-      error: "Falta la conexión de Bazik: necesita User ID + API Key en el panel de administración.",
+      error:
+        "Tu cuenta Bazik es de tipo «transfer» y no puede recibir cobros. Solicita a Bazik una cuenta online/instore para habilitar las recargas.",
     };
   }
-
-  const payload = JSON.stringify(body);
-  const headersBase = {
-    Accept: "application/json",
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${creds.apiSecret ?? creds.userId}`,
-    "X-Api-Key": creds.apiKey,
-    "X-API-Key": creds.apiKey,
-    "X-User-Id": creds.userId,
-  } as Record<string, string>;
-
-  if (creds.apiSecret) {
-    headersBase["X-Api-Secret"] = creds.apiSecret;
-    headersBase["X-API-Secret"] = creds.apiSecret;
+  if (status !== 200) {
+    return { ok: false, configured: true, error: errorMessage(data, raw, status) };
   }
-
-  for (const path of paths) {
-    try {
-      const response = await fetch(`${creds.baseUrl}${path}`, {
-        method: "POST",
-        headers: headersBase,
-        body: payload,
-      });
-
-      const text = await response.text();
-      let parsed: unknown = text;
-      try {
-        parsed = JSON.parse(text) as unknown;
-      } catch {
-        // response is plain text
-      }
-
-      if (!response.ok) {
-        console.error(`Bazik ${path} falló [${response.status}]: ${text}`);
-        continue;
-      }
-
-      const normalised = normaliseBazikResult(parsed);
-      return {
-        ok: true,
-        configured: true,
-        ...normalised,
-      };
-    } catch (error) {
-      console.error(`Bazik ${path} lanzó error:`, error);
-    }
-  }
-
   return {
     ok: false,
     configured: true,
-    error: `Bazik no respondió con ninguna ruta válida. Revisa la URL base y las credenciales: ${paths.join(", ")}`,
+    error: `Recarga no disponible aún para la billetera ${input.walletId}`,
   };
 }
 
-/** Flujo simplificado de Bazik: solo payouts a MonCash/NatCash. */
-export async function bazikTopup(_input: BazikTopupInput): Promise<BazikResult> {
-  return {
-    ok: false,
-    configured: true,
-    error: "Top-up deshabilitado. El sistema Bazik está configurado solo para payouts MonCash/NatCash.",
-  };
-}
-
+/** Envío real de dinero a MonCash o NatCash. */
 export async function bazikPayout(input: BazikPayoutInput): Promise<BazikResult> {
-  const stored = await loadStoredCreds();
-  const creds = credsFor(stored);
-  const wallet = input.phone.replace(/\D/g, "");
-  const normalized = wallet.startsWith("509") ? wallet : `509${wallet.slice(-8)}`;
+  const { session, error } = await getSession();
+  if (!session) return { ok: false, configured: false, error: error ?? "Sin sesión Bazik" };
 
-  return callBazik(creds, bazikRequestCandidates(), {
-    provider: input.provider,
-    destination: normalized,
-    wallet: normalized,
-    amount: input.amount,
-    currency: input.currency,
-    reference: input.reference,
+  const gdes = Math.round(input.amount * 100) / 100;
+  const wallet = normalizeWallet(input.phone);
+  const path = input.provider === "natcash" ? "/natcash/transfers" : "/moncash/transfers";
+
+  const body: Record<string, unknown> = {
+    gdes,
+    amount: gdes,
+    wallet,
+    receiver: wallet,
     description: input.description ?? `Lajan Rapid ${input.reference}`,
-  });
+    referenceId: input.reference,
+    reference: input.reference,
+  };
+  if (input.provider === "natcash") {
+    body["customerFirstName"] = input.firstName ?? "Lajan";
+    body["customerLastName"] = input.lastName ?? "Rapid";
+  }
+
+  const { status, data, raw } = await apiCall(session, "POST", path, body);
+  if (status < 200 || status >= 300) {
+    console.error(`Bazik ${path} falló [${status}]: ${raw.slice(0, 300)}`);
+    return { ok: false, configured: true, error: errorMessage(data, raw, status) };
+  }
+
+  const providerReference = String(
+    data["transactionId"] ?? data["transaction_id"] ?? data["id"] ?? data["referenceId"] ?? "",
+  );
+  const st = data["status"];
+  return {
+    ok: true,
+    configured: true,
+    ...(providerReference ? { providerReference } : {}),
+    ...(typeof st === "string" ? { status: st } : {}),
+  };
 }

@@ -1,10 +1,7 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useProfile } from "@/hooks/useProfile";
-import { adminConfirmTransfer } from "@/lib/transfers.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -36,9 +33,7 @@ export const Route = createFileRoute("/_authenticated/agente")({
 });
 
 function Agente() {
-  const { isAdmin } = useProfile();
   const qc = useQueryClient();
-  const confirmTransfer = useServerFn(adminConfirmTransfer);
 
   const { data: transfers } = useQuery({
     queryKey: ["agent-transfers"],
@@ -53,22 +48,19 @@ function Agente() {
   });
 
   const advance = async (id: string, status: TransferStatus, message: string) => {
-    try {
-      const result = await confirmTransfer({ data: { transferId: id } });
-      if (result.ok) {
-        toast.success(result.message || message);
-        qc.invalidateQueries({ queryKey: ["agent-transfers"] });
-      } else {
-        toast.error("No se pudo actualizar");
-      }
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Error al procesar");
+    const patch = { status };
+    const { error } = await supabase.from("transfers").update(patch).eq("id", id);
+    if (error) {
+      toast.error("No se pudo actualizar");
+      return;
     }
+    toast.success(message);
+    qc.invalidateQueries({ queryKey: ["agent-transfers"] });
   };
 
   const rows = transfers ?? [];
   const pending = rows.filter((t) => t.status === "awaiting_payment");
-  const active = rows.filter((t) => t.status === "processing");
+  const active = rows.filter((t) => ["paid", "processing", "ready_for_pickup"].includes(t.status));
   const done = rows.filter((t) => t.status === "completed");
   const commissions = done.reduce(
     (acc, t) => {
@@ -95,8 +87,8 @@ function Agente() {
         <Stat label="Comisiones acumuladas" value={commissionsLabel} />
       </div>
 
-      <Section title="Solicitudes de pago" rows={pending} advance={advance} isAdmin={isAdmin} />
-      <Section title="En curso" rows={active} advance={advance} isAdmin={isAdmin} />
+      <Section title="Solicitudes de pago" rows={pending} advance={advance} />
+      <Section title="En curso" rows={active} advance={advance} />
       <Section title="Historial de operaciones" rows={done} advance={advance} readOnly />
     </div>
   );
@@ -123,17 +115,17 @@ function Section({
   rows,
   advance,
   readOnly,
-  isAdmin,
 }: {
   title: string;
   rows: Row[];
   advance: (id: string, status: TransferStatus, message: string) => Promise<void>;
   readOnly?: boolean;
-  isAdmin?: boolean;
 }) {
-  const adminActions: Partial<Record<TransferStatus, { to: TransferStatus; label: string }>> = {
-    awaiting_payment: { to: "processing", label: "Confirmar pago" },
-    processing: { to: "completed", label: "Confirmar entregado" },
+  const next: Partial<Record<TransferStatus, { to: TransferStatus; label: string }>> = {
+    awaiting_payment: { to: "paid", label: "Confirmar pago" },
+    paid: { to: "processing", label: "Procesar" },
+    processing: { to: "ready_for_pickup", label: "Listo para retirar" },
+    ready_for_pickup: { to: "completed", label: "Marcar entregado" },
   };
 
   return (
@@ -144,7 +136,7 @@ function Section({
       <CardContent className="space-y-2">
         {rows.length === 0 && <p className="py-4 text-sm text-muted-foreground">Nada por aquí.</p>}
         {rows.map((t) => {
-          const step = isAdmin ? adminActions[t.status as TransferStatus] : undefined;
+          const step = next[t.status as TransferStatus];
           return (
             <div
               key={t.id}
@@ -169,7 +161,7 @@ function Section({
               <Badge className={STATUS_TONE[t.status as TransferStatus]} variant="secondary">
                 {STATUS_LABEL[t.status as TransferStatus]}
               </Badge>
-              {!readOnly && isAdmin && step && (
+              {!readOnly && step && (
                 <Button size="sm" onClick={() => void advance(t.id, step.to, step.label)}>
                   {step.label}
                 </Button>
