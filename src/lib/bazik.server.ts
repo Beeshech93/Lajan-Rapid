@@ -242,7 +242,7 @@ export async function applyBazikResult(opts: {
 
   if (!transfer) return { ok: false, reason: `No existe el envío ${opts.reference}` };
   if (transfer.status === next) return { ok: true, unchanged: true, transferId: transfer.id };
-  if (["completed", "ready_for_pickup", "processing"].includes(transfer.status) && next === "completed") {
+  if (["completed", "processing"].includes(transfer.status) && next === "completed") {
     return { ok: true, unchanged: true, transferId: transfer.id };
   }
 

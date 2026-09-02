@@ -60,7 +60,7 @@ function Agente() {
 
   const rows = transfers ?? [];
   const pending = rows.filter((t) => t.status === "awaiting_payment");
-  const active = rows.filter((t) => ["paid", "processing", "ready_for_pickup"].includes(t.status));
+  const active = rows.filter((t) => t.status === "processing");
   const done = rows.filter((t) => t.status === "completed");
   const commissions = done.reduce(
     (acc, t) => {
@@ -121,12 +121,7 @@ function Section({
   advance: (id: string, status: TransferStatus, message: string) => Promise<void>;
   readOnly?: boolean;
 }) {
-  const next: Partial<Record<TransferStatus, { to: TransferStatus; label: string }>> = {
-    awaiting_payment: { to: "paid", label: "Confirmar pago" },
-    paid: { to: "processing", label: "Procesar" },
-    processing: { to: "ready_for_pickup", label: "Listo para retirar" },
-    ready_for_pickup: { to: "completed", label: "Marcar entregado" },
-  };
+  const next: Partial<Record<TransferStatus, { to: TransferStatus; label: string }>> = {};
 
   return (
     <Card>

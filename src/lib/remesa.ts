@@ -1,18 +1,14 @@
 export type TransferStatus =
   | "created"
   | "awaiting_payment"
-  | "paid"
   | "processing"
-  | "ready_for_pickup"
   | "completed"
   | "cancelled";
 
 export const STATUS_LABEL: Record<TransferStatus, string> = {
   created: "Creado",
   awaiting_payment: "Esperando pago",
-  paid: "Pago recibido",
   processing: "En proceso",
-  ready_for_pickup: "Listo para retirar",
   completed: "Entregado",
   cancelled: "Cancelado",
 };
@@ -20,18 +16,14 @@ export const STATUS_LABEL: Record<TransferStatus, string> = {
 export const STATUS_TONE: Record<TransferStatus, string> = {
   created: "bg-muted text-muted-foreground",
   awaiting_payment: "bg-warning/15 text-warning",
-  paid: "bg-accent/15 text-accent",
   processing: "bg-accent/15 text-accent",
-  ready_for_pickup: "bg-primary/10 text-primary",
   completed: "bg-success/15 text-success",
   cancelled: "bg-destructive/10 text-destructive",
 };
 
 export const STATUS_FLOW: TransferStatus[] = [
   "awaiting_payment",
-  "paid",
   "processing",
-  "ready_for_pickup",
   "completed",
 ];
 

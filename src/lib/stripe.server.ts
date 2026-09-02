@@ -199,7 +199,7 @@ export async function applyStripeEvent(event: StripeEvent) {
 
   if (!transfer) return { ok: false, reason: `No existe el envío ${ref}` };
   if (transfer.status === next) return { ok: true, unchanged: true, transferId: transfer.id };
-  if (["completed", "ready_for_pickup", "processing"].includes(transfer.status)) {
+  if (["completed", "processing"].includes(transfer.status)) {
     return { ok: true, unchanged: true, transferId: transfer.id };
   }
 
