@@ -172,7 +172,7 @@ export async function bazikStatusInfo() {
     configured: Boolean(payout.apiKey && payout.userId),
     payoutEndpoint: `${url}/transfers`,
     payout: {
-      label: "API de envíos (MonCash / NatCash)",
+      label: "API de payouts MonCash / NatCash",
       endpoint: `${url}/transfers`,
       keyName: "BAZIK_PAYOUT_API_KEY",
       secretName: "BAZIK_PAYOUT_API_SECRET",
@@ -249,12 +249,12 @@ async function callBazik(
   };
 }
 
-/** Mantiene compatibilidad con código legado, pero el flujo activo queda limitado a payouts. */
-export async function bazikTopup(input: BazikTopupInput): Promise<BazikResult> {
+/** Flujo simplificado de Bazik: solo payouts a MonCash/NatCash. */
+export async function bazikTopup(_input: BazikTopupInput): Promise<BazikResult> {
   return {
     ok: false,
     configured: true,
-    error: `Recargas no habilitadas: el flujo activo de Bazik es solo MonCash/NatCash (${input.reference}).`,
+    error: "Top-up deshabilitado. El sistema Bazik está configurado solo para payouts MonCash/NatCash.",
   };
 }
 
