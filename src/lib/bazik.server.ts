@@ -3,6 +3,8 @@
 // Spec oficial confirmado:
 //   base_url: https://api.bazik.io
 //   auth: Bearer Token (JWT), obtenido vía POST /token con { userID, secretKey }
+//   respuesta confirmada de /token: { access_token, token_type: "bearer",
+//     expires_in (segundos, ej. 86400 = 24h), user_id }
 //   content_type: application/json
 //   supported_currencies: ["HTG"]
 //   max_transaction_amount: 75000 HTG
@@ -93,17 +95,19 @@ export type BazikAuthResult =
 // lo cual es aceptable dado que un nuevo token se pide automáticamente si falta o expiró).
 let cachedToken: { token: string; expiresAt: number; userId: string } | null = null;
 
+// Forma real confirmada de la respuesta de POST /token:
+// { access_token, token_type: "bearer", expires_in (segundos), user_id }
 function extractToken(payload: unknown): { token: string | null; expiresAt: number | null } {
   const data = (payload ?? {}) as Record<string, unknown>;
   const token =
-    (data["token"] as string | undefined) ??
-    (data["accessToken"] as string | undefined) ??
     (data["access_token"] as string | undefined) ??
+    (data["accessToken"] as string | undefined) ??
+    (data["token"] as string | undefined) ??
     (data["jwt"] as string | undefined) ??
     null;
 
   const expiresIn =
-    (data["expiresIn"] as number | undefined) ?? (data["expires_in"] as number | undefined) ?? null;
+    (data["expires_in"] as number | undefined) ?? (data["expiresIn"] as number | undefined) ?? null;
   const expiresAt = typeof expiresIn === "number" ? Date.now() + expiresIn * 1000 : null;
 
   return { token, expiresAt };
