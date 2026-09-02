@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { useWallets, useRefreshWallet } from "@/hooks/useWallet";
 import { dingListProducts, dingSendTopup } from "@/lib/dingconnect.functions";
-import { money, shortDate } from "@/lib/remesa";
+import { shortDate } from "@/lib/remesa";
 import { TOPUP_COUNTRIES, findTopupCountry, prettyOperator } from "@/lib/topup-operators";
 import { validatePhone, formatNational, expectedLengths, normalizeLocal } from "@/lib/phone";
 
@@ -61,16 +61,17 @@ function Recargas() {
   const sendTopup = useServerFn(dingSendTopup);
 
   const [country, setCountry] = useState("HT");
-  const [walletId, setWalletId] = useState("");
   const [operator, setOperator] = useState("");
   const [sku, setSku] = useState("");
   const [phone, setPhone] = useState("");
   const [amount, setAmount] = useState("");
 
+  // Usar la primera billetera disponible como defecto
   const wallet = useMemo(
-    () => (wallets ?? []).find((w) => w.id === walletId),
-    [wallets, walletId],
+    () => (wallets ?? [])[0],
+    [wallets],
   );
+  const walletId = wallet?.id ?? "";
 
   const { data: products, isFetching } = useQuery({
     queryKey: ["ding_products", country],
@@ -132,7 +133,6 @@ function Recargas() {
 
   const sendMut = useMutation({
     mutationFn: async () => {
-      if (!walletId) throw new Error("Elige la billetera de origen");
       if (!operator) throw new Error("Elige el operador");
       if (!sku && plans.length > 0) throw new Error("Elige el plan del operador");
       if (!phone.trim()) throw new Error("Escribe el número a recargar");
@@ -196,22 +196,6 @@ function Recargas() {
                 {TOPUP_COUNTRIES.map((c) => (
                   <SelectItem key={c.code} value={c.code}>
                     {c.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label>Billetera de origen</Label>
-            <Select value={walletId} onValueChange={setWalletId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Elige una billetera" />
-              </SelectTrigger>
-              <SelectContent>
-                {(wallets ?? []).map((w) => (
-                  <SelectItem key={w.id} value={w.id}>
-                    {w.currency} · {money(Number(w.balance), w.currency)}
                   </SelectItem>
                 ))}
               </SelectContent>
