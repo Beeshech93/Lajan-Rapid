@@ -56,6 +56,27 @@ export const bazikStatus = createServerFn({ method: "POST" })
     return bazikStatusInfo();
   });
 
+/** Cotización real de un envío MonCash / NatCash (solo administradores). */
+export const bazikQuoteTransfer = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { amount: number; provider: "moncash" | "natcash" }) => {
+    if (!Number.isFinite(input.amount) || input.amount <= 0) throw new Error("Monto inválido");
+    if (input.provider !== "moncash" && input.provider !== "natcash") {
+      throw new Error("Proveedor inválido");
+    }
+    return input;
+  })
+  .handler(async ({ data, context }) => {
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!isAdmin) throw new Error("No autorizado");
+    const { bazikQuote } = await import("@/lib/bazik.server");
+    return bazikQuote(data.amount, data.provider);
+  });
+
+
 /** Guardar manualmente las credenciales de Bazik (solo administradores). */
 export const bazikSaveCredentials = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

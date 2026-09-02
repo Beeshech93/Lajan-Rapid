@@ -23,7 +23,6 @@ import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedRecargasRouteImport } from './routes/_authenticated/recargas'
 import { Route as AuthenticatedSoporteRouteImport } from './routes/_authenticated/soporte'
 import { Route as AuthenticatedTransferenciaIdRouteImport } from './routes/_authenticated/transferencia.$id'
-import { Route as ApiPublicBazikDiagRouteImport } from './routes/api/public/bazik/diag'
 import { Route as ApiPublicBazikPayoutRouteImport } from './routes/api/public/bazik/payout'
 import { Route as ApiPublicBazikTopupRouteImport } from './routes/api/public/bazik/topup'
 import { Route as ApiPublicDingconnectWebhookRouteImport } from './routes/api/public/dingconnect/webhook'
@@ -102,11 +101,6 @@ const AuthenticatedTransferenciaIdRoute =
     path: '/transferencia/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const ApiPublicBazikDiagRoute = ApiPublicBazikDiagRouteImport.update({
-  id: '/api/public/bazik/diag',
-  path: '/api/public/bazik/diag',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiPublicBazikPayoutRoute = ApiPublicBazikPayoutRouteImport.update({
   id: '/api/public/bazik/payout',
   path: '/api/public/bazik/payout',
@@ -159,7 +153,6 @@ export interface FileRoutesByFullPath {
   '/recargas': typeof AuthenticatedRecargasRoute
   '/soporte': typeof AuthenticatedSoporteRoute
   '/transferencia/$id': typeof AuthenticatedTransferenciaIdRoute
-  '/api/public/bazik/diag': typeof ApiPublicBazikDiagRoute
   '/api/public/bazik/payout': typeof ApiPublicBazikPayoutRoute
   '/api/public/bazik/topup': typeof ApiPublicBazikTopupRoute
   '/api/public/dingconnect/webhook': typeof ApiPublicDingconnectWebhookRoute
@@ -182,7 +175,6 @@ export interface FileRoutesByTo {
   '/recargas': typeof AuthenticatedRecargasRoute
   '/soporte': typeof AuthenticatedSoporteRoute
   '/transferencia/$id': typeof AuthenticatedTransferenciaIdRoute
-  '/api/public/bazik/diag': typeof ApiPublicBazikDiagRoute
   '/api/public/bazik/payout': typeof ApiPublicBazikPayoutRoute
   '/api/public/bazik/topup': typeof ApiPublicBazikTopupRoute
   '/api/public/dingconnect/webhook': typeof ApiPublicDingconnectWebhookRoute
@@ -207,7 +199,6 @@ export interface FileRoutesById {
   '/_authenticated/recargas': typeof AuthenticatedRecargasRoute
   '/_authenticated/soporte': typeof AuthenticatedSoporteRoute
   '/_authenticated/transferencia/$id': typeof AuthenticatedTransferenciaIdRoute
-  '/api/public/bazik/diag': typeof ApiPublicBazikDiagRoute
   '/api/public/bazik/payout': typeof ApiPublicBazikPayoutRoute
   '/api/public/bazik/topup': typeof ApiPublicBazikTopupRoute
   '/api/public/dingconnect/webhook': typeof ApiPublicDingconnectWebhookRoute
@@ -232,7 +223,6 @@ export interface FileRouteTypes {
     | '/recargas'
     | '/soporte'
     | '/transferencia/$id'
-    | '/api/public/bazik/diag'
     | '/api/public/bazik/payout'
     | '/api/public/bazik/topup'
     | '/api/public/dingconnect/webhook'
@@ -255,7 +245,6 @@ export interface FileRouteTypes {
     | '/recargas'
     | '/soporte'
     | '/transferencia/$id'
-    | '/api/public/bazik/diag'
     | '/api/public/bazik/payout'
     | '/api/public/bazik/topup'
     | '/api/public/dingconnect/webhook'
@@ -279,7 +268,6 @@ export interface FileRouteTypes {
     | '/_authenticated/recargas'
     | '/_authenticated/soporte'
     | '/_authenticated/transferencia/$id'
-    | '/api/public/bazik/diag'
     | '/api/public/bazik/payout'
     | '/api/public/bazik/topup'
     | '/api/public/dingconnect/webhook'
@@ -294,7 +282,6 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   PrivacidadRoute: typeof PrivacidadRoute
-  ApiPublicBazikDiagRoute: typeof ApiPublicBazikDiagRoute
   ApiPublicBazikPayoutRoute: typeof ApiPublicBazikPayoutRoute
   ApiPublicBazikTopupRoute: typeof ApiPublicBazikTopupRoute
   ApiPublicDingconnectWebhookRoute: typeof ApiPublicDingconnectWebhookRoute
@@ -404,13 +391,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTransferenciaIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/public/bazik/diag': {
-      id: '/api/public/bazik/diag'
-      path: '/api/public/bazik/diag'
-      fullPath: '/api/public/bazik/diag'
-      preLoaderRoute: typeof ApiPublicBazikDiagRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/bazik/payout': {
       id: '/api/public/bazik/payout'
       path: '/api/public/bazik/payout'
@@ -497,7 +477,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   PrivacidadRoute: PrivacidadRoute,
-  ApiPublicBazikDiagRoute: ApiPublicBazikDiagRoute,
   ApiPublicBazikPayoutRoute: ApiPublicBazikPayoutRoute,
   ApiPublicBazikTopupRoute: ApiPublicBazikTopupRoute,
   ApiPublicDingconnectWebhookRoute: ApiPublicDingconnectWebhookRoute,
