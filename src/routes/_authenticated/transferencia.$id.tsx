@@ -5,6 +5,7 @@ import { Check, Circle, Copy, Landmark, Loader2, Store } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import { useProfile } from "@/hooks/useProfile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,7 @@ export const Route = createFileRoute("/_authenticated/transferencia/$id")({
 function Detalle() {
   const { id } = Route.useParams();
   const qc = useQueryClient();
+  const { isAdmin } = useProfile();
   const initiatePayment = useServerFn(mercadoPagoInitiatePayment);
   const finalizePayout = useServerFn(finalizeTransferPayout);
   const [isInitiating, setIsInitiating] = useState(false);
@@ -98,7 +100,15 @@ function Detalle() {
   );
   const isOxxo = t.payment_method === "oxxo";
   const isSpei = t.payment_method === "spei";
+  const isDirectCashDelivery = ["moncash", "natcash"].includes(t.delivery_method);
+  const shouldAutoFinalizeUser = !isAdmin && isDirectCashDelivery && !isCardPayment && !isOxxo && !isSpei;
 
+  useEffect(() => {
+    if (!shouldAutoFinalizeUser) return;
+    if (status === "completed" || status === "cancelled") return;
+    if (finalize.isPending) return;
+    finalize.mutate();
+  }, [finalize, shouldAutoFinalizeUser, status]);
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
@@ -130,12 +140,16 @@ function Detalle() {
               <p className="font-semibold">
                 {isCardPayment
                   ? `Completa tu pago con ${paymentName}`
-                  : `Finalizar envío por ${deliveryName}`}
+                  : isDirectCashDelivery && !isAdmin
+                    ? `Procesando envío a ${deliveryName} con Bazik`
+                    : `Finalizar envío por ${deliveryName}`}
               </p>
               <p className="text-sm text-muted-foreground">
                 {isCardPayment
                   ? "Serás redirigido a Mercado Pago para completar el pago."
-                  : `${t.recipient_name} · ${t.recipient_phone} · ${money(Number(t.amount_receive), t.receive_currency)}`}
+                  : isDirectCashDelivery && !isAdmin
+                    ? "Se está ejecutando el pago directo al destinatario con Bazik."
+                    : `${t.recipient_name} · ${t.recipient_phone} · ${money(Number(t.amount_receive), t.receive_currency)}`}
               </p>
             </div>
             {isCardPayment ? (
@@ -156,6 +170,16 @@ function Detalle() {
               >
                 {isInitiating && <Loader2 className="size-4 animate-spin" />}
                 {isInitiating ? "Cargando..." : "Ir a Mercado Pago"}
+              </Button>
+            ) : !isAdmin && isDirectCashDelivery ? (
+              <Button
+                size="sm"
+                className="gap-2"
+                disabled={finalize.isPending}
+                onClick={() => finalize.mutate()}
+              >
+                {finalize.isPending && <Loader2 className="size-4 animate-spin" />}
+                {finalize.isPending ? "Enviando…" : "Reintentar envío"}
               </Button>
             ) : (
               <Button
