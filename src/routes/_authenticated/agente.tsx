@@ -2,6 +2,7 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useProfile } from "@/hooks/useProfile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +34,7 @@ export const Route = createFileRoute("/_authenticated/agente")({
 });
 
 function Agente() {
+  const { isAdmin } = useProfile();
   const qc = useQueryClient();
 
   const { data: transfers } = useQuery({
@@ -87,8 +89,8 @@ function Agente() {
         <Stat label="Comisiones acumuladas" value={commissionsLabel} />
       </div>
 
-      <Section title="Solicitudes de pago" rows={pending} advance={advance} />
-      <Section title="En curso" rows={active} advance={advance} />
+      <Section title="Solicitudes de pago" rows={pending} advance={advance} isAdmin={isAdmin} />
+      <Section title="En curso" rows={active} advance={advance} isAdmin={isAdmin} />
       <Section title="Historial de operaciones" rows={done} advance={advance} readOnly />
     </div>
   );
@@ -115,13 +117,18 @@ function Section({
   rows,
   advance,
   readOnly,
+  isAdmin,
 }: {
   title: string;
   rows: Row[];
   advance: (id: string, status: TransferStatus, message: string) => Promise<void>;
   readOnly?: boolean;
+  isAdmin?: boolean;
 }) {
-  const next: Partial<Record<TransferStatus, { to: TransferStatus; label: string }>> = {};
+  const adminActions: Partial<Record<TransferStatus, { to: TransferStatus; label: string }>> = {
+    awaiting_payment: { to: "processing", label: "Confirmar pago" },
+    processing: { to: "completed", label: "Confirmar entregado" },
+  };
 
   return (
     <Card>
@@ -131,7 +138,7 @@ function Section({
       <CardContent className="space-y-2">
         {rows.length === 0 && <p className="py-4 text-sm text-muted-foreground">Nada por aquí.</p>}
         {rows.map((t) => {
-          const step = next[t.status as TransferStatus];
+          const step = isAdmin ? adminActions[t.status as TransferStatus] : undefined;
           return (
             <div
               key={t.id}
@@ -156,7 +163,7 @@ function Section({
               <Badge className={STATUS_TONE[t.status as TransferStatus]} variant="secondary">
                 {STATUS_LABEL[t.status as TransferStatus]}
               </Badge>
-              {!readOnly && step && (
+              {!readOnly && isAdmin && step && (
                 <Button size="sm" onClick={() => void advance(t.id, step.to, step.label)}>
                   {step.label}
                 </Button>
