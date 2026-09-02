@@ -133,6 +133,45 @@ export function BazikPanel() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
+            <PlugZap className="size-4" /> Conexión en vivo
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant={info?.connected ? "secondary" : "destructive"}>
+              {info?.connected ? "Conectado a Bazik" : "Sin conexión"}
+            </Badge>
+            {info?.balance ? (
+              <Badge variant="outline">Entorno: {info.balance.environment}</Badge>
+            ) : null}
+          </div>
+          {info?.balance ? (
+            <p className="text-lg font-semibold">
+              Saldo disponible: {info.balance.available.toFixed(2)} {info.balance.currency}
+            </p>
+          ) : null}
+          {info?.connectionError ? (
+            <p className="text-xs text-destructive">{info.connectionError}</p>
+          ) : null}
+          <p className="text-xs text-muted-foreground">
+            Envíos MonCash / NatCash activos. Mínimo NatCash: 3998 HTG · comisión ≈ 5%.
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              void queryClient.invalidateQueries({ queryKey: ["bazik_status"] });
+              toast.success("Probando conexión…");
+            }}
+          >
+            <PlugZap className="mr-2 size-4" /> Probar conexión
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
             <PlugZap className="size-4" /> Credenciales Bazik (bazik.io)
           </CardTitle>
         </CardHeader>
