@@ -472,7 +472,7 @@ export type Database = {
           status_detail: string | null
           updated_at: string
           user_id: string
-          wallet_id: string
+          wallet_id: string | null
         }
         Insert: {
           amount: number
@@ -491,7 +491,7 @@ export type Database = {
           status_detail?: string | null
           updated_at?: string
           user_id: string
-          wallet_id: string
+          wallet_id?: string | null
         }
         Update: {
           amount?: number
@@ -510,7 +510,7 @@ export type Database = {
           status_detail?: string | null
           updated_at?: string
           user_id?: string
-          wallet_id?: string
+          wallet_id?: string | null
         }
         Relationships: [
           {
@@ -833,7 +833,42 @@ export type Database = {
           status_detail: string | null
           updated_at: string
           user_id: string
-          wallet_id: string
+          wallet_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "topups"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      create_topup_direct: {
+        Args: {
+          _amount: number
+          _country_code: string
+          _currency: string
+          _operator: string
+          _phone: string
+          _sku_code: string
+        }
+        Returns: {
+          amount: number
+          country_code: string
+          created_at: string
+          currency: string
+          id: string
+          operator: string
+          phone: string
+          provider: string
+          provider_ref: string | null
+          reference: string
+          refunded: boolean
+          sku_code: string
+          status: string
+          status_detail: string | null
+          updated_at: string
+          user_id: string
+          wallet_id: string | null
         }
         SetofOptions: {
           from: "*"
