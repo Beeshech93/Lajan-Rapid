@@ -9,6 +9,7 @@ import {
   Briefcase,
   LogOut,
   Plus,
+  Smartphone,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import logoAsset from "@/assets/lajan-rapid-logo.png.asset.json";
@@ -22,12 +23,14 @@ import { useI18n } from "@/lib/i18n";
 const baseNav = [
   { to: "/dashboard", key: "nav.home", icon: Home },
   { to: "/enviar", key: "nav.send", icon: Send },
+  { to: "/recargas", key: "nav.topup", icon: Smartphone },
   { to: "/historial", key: "nav.history", icon: History },
   { to: "/perfil", key: "nav.profile", icon: User },
 ];
 
 const mobileNav = [
   { to: "/dashboard", key: "nav.home", icon: Home },
+  { to: "/recargas", key: "nav.topup", icon: Smartphone },
   { to: "/historial", key: "nav.history", icon: History },
   { to: "/perfil", key: "nav.profile", icon: User },
 ];
