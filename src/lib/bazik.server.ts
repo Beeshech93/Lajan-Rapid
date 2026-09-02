@@ -182,6 +182,95 @@ export async function bazikStatusInfo() {
   };
 }
 
+export function bazikWebhookState(value?: string | null): "processing" | "completed" | "cancelled" | null {
+  const v = String(value ?? "").trim().toLowerCase();
+  if (!v) return null;
+
+  if (bazikStatusLooksSuccessful(value)) return "completed";
+  if (["pending", "processing", "in_progress", "queued", "submitted", "created", "awaiting"].includes(v) || v.includes("process") || v.includes("pending")) {
+    return "processing";
+  }
+  if (["failed", "rejected", "cancelled", "canceled", "error", "refunded", "declined"].includes(v) || v.includes("fail") || v.includes("cancel")) {
+    return "cancelled";
+  }
+  return null;
+}
+
+export function bazikExtractReference(payload: unknown): string | null {
+  const data = (payload ?? {}) as Record<string, unknown>;
+  const nested = (data["data"] as Record<string, unknown> | undefined) ?? undefined;
+  const transfer = (data["transfer"] as Record<string, unknown> | undefined) ?? undefined;
+  const payout = (data["payout"] as Record<string, unknown> | undefined) ?? undefined;
+
+  const candidate =
+    (data["reference"] as string | undefined) ??
+    (data["ref"] as string | undefined) ??
+    (data["transaction_reference"] as string | undefined) ??
+    (data["provider_reference"] as string | undefined) ??
+    (data["providerRef"] as string | undefined) ??
+    (data["external_reference"] as string | undefined) ??
+    (nested?.["reference"] as string | undefined) ??
+    (nested?.["ref"] as string | undefined) ??
+    (transfer?.["reference"] as string | undefined) ??
+    (payout?.["reference"] as string | undefined) ??
+    (data["id"] as string | undefined);
+
+  return candidate ? String(candidate).trim() : null;
+}
+
+const BAZIK_STATUS_TEXT: Record<"processing" | "completed" | "cancelled", { title: string; body: string }> = {
+  processing: { title: "Pago en proceso", body: "Bazik está procesando el envío a MonCash/NatCash." },
+  completed: { title: "Pago confirmado", body: "Bazik confirmó el envío y ya fue acreditado a la billetera móvil." },
+  cancelled: { title: "Pago rechazado", body: "Bazik no pudo completar el envío." },
+};
+
+export async function applyBazikResult(opts: {
+  reference: string;
+  state: string;
+  providerRef?: string | null;
+  detail?: string | null;
+}) {
+  const next = bazikWebhookState(opts.state);
+  if (!next) return { ok: false, reason: `Estado no manejado: ${opts.state}` };
+
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: transfer } = await supabaseAdmin
+    .from("transfers")
+    .select("id, user_id, status, reference")
+    .eq("reference", opts.reference)
+    .maybeSingle();
+
+  if (!transfer) return { ok: false, reason: `No existe el envío ${opts.reference}` };
+  if (transfer.status === next) return { ok: true, unchanged: true, transferId: transfer.id };
+  if (["completed", "ready_for_pickup", "processing"].includes(transfer.status) && next === "completed") {
+    return { ok: true, unchanged: true, transferId: transfer.id };
+  }
+
+  const { error } = await supabaseAdmin
+    .from("transfers")
+    .update({ status: next })
+    .eq("id", transfer.id);
+
+  if (error) {
+    console.error("Bazik: no se pudo actualizar el envío", error);
+    return { ok: false, reason: error.message };
+  }
+
+  await supabaseAdmin.from("transfer_events").insert({
+    transfer_id: transfer.id,
+    status: next,
+    message: `Bazik: ${BAZIK_STATUS_TEXT[next].title}`,
+  });
+
+  await supabaseAdmin.from("notifications").insert({
+    user_id: transfer.user_id,
+    title: `${BAZIK_STATUS_TEXT[next].title} · ${transfer.reference}`,
+    body: BAZIK_STATUS_TEXT[next].body,
+  });
+
+  return { ok: true, transferId: transfer.id, status: next };
+}
+
 async function callBazik(
   creds: Creds,
   paths: string[],
