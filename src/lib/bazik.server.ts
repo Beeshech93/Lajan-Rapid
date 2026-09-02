@@ -100,8 +100,16 @@ export async function bazikWebhookSecret(): Promise<string | undefined> {
   return pick(stored, "BAZIK_WEBHOOK_SECRET");
 }
 
-export function bazikRequestCandidates() {
-  return ["/transfers", "/payouts", "/v1/payouts", "/v1/transfers"];
+export function bazikRequestCandidates(provider?: BazikWallet) {
+  // Rutas específicas por proveedor (según un SDK no oficial de Bazik) probadas primero,
+  // seguidas de las rutas genéricas originales como respaldo.
+  const providerSpecific =
+    provider === "moncash"
+      ? ["/moncash/withdraw", "/moncash/transfers"]
+      : provider === "natcash"
+        ? ["/natcash/withdraw", "/natcash/transfers"]
+        : [];
+  return [...providerSpecific, "/transfers", "/payouts", "/v1/payouts", "/v1/transfers"];
 }
 
 export function bazikStatusLooksSuccessful(status?: string | null): boolean {
@@ -398,7 +406,7 @@ export async function bazikQuote(amount: number, provider: BazikWallet): Promise
     };
   }
 
-  const result = await callBazik(creds, ["/quotes", "/v1/quotes", "/quote"], {
+  const result = await callBazik(creds, ["/transfers/quote", "/quotes", "/v1/quotes", "/quote"], {
     provider,
     amount,
   });
@@ -414,7 +422,7 @@ export async function bazikPayout(input: BazikPayoutInput): Promise<BazikResult>
   const wallet = input.phone.replace(/\D/g, "");
   const normalized = wallet.startsWith("509") ? wallet : `509${wallet.slice(-8)}`;
 
-  return callBazik(creds, bazikRequestCandidates(), {
+  return callBazik(creds, bazikRequestCandidates(input.provider), {
     provider: input.provider,
     destination: normalized,
     wallet: normalized,
