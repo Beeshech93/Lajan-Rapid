@@ -1,6 +1,6 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMutation } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
@@ -38,6 +38,7 @@ export const Route = createFileRoute("/_authenticated/agente")({
 function Agente() {
   const { isAdmin } = useProfile();
   const qc = useQueryClient();
+  const confirmTransfer = useServerFn(adminConfirmTransfer);
 
   const { data: transfers } = useQuery({
     queryKey: ["agent-transfers"],
@@ -53,7 +54,7 @@ function Agente() {
 
   const advance = async (id: string, status: TransferStatus, message: string) => {
     try {
-      const result = await adminConfirmTransfer({ transferId: id });
+      const result = await confirmTransfer({ data: { transferId: id } });
       if (result.ok) {
         toast.success(result.message || message);
         qc.invalidateQueries({ queryKey: ["agent-transfers"] });
