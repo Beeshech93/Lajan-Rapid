@@ -2,10 +2,7 @@
 // Credenciales guardadas manualmente desde el panel de administración
 // (o por variables de entorno del mismo nombre).
 
-export const MP_CRED_NAMES = [
-  "MERCADOPAGO_ACCESS_TOKEN",
-  "MERCADOPAGO_WEBHOOK_SECRET",
-] as const;
+export const MP_CRED_NAMES = ["MERCADOPAGO_ACCESS_TOKEN", "MERCADOPAGO_WEBHOOK_SECRET"] as const;
 
 export type MpCredName = (typeof MP_CRED_NAMES)[number];
 
@@ -105,9 +102,7 @@ export async function verifyMpSignature(opts: {
 
   const manifest = `id:${opts.dataId ?? ""};request-id:${opts.requestId ?? ""};ts:${ts};`;
   const expected = await hmacSha256Hex(secret, manifest);
-  return timingSafeEqualHex(expected, v1)
-    ? { ok: true }
-    : { ok: false, reason: "Firma inválida" };
+  return timingSafeEqualHex(expected, v1) ? { ok: true } : { ok: false, reason: "Firma inválida" };
 }
 
 export type MpPayment = {
@@ -242,11 +237,17 @@ export async function createMpPreference(opts: {
       },
     ],
     external_reference: opts.reference,
-    notification_url: `${process.env['PUBLIC_URL'] || "http://localhost:5173"}/api/public/mercadopago/webhook`,
+    notification_url: `${process.env["PUBLIC_URL"] || "http://localhost:5173"}/api/public/mercadopago/webhook`,
     back_urls: {
-      success: opts.successUrl || `${process.env['PUBLIC_URL'] || "http://localhost:5173"}/transferencia/${opts.transferId}?payment=success`,
-      pending: opts.pendingUrl || `${process.env['PUBLIC_URL'] || "http://localhost:5173"}/transferencia/${opts.transferId}?payment=pending`,
-      failure: opts.failureUrl || `${process.env['PUBLIC_URL'] || "http://localhost:5173"}/transferencia/${opts.transferId}?payment=failure`,
+      success:
+        opts.successUrl ||
+        `${process.env["PUBLIC_URL"] || "http://localhost:5173"}/transferencia/${opts.transferId}?payment=success`,
+      pending:
+        opts.pendingUrl ||
+        `${process.env["PUBLIC_URL"] || "http://localhost:5173"}/transferencia/${opts.transferId}?payment=pending`,
+      failure:
+        opts.failureUrl ||
+        `${process.env["PUBLIC_URL"] || "http://localhost:5173"}/transferencia/${opts.transferId}?payment=failure`,
     },
     payer: opts.buyerEmail ? { email: opts.buyerEmail } : undefined,
     ...(opts.cardOnly
@@ -317,8 +318,11 @@ function mapOxxo(p: Record<string, unknown>): OxxoVoucher {
     paymentId: String(p["id"]),
     reference: String(ref),
     voucherUrl:
-      typeof td["external_resource_url"] === "string" ? (td["external_resource_url"] as string) : null,
-    expiresAt: typeof p["date_of_expiration"] === "string" ? (p["date_of_expiration"] as string) : null,
+      typeof td["external_resource_url"] === "string"
+        ? (td["external_resource_url"] as string)
+        : null,
+    expiresAt:
+      typeof p["date_of_expiration"] === "string" ? (p["date_of_expiration"] as string) : null,
     amount: Number(p["transaction_amount"] ?? 0),
     currency: String(p["currency_id"] ?? "MXN"),
     status: String(p["status"] ?? "pending"),
@@ -369,7 +373,7 @@ export async function createOxxoVoucher(opts: {
     payment_method_id: "oxxo",
     external_reference: opts.reference,
     date_of_expiration: expires.toISOString().replace("Z", "+00:00"),
-    notification_url: `${process.env['PUBLIC_URL'] || "https://lajanrapid.app"}/api/public/mercadopago/webhook`,
+    notification_url: `${process.env["PUBLIC_URL"] || "https://lajanrapid.app"}/api/public/mercadopago/webhook`,
     payer: {
       email: opts.payerEmail,
       first_name: opts.payerFirstName ?? "Cliente",
@@ -438,17 +442,15 @@ function mapSpei(p: Record<string, unknown>, concept: string): SpeiReference {
       typeof td["external_resource_url"] === "string"
         ? (td["external_resource_url"] as string)
         : null,
-    expiresAt: typeof p["date_of_expiration"] === "string" ? (p["date_of_expiration"] as string) : null,
+    expiresAt:
+      typeof p["date_of_expiration"] === "string" ? (p["date_of_expiration"] as string) : null,
     amount: Number(p["transaction_amount"] ?? 0),
     currency: String(p["currency_id"] ?? "MXN"),
     status: String(p["status"] ?? "pending"),
   };
 }
 
-async function findExistingSpei(
-  token: string,
-  reference: string,
-): Promise<SpeiReference | null> {
+async function findExistingSpei(token: string, reference: string): Promise<SpeiReference | null> {
   const url = `${MP_API}/v1/payments/search?external_reference=${encodeURIComponent(reference)}&sort=date_created&criteria=desc&limit=10`;
   const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
   if (!res.ok) return null;
@@ -488,7 +490,7 @@ export async function createSpeiReference(opts: {
     payment_method_id: "clabe",
     external_reference: opts.reference,
     date_of_expiration: expires.toISOString().replace("Z", "+00:00"),
-    notification_url: `${process.env['PUBLIC_URL'] || "https://lajanrapid.app"}/api/public/mercadopago/webhook`,
+    notification_url: `${process.env["PUBLIC_URL"] || "https://lajanrapid.app"}/api/public/mercadopago/webhook`,
     payer: {
       email: opts.payerEmail,
       first_name: opts.payerFirstName ?? "Cliente",

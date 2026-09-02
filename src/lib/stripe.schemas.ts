@@ -9,5 +9,4 @@ export const stripeCredentialsSchema = z.object({
 
 export type StripeCredentialsInput = z.infer<typeof stripeCredentialsSchema>;
 
-export const parseStripeCredentialsInput = (input: unknown) =>
-  stripeCredentialsSchema.parse(input);
+export const parseStripeCredentialsInput = (input: unknown) => stripeCredentialsSchema.parse(input);

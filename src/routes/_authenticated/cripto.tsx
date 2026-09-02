@@ -225,13 +225,19 @@ function Cripto() {
 
               {asset && (
                 <div className="rounded-xl border bg-muted/40 p-3">
-                  <p className="text-xs text-muted-foreground">Dirección de depósito ({asset.network})</p>
+                  <p className="text-xs text-muted-foreground">
+                    Dirección de depósito ({asset.network})
+                  </p>
                   <div className="mt-1 flex items-center gap-2">
                     <code className="min-w-0 flex-1 truncate text-sm">
                       {asset.deposit_address || "Aún no configurada — contacta soporte"}
                     </code>
                     {asset.deposit_address && (
-                      <Button size="icon" variant="ghost" onClick={() => copy(asset.deposit_address)}>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => copy(asset.deposit_address)}
+                      >
                         <Copy className="size-4" />
                       </Button>
                     )}

@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/select";
 import { bazikSaveCredentials, bazikSendMobileMoney, bazikStatus } from "@/lib/bazik.functions";
 
-
 function CopyField({ label, value }: { label: string; value: string }) {
   return (
     <div className="space-y-1.5">
@@ -84,7 +83,6 @@ export function BazikPanel() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-
   const [provider, setProvider] = useState<"moncash" | "natcash">("moncash");
   const [phone, setPhone] = useState("");
   const [payAmount, setPayAmount] = useState("");
@@ -114,20 +112,17 @@ export function BazikPanel() {
         </CardHeader>
         <CardContent className="space-y-2 text-sm">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant={info?.connected ? "secondary" : "destructive"}>
-              {info?.connected ? "Conectado a Bazik" : "Sin conexión"}
+            <Badge variant={info?.configured ? "secondary" : "destructive"}>
+              {info?.configured ? "Conectado a Bazik" : "Sin conexión"}
             </Badge>
-            {info?.balance ? (
-              <Badge variant="outline">Entorno: {info.balance.environment}</Badge>
-            ) : null}
+            {info?.baseUrl ? <Badge variant="outline">{info.baseUrl}</Badge> : null}
           </div>
-          {info?.balance ? (
-            <p className="text-lg font-semibold">
-              Saldo disponible: {info.balance.available.toFixed(2)} {info.balance.currency}
+          {info && !info.configured ? (
+            <p className="text-xs text-destructive">
+              Faltan credenciales: {!info.payout.hasKey ? "API Key" : ""}
+              {!info.payout.hasKey && !info.payout.hasSecret ? " y " : ""}
+              {!info.payout.hasSecret ? "API Secret" : ""}
             </p>
-          ) : null}
-          {info?.connectionError ? (
-            <p className="text-xs text-destructive">{info.connectionError}</p>
           ) : null}
           <p className="text-xs text-muted-foreground">
             Envíos MonCash / NatCash activos. Mínimo NatCash: 3998 HTG · comisión ≈ 5%.
@@ -153,8 +148,8 @@ export function BazikPanel() {
         </CardHeader>
         <CardContent className="space-y-4 text-sm">
           <p className="text-xs text-muted-foreground">
-            Pega aquí las credenciales de Bazik para payouts MonCash / NatCash. Se guardan
-            cifradas en el backend y nunca se muestran de vuelta.
+            Pega aquí las credenciales de Bazik para payouts MonCash / NatCash. Se guardan cifradas
+            en el backend y nunca se muestran de vuelta.
           </p>
 
           <div className="space-y-1.5">
@@ -270,16 +265,11 @@ export function BazikPanel() {
             </div>
           ))}
 
-          <Button
-            className="w-full"
-            disabled={saveMut.isPending}
-            onClick={() => saveMut.mutate()}
-          >
+          <Button className="w-full" disabled={saveMut.isPending} onClick={() => saveMut.mutate()}>
             <Save className="mr-2 size-4" /> Guardar credenciales
           </Button>
         </CardContent>
       </Card>
-
 
       <Card>
         <CardHeader>

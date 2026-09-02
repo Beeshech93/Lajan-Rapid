@@ -23,4 +23,3 @@ export type BazikCredentialsInput = z.infer<typeof bazikCredentialsSchema>;
 
 export const parseBazikPayoutInput = (input: unknown) => bazikPayoutSchema.parse(input);
 export const parseBazikCredentialsInput = (input: unknown) => bazikCredentialsSchema.parse(input);
-

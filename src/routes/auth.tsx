@@ -232,7 +232,6 @@ function AuthPage() {
                     </p>
                   </div>
 
-
                   <Field id="email-up" name="email" label={t("auth.email")} type="email" />
                   <Field id="pass-up" name="password" label={t("auth.password")} type="password" />
                   <Button className="w-full" disabled={loading}>

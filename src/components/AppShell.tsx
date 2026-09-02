@@ -148,7 +148,12 @@ export function AppShell({ children }: { children: ReactNode }) {
         >
           <ul className="mx-auto grid max-w-md grid-cols-5 items-end px-1 pt-2">
             {mobileNav.slice(0, 2).map((item) => (
-              <NavItem key={item.to} item={item} active={pathname === item.to} label={t(item.key)} />
+              <NavItem
+                key={item.to}
+                item={item}
+                active={pathname === item.to}
+                label={t(item.key)}
+              />
             ))}
 
             <li className="relative min-w-0">
@@ -163,7 +168,12 @@ export function AppShell({ children }: { children: ReactNode }) {
             </li>
 
             {mobileNav.slice(2).map((item) => (
-              <NavItem key={item.to} item={item} active={pathname === item.to} label={t(item.key)} />
+              <NavItem
+                key={item.to}
+                item={item}
+                active={pathname === item.to}
+                label={t(item.key)}
+              />
             ))}
           </ul>
         </nav>

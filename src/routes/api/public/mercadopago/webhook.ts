@@ -26,9 +26,8 @@ export const Route = createFileRoute("/api/public/mercadopago/webhook")({
 
         const topic = body.type ?? url.searchParams.get("type") ?? url.searchParams.get("topic");
 
-        const { verifyMpSignature, fetchMpPayment, applyMpPayment } = await import(
-          "@/lib/mercadopago.server"
-        );
+        const { verifyMpSignature, fetchMpPayment, applyMpPayment } =
+          await import("@/lib/mercadopago.server");
 
         const verified = await verifyMpSignature({
           signatureHeader: request.headers.get("x-signature"),

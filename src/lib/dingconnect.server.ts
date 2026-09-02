@@ -56,12 +56,13 @@ async function dingFetch(path: string, init?: RequestInit) {
   const stored = await loadDingCreds();
   const apiKey = pick(stored, "DINGCONNECT_API_KEY");
   const baseUrl = (pick(stored, "DINGCONNECT_BASE_URL") ?? DEFAULT_BASE_URL).replace(/\/$/, "");
-  if (!apiKey) throw new Error("Falta DINGCONNECT_API_KEY: configúralo en Administración → DingConnect");
+  if (!apiKey)
+    throw new Error("Falta DINGCONNECT_API_KEY: configúralo en Administración → DingConnect");
 
   const res = await fetch(`${baseUrl}${path}`, {
     ...init,
     headers: {
-      "api_key": apiKey,
+      api_key: apiKey,
       "Content-Type": "application/json",
       Accept: "application/json",
       ...(init?.headers ?? {}),
@@ -90,9 +91,17 @@ export type DingProduct = {
 
 /** Catálogo de productos (operadores y montos) por país. */
 export async function dingProducts(countryCode: string): Promise<DingProduct[]> {
+  type DingProductItem = {
+    SkuCode?: unknown;
+    ProviderCode?: unknown;
+    ProviderName?: unknown;
+    CountryIso?: unknown;
+    Minimum?: { SendValue?: number; SendCurrencyIso?: string };
+    Maximum?: { SendValue?: number };
+  };
   const raw = (await dingFetch(
     `/GetProducts?countryIsos=${encodeURIComponent(countryCode.toUpperCase())}`,
-  )) as { Items?: Array<Record<string, any>> };
+  )) as { Items?: DingProductItem[] };
   return (raw.Items ?? []).slice(0, 200).map((p) => ({
     skuCode: String(p["SkuCode"] ?? ""),
     operator: String(p["ProviderCode"] ?? p["ProviderName"] ?? ""),
@@ -166,7 +175,10 @@ export async function verifyDingWebhook(opts: {
     return { ok: true };
   }
   if (opts.signatureHeader) {
-    const provided = opts.signatureHeader.replace(/^sha256=/i, "").trim().toLowerCase();
+    const provided = opts.signatureHeader
+      .replace(/^sha256=/i, "")
+      .trim()
+      .toLowerCase();
     const expected = await hmacSha256Hex(secret, opts.rawBody);
     if (timingSafeEqual(expected, provided)) return { ok: true };
   }
@@ -197,8 +209,14 @@ export function mapDingState(state: string): TopupStatus | null {
 }
 
 const STATUS_TEXT: Record<TopupStatus, { title: string; body: string }> = {
-  processing: { title: "Recarga en proceso", body: "Tu recarga está siendo procesada por el operador." },
-  completed: { title: "Recarga completada", body: "El saldo ya fue acreditado en el número indicado." },
+  processing: {
+    title: "Recarga en proceso",
+    body: "Tu recarga está siendo procesada por el operador.",
+  },
+  completed: {
+    title: "Recarga completada",
+    body: "El saldo ya fue acreditado en el número indicado.",
+  },
   failed: {
     title: "Recarga no completada",
     body: "El operador rechazó la recarga. Devolvimos el monto a tu billetera.",
@@ -241,19 +259,20 @@ export async function applyDingResult(opts: {
     return { ok: false, reason: error.message };
   }
 
-  if (next === "failed" && !topup.refunded) {
+  if (next === "failed" && !topup.refunded && topup.wallet_id) {
+    const walletId = topup.wallet_id;
     const { data: wallet } = await supabaseAdmin
       .from("wallets")
       .select("balance")
-      .eq("id", topup.wallet_id)
+      .eq("id", walletId)
       .maybeSingle();
     if (wallet) {
       await supabaseAdmin
         .from("wallets")
         .update({ balance: Number(wallet.balance) + Number(topup.amount) })
-        .eq("id", topup.wallet_id);
+        .eq("id", walletId);
       await supabaseAdmin.from("wallet_transactions").insert({
-        wallet_id: topup.wallet_id,
+        wallet_id: walletId,
         user_id: topup.user_id,
         kind: "topup_refund",
         amount: Number(topup.amount),

@@ -57,7 +57,6 @@ export const bazikQuoteTransfer = createServerFn({ method: "POST" })
     return bazikQuote(data.amount, data.provider);
   });
 
-
 /** Guardar manualmente las credenciales de Bazik (solo administradores). */
 export const bazikSaveCredentials = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -75,4 +74,3 @@ export const bazikSaveCredentials = createServerFn({ method: "POST" })
     }
     return { ok: true };
   });
-

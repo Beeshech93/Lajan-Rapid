@@ -161,7 +161,11 @@ export function formatNational(countryCode: string, local: string, dial?: string
   return out.join(" ");
 }
 
-export type PhoneCheck = { ok: boolean; e164?: string; error?: "empty" | "short" | "long" | "invalid" };
+export type PhoneCheck = {
+  ok: boolean;
+  e164?: string;
+  error?: "empty" | "short" | "long" | "invalid";
+};
 
 /** Valida el número nacional contra el país y devuelve E.164. */
 export function validatePhone(countryCode: string, dial: string, local: string): PhoneCheck {

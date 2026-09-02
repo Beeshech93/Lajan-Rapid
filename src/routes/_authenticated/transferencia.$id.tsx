@@ -9,7 +9,11 @@ import { useProfile } from "@/hooks/useProfile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { mercadoPagoInitiatePayment, mercadoPagoOxxoVoucher, mercadoPagoSpeiReference } from "@/lib/mercadopago.functions";
+import {
+  mercadoPagoInitiatePayment,
+  mercadoPagoOxxoVoucher,
+  mercadoPagoSpeiReference,
+} from "@/lib/mercadopago.functions";
 import { finalizeTransferPayout } from "@/lib/transfers.functions";
 import {
   money,
@@ -75,9 +79,13 @@ function Detalle() {
   useEffect(() => {
     const channel = supabase
       .channel(`transfer-${id}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "transfers", filter: `id=eq.${id}` }, () => {
-        qc.invalidateQueries({ queryKey: ["transfer", id] });
-      })
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "transfers", filter: `id=eq.${id}` },
+        () => {
+          qc.invalidateQueries({ queryKey: ["transfer", id] });
+        },
+      )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "transfer_events", filter: `transfer_id=eq.${id}` },
@@ -89,26 +97,30 @@ function Detalle() {
     };
   }, [id, qc]);
 
-  if (!t) return <p className="py-10 text-center text-sm text-muted-foreground">Cargando…</p>;
-
-  const status = t.status as TransferStatus;
-  const currentIndex = STATUS_FLOW.indexOf(status);
-  const paymentName = paymentLabel(t.payment_method);
-  const deliveryName = deliveryLabel(t.delivery_method);
-  const isCardPayment = ["mercado_pago", "mercadopago", "card", "tarjeta"].includes(
-    t.payment_method,
-  );
-  const isOxxo = t.payment_method === "oxxo";
-  const isSpei = t.payment_method === "spei";
-  const isDirectCashDelivery = ["moncash", "natcash"].includes(t.delivery_method);
-  const shouldAutoFinalizeUser = !isAdmin && isDirectCashDelivery && !isCardPayment && !isOxxo && !isSpei;
+  const status = t?.status as TransferStatus | undefined;
+  const isCardPayment = t
+    ? ["mercado_pago", "mercadopago", "card", "tarjeta"].includes(t.payment_method)
+    : false;
+  const isOxxo = t?.payment_method === "oxxo";
+  const isSpei = t?.payment_method === "spei";
+  const isDirectCashDelivery = t ? ["moncash", "natcash"].includes(t.delivery_method) : false;
+  const shouldAutoFinalizeUser =
+    !isAdmin && isDirectCashDelivery && !isCardPayment && !isOxxo && !isSpei;
 
   useEffect(() => {
+    if (!t) return;
     if (!shouldAutoFinalizeUser) return;
     if (status === "completed" || status === "cancelled") return;
     if (finalize.isPending) return;
     finalize.mutate();
-  }, [finalize, shouldAutoFinalizeUser, status]);
+  }, [finalize, shouldAutoFinalizeUser, status, t]);
+
+  if (!t) return <p className="py-10 text-center text-sm text-muted-foreground">Cargando…</p>;
+
+  const definiteStatus = t.status as TransferStatus;
+  const currentIndex = STATUS_FLOW.indexOf(definiteStatus);
+  const paymentName = paymentLabel(t.payment_method);
+  const deliveryName = deliveryLabel(t.delivery_method);
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
@@ -117,8 +129,8 @@ function Detalle() {
           <h1 className="text-2xl font-bold">Envío {t.reference}</h1>
           <p className="text-sm text-muted-foreground">Creado el {shortDate(t.created_at)}</p>
         </div>
-        <Badge className={STATUS_TONE[status]} variant="secondary">
-          {STATUS_LABEL[status]}
+        <Badge className={STATUS_TONE[definiteStatus]} variant="secondary">
+          {STATUS_LABEL[definiteStatus]}
         </Badge>
       </div>
 
@@ -204,11 +216,6 @@ function Detalle() {
         <SpeiCard transferId={id} amount={money(Number(t.total_send), t.send_currency)} />
       )}
 
-
-
-
-
-
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Seguimiento en tiempo real</CardTitle>
@@ -260,7 +267,10 @@ function Detalle() {
           <Row label="Entrega" value={deliveryName} />
           <Row label="Corredor" value={`${t.origin_country} → ${t.destination_country}`} />
           <Row label="Método de pago" value={paymentName} />
-          <Row label="Tipo de cambio" value={`1 ${t.send_currency} = ${Number(t.rate).toFixed(4)} ${t.receive_currency}`} />
+          <Row
+            label="Tipo de cambio"
+            value={`1 ${t.send_currency} = ${Number(t.rate).toFixed(4)} ${t.receive_currency}`}
+          />
           {t.note && <Row label="Mensaje" value={t.note} />}
         </CardContent>
       </Card>
@@ -316,7 +326,12 @@ function OxxoVoucherCard({ transferId, amount }: { transferId: string; amount: s
             <p className="text-sm text-destructive">
               {(error as Error).message || "No pudimos generar la ficha."}
             </p>
-            <Button size="sm" variant="outline" disabled={isFetching} onClick={() => void refetch()}>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={isFetching}
+              onClick={() => void refetch()}
+            >
               Reintentar
             </Button>
           </div>
@@ -367,7 +382,12 @@ function OxxoVoucherCard({ transferId, amount }: { transferId: string; amount: s
                 </Button>
               )}
               {expired && (
-                <Button size="sm" variant="secondary" disabled={isFetching} onClick={() => void refetch()}>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={isFetching}
+                  onClick={() => void refetch()}
+                >
                   Generar nueva ficha
                 </Button>
               )}
@@ -414,7 +434,12 @@ function SpeiCard({ transferId, amount }: { transferId: string; amount: string }
             <p className="text-sm text-destructive">
               {(error as Error).message || "No pudimos generar la CLABE."}
             </p>
-            <Button size="sm" variant="outline" disabled={isFetching} onClick={() => void refetch()}>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={isFetching}
+              onClick={() => void refetch()}
+            >
               Reintentar
             </Button>
           </div>
@@ -423,7 +448,9 @@ function SpeiCard({ transferId, amount }: { transferId: string; amount: string }
         {data && (
           <>
             <div className="rounded-xl bg-secondary p-4">
-              <p className="text-xs font-semibold uppercase text-muted-foreground">CLABE interbancaria</p>
+              <p className="text-xs font-semibold uppercase text-muted-foreground">
+                CLABE interbancaria
+              </p>
               <p className="mt-1 break-all font-display text-2xl font-bold tracking-wider">
                 {data.clabe}
               </p>
@@ -477,7 +504,12 @@ function SpeiCard({ transferId, amount }: { transferId: string; amount: string }
                 </Button>
               )}
               {expired && (
-                <Button size="sm" variant="secondary" disabled={isFetching} onClick={() => void refetch()}>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={isFetching}
+                  onClick={() => void refetch()}
+                >
                   Generar nueva CLABE
                 </Button>
               )}

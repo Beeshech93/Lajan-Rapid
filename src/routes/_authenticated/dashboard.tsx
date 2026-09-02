@@ -1,7 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowRight, Bell, Coins, History, Send, ShieldAlert, Smartphone, TrendingUp } from "lucide-react";
+import {
+  ArrowRight,
+  Bell,
+  Coins,
+  History,
+  Send,
+  ShieldAlert,
+  Smartphone,
+  TrendingUp,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { useCountries, useRate } from "@/hooks/useCorridors";
@@ -113,8 +122,13 @@ function Dashboard() {
 
       {/* Balance hero */}
       <section className="rise-in bg-brand shadow-lift relative overflow-hidden rounded-[var(--radius-3xl)] p-6 text-primary-foreground">
-        <div className="pointer-events-none absolute -right-16 -top-20 size-56 rounded-full bg-accent/25 blur-3xl" aria-hidden />
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] opacity-70">Saldo disponible</p>
+        <div
+          className="pointer-events-none absolute -right-16 -top-20 size-56 rounded-full bg-accent/25 blur-3xl"
+          aria-hidden
+        />
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] opacity-70">
+          Saldo disponible
+        </p>
         <p className="mt-2 font-display text-4xl font-bold tracking-tight">
           {money(totalHtg, "HTG")}
         </p>
@@ -124,12 +138,19 @@ function Dashboard() {
             : "Disponible para retirar por MonCash o NatCash."}
         </p>
         <div className="mt-5 grid grid-cols-2 gap-3">
-          <Button asChild className="press gap-2 bg-primary-foreground text-primary hover:bg-primary-foreground/90">
+          <Button
+            asChild
+            className="press gap-2 bg-primary-foreground text-primary hover:bg-primary-foreground/90"
+          >
             <Link to="/enviar">
               <Send className="size-4" /> Enviar
             </Link>
           </Button>
-          <Button asChild variant="outline" className="press gap-2 border-primary-foreground/30 bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/20 hover:text-primary-foreground">
+          <Button
+            asChild
+            variant="outline"
+            className="press gap-2 border-primary-foreground/30 bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/20 hover:text-primary-foreground"
+          >
             <Link to="/cripto">
               <Coins className="size-4" /> Cripto
             </Link>
@@ -195,7 +216,9 @@ function Dashboard() {
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
             Comisión{" "}
-            {rate ? `${Number(rate.fee_percent)}% + ${money(Number(rate.fee_fixed), sendCur)}` : "—"}
+            {rate
+              ? `${Number(rate.fee_percent)}% + ${money(Number(rate.fee_fixed), sendCur)}`
+              : "—"}
           </p>
         </CardContent>
       </Card>
@@ -266,4 +289,3 @@ function Dashboard() {
     </div>
   );
 }
-

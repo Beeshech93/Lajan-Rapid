@@ -45,7 +45,11 @@ function Soporte() {
       <h1 className="text-2xl font-bold">Soporte</h1>
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <Channel icon={<MessageCircle className="size-4" />} title="WhatsApp" value="+52 55 0000 0000" />
+        <Channel
+          icon={<MessageCircle className="size-4" />}
+          title="WhatsApp"
+          value="+52 55 0000 0000"
+        />
         <Channel icon={<Phone className="size-4" />} title="Teléfono" value="800 000 0000" />
         <Channel icon={<Mail className="size-4" />} title="Correo" value="ayuda@remesahaiti.app" />
       </div>

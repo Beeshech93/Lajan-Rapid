@@ -33,7 +33,11 @@ function CopyField({ label, value }: { label: string; value: string }) {
   );
 }
 
-const CRED_KEYS = ["DINGCONNECT_BASE_URL", "DINGCONNECT_API_KEY", "DINGCONNECT_WEBHOOK_SECRET"] as const;
+const CRED_KEYS = [
+  "DINGCONNECT_BASE_URL",
+  "DINGCONNECT_API_KEY",
+  "DINGCONNECT_WEBHOOK_SECRET",
+] as const;
 type CredKey = (typeof CRED_KEYS)[number];
 
 const EMPTY: Record<CredKey, string> = {
@@ -83,13 +87,13 @@ export function DingConnectPanel() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Pega esta URL en DingConnect → Webhooks / Notificaciones de transferencia. Las recargas se enlazan por{" "}
-            <code>DistributorRef</code> (referencia <code>LR-TU-XXXXXXXX</code>).
+            Pega esta URL en DingConnect → Webhooks / Notificaciones de transferencia. Las recargas
+            se enlazan por <code>DistributorRef</code> (referencia <code>LR-TU-XXXXXXXX</code>).
           </p>
           <CopyField label="URL de notificaciones" value={webhookUrl} />
           <p className="text-xs text-muted-foreground">
-            Enviar el secreto en la cabecera <code>x-webhook-secret</code>, o firmar el cuerpo con HMAC-SHA256 en{" "}
-            <code>x-signature</code>.
+            Enviar el secreto en la cabecera <code>x-webhook-secret</code>, o firmar el cuerpo con
+            HMAC-SHA256 en <code>x-signature</code>.
           </p>
           <ul className="list-disc pl-5 text-sm text-muted-foreground">
             <li>

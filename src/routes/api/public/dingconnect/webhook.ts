@@ -12,16 +12,14 @@ export const Route = createFileRoute("/api/public/dingconnect/webhook")({
         const url = new URL(request.url);
         const raw = await request.text();
 
-        let body: Record<string, any> = {};
+        let body: Record<string, unknown> = {};
         try {
-          body = JSON.parse(raw) as Record<string, any>;
+          body = JSON.parse(raw) as Record<string, unknown>;
         } catch {
           /* cuerpo no JSON */
         }
 
-        const { verifyDingWebhook, applyDingResult } = await import(
-          "@/lib/dingconnect.server"
-        );
+        const { verifyDingWebhook, applyDingResult } = await import("@/lib/dingconnect.server");
 
         const verified = await verifyDingWebhook({
           signatureHeader: request.headers.get("x-signature"),
@@ -34,7 +32,7 @@ export const Route = createFileRoute("/api/public/dingconnect/webhook")({
           return new Response("Invalid signature", { status: 401 });
         }
 
-        const record = (body["TransferRecord"] ?? body) as Record<string, any>;
+        const record = (body["TransferRecord"] ?? body) as Record<string, unknown>;
         const reference = String(
           record["DistributorRef"] ?? body["DistributorRef"] ?? url.searchParams.get("ref") ?? "",
         ).trim();

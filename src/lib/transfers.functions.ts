@@ -79,7 +79,10 @@ export const adminConfirmTransfer = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // Si es MonCash/NatCash, llamar a Bazik
-    if ((t.delivery_method === "moncash" || t.delivery_method === "natcash") && t.status === "awaiting_payment") {
+    if (
+      (t.delivery_method === "moncash" || t.delivery_method === "natcash") &&
+      t.status === "awaiting_payment"
+    ) {
       const { bazikPayout } = await import("@/lib/bazik.server");
       const result = await bazikPayout({
         provider: t.delivery_method,

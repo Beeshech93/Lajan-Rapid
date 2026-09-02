@@ -8,10 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import {
-  mercadoPagoSaveCredentials,
-  mercadoPagoStatus,
-} from "@/lib/mercadopago.functions";
+import { mercadoPagoSaveCredentials, mercadoPagoStatus } from "@/lib/mercadopago.functions";
 
 function CopyField({ label, value }: { label: string; value: string }) {
   return (
@@ -87,14 +84,20 @@ export function MercadoPagoPanel() {
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
             Pega esta URL en Mercado Pago → Tus integraciones → Webhooks, y activa el evento
-            <strong> Pagos</strong>. Los envíos se enlazan por <code>external_reference</code>,
-            que debe ser la referencia del envío (ej. <code>RH-XXXXXXXX</code>).
+            <strong> Pagos</strong>. Los envíos se enlazan por <code>external_reference</code>, que
+            debe ser la referencia del envío (ej. <code>RH-XXXXXXXX</code>).
           </p>
           <CopyField label="URL de notificaciones (producción y pruebas)" value={webhookUrl} />
           <ul className="list-disc pl-5 text-sm text-muted-foreground">
-            <li>Pago aprobado → el envío pasa a <strong>Pagado</strong>.</li>
-            <li>Pago pendiente o en proceso → <strong>Esperando pago</strong>.</li>
-            <li>Rechazado, cancelado o devuelto → <strong>Cancelado</strong>.</li>
+            <li>
+              Pago aprobado → el envío pasa a <strong>Pagado</strong>.
+            </li>
+            <li>
+              Pago pendiente o en proceso → <strong>Esperando pago</strong>.
+            </li>
+            <li>
+              Rechazado, cancelado o devuelto → <strong>Cancelado</strong>.
+            </li>
             <li>El cliente recibe una notificación en la app con cada cambio.</li>
           </ul>
         </CardContent>
@@ -130,11 +133,7 @@ export function MercadoPagoPanel() {
               onChange={(e) => setCred("MERCADOPAGO_WEBHOOK_SECRET", e.target.value)}
             />
           </div>
-          <Button
-            onClick={() => saveMut.mutate()}
-            disabled={saveMut.isPending}
-            className="w-full"
-          >
+          <Button onClick={() => saveMut.mutate()} disabled={saveMut.isPending} className="w-full">
             <Save className="mr-2 size-4" />
             {saveMut.isPending ? "Guardando..." : "Guardar credenciales"}
           </Button>

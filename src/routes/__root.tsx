@@ -96,10 +96,26 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
       { property: "og:title", content: "Lajan Rapid — Envía dinero de México a Haití" },
       { name: "twitter:title", content: "Lajan Rapid — Envía dinero de México a Haití" },
-      { property: "og:description", content: "Envía dinero de México a Haití en minutos. Tipo de cambio transparente, comisiones claras y seguimiento en tiempo real." },
-      { name: "twitter:description", content: "Envía dinero de México a Haití en minutos. Tipo de cambio transparente, comisiones claras y seguimiento en tiempo real." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/12a98643-608e-4133-90a8-d9091cc3da8a/id-preview-9e63a84a--b7a9baa3-804a-465d-b798-284cc8ac44da.lovable.app-1785963363792.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/12a98643-608e-4133-90a8-d9091cc3da8a/id-preview-9e63a84a--b7a9baa3-804a-465d-b798-284cc8ac44da.lovable.app-1785963363792.png" },
+      {
+        property: "og:description",
+        content:
+          "Envía dinero de México a Haití en minutos. Tipo de cambio transparente, comisiones claras y seguimiento en tiempo real.",
+      },
+      {
+        name: "twitter:description",
+        content:
+          "Envía dinero de México a Haití en minutos. Tipo de cambio transparente, comisiones claras y seguimiento en tiempo real.",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/12a98643-608e-4133-90a8-d9091cc3da8a/id-preview-9e63a84a--b7a9baa3-804a-465d-b798-284cc8ac44da.lovable.app-1785963363792.png",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/12a98643-608e-4133-90a8-d9091cc3da8a/id-preview-9e63a84a--b7a9baa3-804a-465d-b798-284cc8ac44da.lovable.app-1785963363792.png",
+      },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -112,7 +128,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "icon", href: "/favicon.png", type: "image/png" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
       { rel: "manifest", href: "/manifest.webmanifest" },
-
     ],
   }),
   shellComponent: RootShell,
@@ -157,5 +172,4 @@ function RootComponent() {
       </I18nProvider>
     </QueryClientProvider>
   );
-
 }

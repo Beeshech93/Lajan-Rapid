@@ -1,9 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import {
-  parseStripeCredentialsInput,
-  type StripeCredentialsInput,
-} from "@/lib/stripe.schemas";
+import { parseStripeCredentialsInput, type StripeCredentialsInput } from "@/lib/stripe.schemas";
 
 /** Estado de configuración de Stripe (solo administradores). */
 export const stripeStatus = createServerFn({ method: "POST" })

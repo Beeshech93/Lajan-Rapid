@@ -17,14 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  quote,
-  money,
-  paymentMethods,
-  deliveryMethods,
-  citiesFor,
-  ZERO_RATE,
-} from "@/lib/remesa";
+import { quote, money, paymentMethods, deliveryMethods, citiesFor, ZERO_RATE } from "@/lib/remesa";
 
 export const Route = createFileRoute("/_authenticated/enviar")({
   head: () => ({

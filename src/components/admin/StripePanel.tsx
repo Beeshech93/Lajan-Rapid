@@ -83,8 +83,8 @@ export function StripePanel() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Pega esta URL en Stripe → Developers → Webhooks → Add endpoint. El envío se enlaza
-            por <code>client_reference_id</code> o <code>metadata.reference</code>, que debe ser la
+            Pega esta URL en Stripe → Developers → Webhooks → Add endpoint. El envío se enlaza por{" "}
+            <code>client_reference_id</code> o <code>metadata.reference</code>, que debe ser la
             referencia del envío (ej. <code>RH-XXXXXXXX</code>).
           </p>
           <CopyField label="URL del endpoint (producción y pruebas)" value={webhookUrl} />
@@ -93,14 +93,20 @@ export function StripePanel() {
             <p className="font-mono text-xs">
               checkout.session.completed, checkout.session.expired,
               checkout.session.async_payment_succeeded, checkout.session.async_payment_failed,
-              payment_intent.succeeded, payment_intent.processing,
-              payment_intent.payment_failed, payment_intent.canceled, charge.refunded
+              payment_intent.succeeded, payment_intent.processing, payment_intent.payment_failed,
+              payment_intent.canceled, charge.refunded
             </p>
           </div>
           <ul className="list-disc pl-5 text-sm text-muted-foreground">
-            <li>Pago exitoso → el envío pasa a <strong>Pagado</strong>.</li>
-            <li>Pago en proceso → <strong>Esperando pago</strong>.</li>
-            <li>Fallido, cancelado o devuelto → <strong>Cancelado</strong>.</li>
+            <li>
+              Pago exitoso → el envío pasa a <strong>Pagado</strong>.
+            </li>
+            <li>
+              Pago en proceso → <strong>Esperando pago</strong>.
+            </li>
+            <li>
+              Fallido, cancelado o devuelto → <strong>Cancelado</strong>.
+            </li>
             <li>El cliente recibe una notificación en la app con cada cambio.</li>
           </ul>
         </CardContent>

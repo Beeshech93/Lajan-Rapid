@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { useWallets, useRefreshWallet } from "@/hooks/useWallet";
 import { dingListProducts, dingSendTopup } from "@/lib/dingconnect.functions";
-import { shortDate } from "@/lib/remesa";
+import { money, shortDate } from "@/lib/remesa";
 import { TOPUP_COUNTRIES, findTopupCountry, prettyOperator } from "@/lib/topup-operators";
 import { validatePhone, formatNational, expectedLengths, normalizeLocal } from "@/lib/phone";
 
@@ -52,7 +52,6 @@ const STATUS_LABEL: Record<string, string> = {
   refunded: "Devuelta",
 };
 
-
 function Recargas() {
   const qc = useQueryClient();
   const refreshWallet = useRefreshWallet();
@@ -67,10 +66,7 @@ function Recargas() {
   const [amount, setAmount] = useState("");
 
   // Usar la primera billetera disponible como defecto
-  const wallet = useMemo(
-    () => (wallets ?? [])[0],
-    [wallets],
-  );
+  const wallet = useMemo(() => (wallets ?? [])[0], [wallets]);
   const walletId = wallet?.id ?? "";
 
   const { data: products, isFetching } = useQuery({
@@ -109,7 +105,6 @@ function Recargas() {
         : phoneCheck.error === "long"
           ? `Sobran dígitos: ${countryInfo?.label ?? country} usa ${lengths.join(" o ")} dígitos (llevas ${phoneDigits.length}).`
           : `Número inválido para ${countryInfo?.label ?? country}. Debe tener ${lengths.join(" o ")} dígitos.`;
-
 
   // Operadores del país: del catálogo del proveedor si hay, si no del catálogo local.
   const operators = useMemo(() => {
@@ -249,9 +244,7 @@ function Recargas() {
               <SelectContent>
                 {plans.map((p) => (
                   <SelectItem key={p.skuCode} value={p.skuCode}>
-                    {p.minValue != null
-                      ? `${p.minValue} – ${p.maxValue} ${p.currency}`
-                      : p.skuCode}
+                    {p.minValue != null ? `${p.minValue} – ${p.maxValue} ${p.currency}` : p.skuCode}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -286,11 +279,8 @@ function Recargas() {
             ) : null}
           </div>
 
-
           <div className="space-y-1.5">
-            <Label htmlFor="tu-amount">
-              Monto {wallet ? `(${wallet.currency})` : ""}
-            </Label>
+            <Label htmlFor="tu-amount">Monto {wallet ? `(${wallet.currency})` : ""}</Label>
             <Input
               id="tu-amount"
               inputMode="decimal"

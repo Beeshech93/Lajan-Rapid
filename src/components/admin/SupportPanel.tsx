@@ -8,10 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import {
-  getSupportConfig,
-  updateSupportConfig,
-} from "@/lib/support.functions";
+import { getSupportConfig, updateSupportConfig } from "@/lib/support.functions";
 
 const TIMEZONES = [
   "UTC",
@@ -200,7 +197,10 @@ export function SupportPanel() {
         </CardHeader>
         <CardContent className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-50">
+            <Badge
+              variant="outline"
+              className="bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-50"
+            >
               ✓ Activo
             </Badge>
             <p className="text-sm text-muted-foreground">

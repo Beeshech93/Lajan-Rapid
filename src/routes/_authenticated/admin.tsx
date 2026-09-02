@@ -191,12 +191,8 @@ function KycPanel() {
   const { data } = useQuery({
     queryKey: ["admin-kyc"],
     queryFn: async () =>
-      (
-        await supabase
-          .from("kyc_submissions")
-          .select("*")
-          .order("created_at", { ascending: false })
-      ).data ?? [],
+      (await supabase.from("kyc_submissions").select("*").order("created_at", { ascending: false }))
+        .data ?? [],
   });
 
   const review = async (id: string, userId: string, status: "approved" | "rejected") => {
@@ -224,7 +220,10 @@ function KycPanel() {
           <p className="py-4 text-sm text-muted-foreground">Sin solicitudes.</p>
         )}
         {(data ?? []).map((k) => (
-          <div key={k.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3">
+          <div
+            key={k.id}
+            className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3"
+          >
             <div>
               <p className="font-medium">
                 {k.document_type.toUpperCase()} · {k.document_number}
@@ -266,12 +265,15 @@ function TxPanel() {
       </CardHeader>
       <CardContent className="space-y-2">
         {(data ?? []).map((t) => (
-          <div key={t.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3">
+          <div
+            key={t.id}
+            className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3"
+          >
             <div>
               <p className="font-medium">{t.recipient_name}</p>
               <p className="text-xs text-muted-foreground">
-                {t.reference} · {t.origin_country} → {t.destination_country} ·{" "}
-                {t.payment_method} · {shortDate(t.created_at)}
+                {t.reference} · {t.origin_country} → {t.destination_country} · {t.payment_method} ·{" "}
+                {shortDate(t.created_at)}
               </p>
             </div>
             <div className="text-right">
@@ -323,7 +325,10 @@ function UsersPanel() {
           const mine = (roles ?? []).filter((r) => r.user_id === p.id).map((r) => r.role);
           const isAgent = mine.includes("agent");
           return (
-            <div key={p.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3">
+            <div
+              key={p.id}
+              className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3"
+            >
               <div>
                 <p className="font-medium">{p.full_name || "Sin nombre"}</p>
                 <p className="text-xs text-muted-foreground">{p.phone || "sin teléfono"}</p>

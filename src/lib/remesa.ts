@@ -1,9 +1,5 @@
 export type TransferStatus =
-  | "created"
-  | "awaiting_payment"
-  | "processing"
-  | "completed"
-  | "cancelled";
+  "created" | "awaiting_payment" | "processing" | "completed" | "cancelled";
 
 export const STATUS_LABEL: Record<TransferStatus, string> = {
   created: "Creado",
@@ -21,11 +17,7 @@ export const STATUS_TONE: Record<TransferStatus, string> = {
   cancelled: "bg-destructive/10 text-destructive",
 };
 
-export const STATUS_FLOW: TransferStatus[] = [
-  "awaiting_payment",
-  "processing",
-  "completed",
-];
+export const STATUS_FLOW: TransferStatus[] = ["awaiting_payment", "processing", "completed"];
 
 export type KycStatus = "none" | "pending" | "approved" | "rejected";
 
@@ -72,7 +64,11 @@ export const PAYMENT_CATALOG: Record<string, Method> = {
     label: "Faster Payments",
     hint: "Bancos del Reino Unido",
   },
-  bank_transfer: { value: "bank_transfer", label: "Transferencia bancaria", hint: "Desde tu banco" },
+  bank_transfer: {
+    value: "bank_transfer",
+    label: "Transferencia bancaria",
+    hint: "Desde tu banco",
+  },
   cash_agent: { value: "cash_agent", label: "Efectivo con agente", hint: "Punto autorizado" },
 };
 
@@ -123,7 +119,6 @@ export const DELIVERY_KEYS = ["moncash", "natcash"] as const;
 export function deliveryMethods(_countryCode?: string | undefined): Method[] {
   return DELIVERY_KEYS.map((k) => DELIVERY_CATALOG[k]!);
 }
-
 
 export function deliveryLabel(value: string): string {
   return DELIVERY_CATALOG[value]?.label ?? value;
@@ -182,7 +177,9 @@ export const ZERO_RATE: RateConfig = {
 
 export function quote(amount: number, cfg: RateConfig): Quote {
   const safe = Number.isFinite(amount) && amount > 0 ? amount : 0;
-  const fee = round2(safe * (Number(cfg.fee_percent) / 100) + (safe > 0 ? Number(cfg.fee_fixed) : 0));
+  const fee = round2(
+    safe * (Number(cfg.fee_percent) / 100) + (safe > 0 ? Number(cfg.fee_fixed) : 0),
+  );
   return {
     amount: round2(safe),
     fee,

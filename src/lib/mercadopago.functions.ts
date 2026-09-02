@@ -1,6 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { parseMpCredentialsInput, parseOxxoVoucherInput, parseSpeiReferenceInput, type MpCredentialsInput } from "@/lib/mercadopago.schemas";
+import {
+  parseMpCredentialsInput,
+  parseOxxoVoucherInput,
+  parseSpeiReferenceInput,
+  type MpCredentialsInput,
+} from "@/lib/mercadopago.schemas";
 
 /** Estado de configuración de Mercado Pago (solo administradores). */
 export const mercadoPagoStatus = createServerFn({ method: "POST" })
@@ -59,7 +64,7 @@ export const mercadoPagoInitiatePayment = createServerFn({ method: "POST" })
     }
 
     const email = context.claims?.email as string | undefined;
-    const base = process.env['PUBLIC_URL'] || "https://lajanrapid.app";
+    const base = process.env["PUBLIC_URL"] || "https://lajanrapid.app";
 
     const { createMpPreference } = await import("@/lib/mercadopago.server");
     const checkoutUrl = await createMpPreference({

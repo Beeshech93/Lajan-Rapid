@@ -70,10 +70,19 @@ function Landing() {
           </div>
           <div className="flex items-center gap-2">
             <LanguageSwitcher className="h-9 w-[132px] border-primary-foreground/20 bg-primary-foreground/10 text-xs text-primary-foreground" />
-            <Button asChild variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground">
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+            >
               <Link to="/auth">{t("auth.signin")}</Link>
             </Button>
-            <Button asChild size="sm" className="bg-primary-foreground text-primary hover:bg-primary-foreground/90">
+            <Button
+              asChild
+              size="sm"
+              className="bg-primary-foreground text-primary hover:bg-primary-foreground/90"
+            >
               <Link to="/auth" search={{ modo: "registro" }}>
                 {t("auth.signup")}
               </Link>
@@ -93,7 +102,11 @@ function Landing() {
               {t("landing.subtitle")}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Button asChild size="lg" className="gap-2 bg-primary-foreground text-primary hover:bg-primary-foreground/90">
+              <Button
+                asChild
+                size="lg"
+                className="gap-2 bg-primary-foreground text-primary hover:bg-primary-foreground/90"
+              >
                 <Link to="/auth" search={{ modo: "registro" }}>
                   {t("landing.cta")} <ArrowRight className="size-4" />
                 </Link>
@@ -115,7 +128,9 @@ function Landing() {
               <CardContent className="space-y-4 p-6">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("landing.from")}</span>
+                    <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {t("landing.from")}
+                    </span>
                     <Select value={origin} onValueChange={setOrigin}>
                       <SelectTrigger>
                         <SelectValue />
@@ -130,7 +145,9 @@ function Landing() {
                     </Select>
                   </div>
                   <div className="space-y-1.5">
-                    <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("landing.to")}</span>
+                    <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {t("landing.to")}
+                    </span>
                     <Select value={destination} onValueChange={setDestination}>
                       <SelectTrigger>
                         <SelectValue />
@@ -146,7 +163,10 @@ function Landing() {
                   </div>
                 </div>
                 <div>
-                  <label htmlFor="monto" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  <label
+                    htmlFor="monto"
+                    className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                  >
                     {t("landing.you_send")} ({sendCurrency})
                   </label>
                   <Input
@@ -185,9 +205,17 @@ function Landing() {
 
       <section className="mx-auto -mt-12 max-w-6xl px-5 pb-20">
         <dl className="grid gap-4 sm:grid-cols-3">
-          <Stat icon={Timer} title={t("landing.stat_minutes")} desc={t("landing.stat_minutes_desc")} />
+          <Stat
+            icon={Timer}
+            title={t("landing.stat_minutes")}
+            desc={t("landing.stat_minutes_desc")}
+          />
           <Stat icon={ShieldCheck} title="KYC" desc={t("landing.stat_kyc_desc")} />
-          <Stat icon={Wallet} title={t("landing.stat_countries")} desc={t("landing.stat_countries_desc")} />
+          <Stat
+            icon={Wallet}
+            title={t("landing.stat_countries")}
+            desc={t("landing.stat_countries_desc")}
+          />
         </dl>
       </section>
 
@@ -214,7 +242,6 @@ function Stat({ icon: Icon, title, desc }: { icon: typeof Timer; title: string; 
     </div>
   );
 }
-
 
 function Row({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
   return (

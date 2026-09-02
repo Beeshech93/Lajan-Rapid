@@ -102,7 +102,14 @@ export function AccountingPanel() {
   const byMonth = useMemo(() => {
     const map = new Map<
       string,
-      { month: string; currency: string; volume: number; fees: number; agent: number; count: number }
+      {
+        month: string;
+        currency: string;
+        volume: number;
+        fees: number;
+        agent: number;
+        count: number;
+      }
     >();
     for (const r of settled) {
       const key = `${monthKey(r.created_at)}|${r.send_currency}`;
@@ -188,23 +195,23 @@ export function AccountingPanel() {
         {byCurrency.length === 0 ? (
           <Kpi icon={TrendingUp} label="Volumen" value={isLoading ? "…" : "Sin datos"} />
         ) : (
-          byCurrency.slice(0, 2).map((c) => (
-            <Kpi
-              key={c.currency}
-              icon={TrendingUp}
-              label={`Volumen ${c.currency}`}
-              value={money(c.volume, c.currency)}
-              hint={`${c.count} operaciones liquidadas`}
-            />
-          ))
+          byCurrency
+            .slice(0, 2)
+            .map((c) => (
+              <Kpi
+                key={c.currency}
+                icon={TrendingUp}
+                label={`Volumen ${c.currency}`}
+                value={money(c.volume, c.currency)}
+                hint={`${c.count} operaciones liquidadas`}
+              />
+            ))
         )}
         <Kpi
           icon={Coins}
           label="Ingresos por comisión"
           value={
-            byCurrency.length
-              ? byCurrency.map((c) => money(c.fees, c.currency)).join(" · ")
-              : "—"
+            byCurrency.length ? byCurrency.map((c) => money(c.fees, c.currency)).join(" · ") : "—"
           }
           hint="Comisiones cobradas al cliente"
         />
@@ -212,9 +219,7 @@ export function AccountingPanel() {
           icon={Users}
           label="Comisión de agentes"
           value={
-            byCurrency.length
-              ? byCurrency.map((c) => money(c.agent, c.currency)).join(" · ")
-              : "—"
+            byCurrency.length ? byCurrency.map((c) => money(c.agent, c.currency)).join(" · ") : "—"
           }
           hint="Costo pagado a la red de agentes"
         />
@@ -253,7 +258,9 @@ export function AccountingPanel() {
                 {byCurrency.length === 0 && (
                   <tr>
                     <Td className="py-6 text-center text-muted-foreground">
-                      {isLoading ? "Cargando…" : "Aún no hay operaciones liquidadas en este periodo."}
+                      {isLoading
+                        ? "Cargando…"
+                        : "Aún no hay operaciones liquidadas en este periodo."}
                     </Td>
                   </tr>
                 )}
@@ -351,7 +358,15 @@ function Kpi({
   );
 }
 
-function LineItem({ icon: Icon, label, value }: { icon: typeof Wallet; label: string; value: string }) {
+function LineItem({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: typeof Wallet;
+  label: string;
+  value: string;
+}) {
   return (
     <div className="flex items-center justify-between">
       <span className="flex items-center gap-2 text-muted-foreground">
@@ -363,7 +378,11 @@ function LineItem({ icon: Icon, label, value }: { icon: typeof Wallet; label: st
 }
 
 function Th({ children, right }: { children?: React.ReactNode; right?: boolean }) {
-  return <th className={`px-4 py-2.5 ${right ? "text-right" : "text-left"} font-semibold`}>{children}</th>;
+  return (
+    <th className={`px-4 py-2.5 ${right ? "text-right" : "text-left"} font-semibold`}>
+      {children}
+    </th>
+  );
 }
 
 function Td({

@@ -106,7 +106,8 @@ function Perfil() {
       ...parsed.data,
       status: "pending",
     });
-    if (!error) await supabase.from("profiles").update({ kyc_status: "pending" }).eq("id", user!.id);
+    if (!error)
+      await supabase.from("profiles").update({ kyc_status: "pending" }).eq("id", user!.id);
     setSavingKyc(false);
     if (error) {
       toast.error("No se pudo enviar la verificación");
@@ -138,7 +139,12 @@ function Perfil() {
           <form onSubmit={saveProfile} className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="full_name">Nombre completo</Label>
-              <Input id="full_name" name="full_name" defaultValue={profile?.full_name ?? ""} maxLength={100} />
+              <Input
+                id="full_name"
+                name="full_name"
+                defaultValue={profile?.full_name ?? ""}
+                maxLength={100}
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="phone">Teléfono</Label>

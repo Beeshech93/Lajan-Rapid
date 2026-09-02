@@ -105,22 +105,31 @@ export function bazikRequestCandidates() {
 }
 
 export function bazikStatusLooksSuccessful(status?: string | null): boolean {
-  const value = String(status ?? "").trim().toLowerCase();
+  const value = String(status ?? "")
+    .trim()
+    .toLowerCase();
   if (!value) return false;
-  return [
-    "success",
-    "succeeded",
-    "completed",
-    "paid",
-    "approved",
-    "confirmed",
-    "processed",
-    "sent",
-    "finished",
-  ].includes(value) || value.includes("success") || value.includes("complete") || value.includes("paid");
+  return (
+    [
+      "success",
+      "succeeded",
+      "completed",
+      "paid",
+      "approved",
+      "confirmed",
+      "processed",
+      "sent",
+      "finished",
+    ].includes(value) ||
+    value.includes("success") ||
+    value.includes("complete") ||
+    value.includes("paid")
+  );
 }
 
-export function normaliseBazikResult(payload: unknown): Pick<BazikResult, "providerReference" | "status"> {
+export function normaliseBazikResult(
+  payload: unknown,
+): Pick<BazikResult, "providerReference" | "status"> {
   const data = (payload ?? {}) as Record<string, unknown>;
   const nested = (data["data"] as Record<string, unknown> | undefined) ?? undefined;
   const transfer = (data["transfer"] as Record<string, unknown> | undefined) ?? undefined;
@@ -182,15 +191,29 @@ export async function bazikStatusInfo() {
   };
 }
 
-export function bazikWebhookState(value?: string | null): "processing" | "completed" | "cancelled" | null {
-  const v = String(value ?? "").trim().toLowerCase();
+export function bazikWebhookState(
+  value?: string | null,
+): "processing" | "completed" | "cancelled" | null {
+  const v = String(value ?? "")
+    .trim()
+    .toLowerCase();
   if (!v) return null;
 
   if (bazikStatusLooksSuccessful(value)) return "completed";
-  if (["pending", "processing", "in_progress", "queued", "submitted", "created", "awaiting"].includes(v) || v.includes("process") || v.includes("pending")) {
+  if (
+    ["pending", "processing", "in_progress", "queued", "submitted", "created", "awaiting"].includes(
+      v,
+    ) ||
+    v.includes("process") ||
+    v.includes("pending")
+  ) {
     return "processing";
   }
-  if (["failed", "rejected", "cancelled", "canceled", "error", "refunded", "declined"].includes(v) || v.includes("fail") || v.includes("cancel")) {
+  if (
+    ["failed", "rejected", "cancelled", "canceled", "error", "refunded", "declined"].includes(v) ||
+    v.includes("fail") ||
+    v.includes("cancel")
+  ) {
     return "cancelled";
   }
   return null;
@@ -218,9 +241,18 @@ export function bazikExtractReference(payload: unknown): string | null {
   return candidate ? String(candidate).trim() : null;
 }
 
-const BAZIK_STATUS_TEXT: Record<"processing" | "completed" | "cancelled", { title: string; body: string }> = {
-  processing: { title: "Pago en proceso", body: "Bazik está procesando el envío a MonCash/NatCash." },
-  completed: { title: "Pago confirmado", body: "Bazik confirmó el envío y ya fue acreditado a la billetera móvil." },
+const BAZIK_STATUS_TEXT: Record<
+  "processing" | "completed" | "cancelled",
+  { title: string; body: string }
+> = {
+  processing: {
+    title: "Pago en proceso",
+    body: "Bazik está procesando el envío a MonCash/NatCash.",
+  },
+  completed: {
+    title: "Pago confirmado",
+    body: "Bazik confirmó el envío y ya fue acreditado a la billetera móvil.",
+  },
   cancelled: { title: "Pago rechazado", body: "Bazik no pudo completar el envío." },
 };
 
@@ -271,16 +303,13 @@ export async function applyBazikResult(opts: {
   return { ok: true, transferId: transfer.id, status: next };
 }
 
-async function callBazik(
-  creds: Creds,
-  paths: string[],
-  body: unknown,
-): Promise<BazikResult> {
+async function callBazik(creds: Creds, paths: string[], body: unknown): Promise<BazikResult> {
   if (!creds.apiKey || !creds.userId) {
     return {
       ok: false,
       configured: true,
-      error: "Falta la conexión de Bazik: necesita User ID + API Key en el panel de administración.",
+      error:
+        "Falta la conexión de Bazik: necesita User ID + API Key en el panel de administración.",
     };
   }
 
@@ -343,8 +372,40 @@ export async function bazikTopup(_input: BazikTopupInput): Promise<BazikResult> 
   return {
     ok: false,
     configured: true,
-    error: "Top-up deshabilitado. El sistema Bazik está configurado solo para payouts MonCash/NatCash.",
+    error:
+      "Top-up deshabilitado. El sistema Bazik está configurado solo para payouts MonCash/NatCash.",
   };
+}
+
+export type BazikQuoteResult = BazikResult & {
+  amount?: number;
+  fee?: number;
+  total?: number;
+  provider?: BazikWallet;
+};
+
+/** Cotización real de un payout MonCash/NatCash antes de confirmarlo. */
+export async function bazikQuote(amount: number, provider: BazikWallet): Promise<BazikQuoteResult> {
+  const stored = await loadStoredCreds();
+  const creds = credsFor(stored);
+
+  if (!creds.apiKey || !creds.userId) {
+    return {
+      ok: false,
+      configured: true,
+      error:
+        "Falta la conexión de Bazik: necesita User ID + API Key en el panel de administración.",
+    };
+  }
+
+  const result = await callBazik(creds, ["/quotes", "/v1/quotes", "/quote"], {
+    provider,
+    amount,
+  });
+
+  if (!result.ok) return result;
+
+  return { ...result, amount, provider };
 }
 
 export async function bazikPayout(input: BazikPayoutInput): Promise<BazikResult> {

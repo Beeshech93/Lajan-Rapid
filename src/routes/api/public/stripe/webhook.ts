@@ -11,11 +11,8 @@ export const Route = createFileRoute("/api/public/stripe/webhook")({
       POST: async ({ request }) => {
         const raw = await request.text();
 
-        const {
-          verifyStripeSignature,
-          fetchStripeEvent,
-          applyStripeEvent,
-        } = await import("@/lib/stripe.server");
+        const { verifyStripeSignature, fetchStripeEvent, applyStripeEvent } =
+          await import("@/lib/stripe.server");
 
         const verified = await verifyStripeSignature({
           signatureHeader:
@@ -41,7 +38,7 @@ export const Route = createFileRoute("/api/public/stripe/webhook")({
           ({
             id: body.id,
             type: body.type ?? "",
-            data: { object: (body.data?.object ?? {}) as Record<string, any> },
+            data: { object: (body.data?.object ?? {}) as Record<string, unknown> },
           } as const);
 
         const result = await applyStripeEvent(event);

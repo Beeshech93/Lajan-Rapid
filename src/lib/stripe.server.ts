@@ -2,10 +2,7 @@
 // Credenciales guardadas manualmente desde el panel de administración
 // (o por variables de entorno del mismo nombre).
 
-export const STRIPE_CRED_NAMES = [
-  "STRIPE_SECRET_KEY",
-  "STRIPE_WEBHOOK_SECRET",
-] as const;
+export const STRIPE_CRED_NAMES = ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"] as const;
 
 export type StripeCredName = (typeof STRIPE_CRED_NAMES)[number];
 
@@ -111,7 +108,7 @@ export async function verifyStripeSignature(opts: {
 export type StripeEvent = {
   id: string;
   type: string;
-  data: { object: Record<string, any> };
+  data: { object: Record<string, unknown> };
 };
 
 /** Reconsulta el evento en la API de Stripe (nunca se confía solo en el cuerpo). */
@@ -159,12 +156,14 @@ export function mapStripeEvent(type: string): TransferStatus | null {
 }
 
 /** Extrae la referencia del envío (RH-XXXXXXXX) del objeto del evento. */
-export function extractReference(obj: Record<string, any>): string | null {
+export function extractReference(obj: Record<string, unknown>): string | null {
+  const metadata = obj["metadata"] as Record<string, unknown> | undefined;
+  const paymentIntent = obj["payment_intent"] as { metadata?: Record<string, unknown> } | undefined;
   const candidates = [
     obj["client_reference_id"],
-    obj["metadata"]?.["reference"],
-    obj["metadata"]?.["transfer_reference"],
-    obj["payment_intent"]?.["metadata"]?.["reference"],
+    metadata?.["reference"],
+    metadata?.["transfer_reference"],
+    paymentIntent?.metadata?.["reference"],
     obj["description"],
   ];
   for (const c of candidates) {
