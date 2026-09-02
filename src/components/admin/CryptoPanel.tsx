@@ -203,8 +203,8 @@ function WithdrawalsPanel() {
   const payMutation = useMutation({
     mutationFn: (withdrawalId: string) => pay({ data: { withdrawalId } }),
     onSuccess: (res) => {
-      if (res.ok) toast.success("Pago enviado vía Bazik");
-      else toast.error(res.error ?? "Bazik rechazó el pago");
+      if (res.ok) toast.success("Pago enviado");
+      else toast.error(res.error ?? "No se pudo pagar el retiro");
       refresh();
     },
     onError: (e: Error) => toast.error(e.message),
@@ -258,7 +258,7 @@ function WithdrawalsPanel() {
                   disabled={payMutation.isPending}
                   onClick={() => payMutation.mutate(w.id)}
                 >
-                  <Send className="size-4" /> Pagar con Bazik
+                  <Send className="size-4" /> Pagar retiro
                 </Button>
               )}
               <Button size="sm" variant="secondary" onClick={() => void settle(w.id, "completed")}>

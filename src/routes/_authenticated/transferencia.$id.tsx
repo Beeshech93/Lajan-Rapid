@@ -160,7 +160,7 @@ function Detalle() {
                 {isCardPayment
                   ? "Serás redirigido a Mercado Pago para completar el pago."
                   : isDirectCashDelivery && !isAdmin
-                    ? "Tu pago está siendo enviado directamente al destinatario por Bazik."
+                    ? "Tu pago está siendo procesado para el envío al destinatario."
                     : `${t.recipient_name} · ${t.recipient_phone} · ${money(Number(t.amount_receive), t.receive_currency)}`}
               </p>
             </div>

@@ -17,7 +17,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCountries } from "@/hooks/useCorridors";
-import { BazikPanel } from "@/components/admin/BazikPanel";
 import { CryptoPanel } from "@/components/admin/CryptoPanel";
 import { MercadoPagoPanel } from "@/components/admin/MercadoPagoPanel";
 import { StripePanel } from "@/components/admin/StripePanel";
@@ -65,7 +64,6 @@ function Admin() {
           <TabsTrigger value="resumen">Resumen</TabsTrigger>
           <TabsTrigger value="contabilidad">Contabilidad</TabsTrigger>
           <TabsTrigger value="soporte">Soporte</TabsTrigger>
-          <TabsTrigger value="bazik">Bazik API</TabsTrigger>
           <TabsTrigger value="mercadopago">Mercado Pago</TabsTrigger>
           <TabsTrigger value="stripe">Stripe</TabsTrigger>
           <TabsTrigger value="dingconnect">Recargas (Ding)</TabsTrigger>
@@ -95,9 +93,6 @@ function Admin() {
         </TabsContent>
         <TabsContent value="tarifas" className="mt-4">
           <RatesPanel />
-        </TabsContent>
-        <TabsContent value="bazik" className="mt-4">
-          <BazikPanel />
         </TabsContent>
         <TabsContent value="cripto" className="mt-4">
           <CryptoPanel />

@@ -26,31 +26,16 @@ export const payCryptoWithdrawal = createServerFn({ method: "POST" })
       .maybeSingle();
     if (error || !row) throw new Error("Retiro no encontrado");
     if (row.kind !== "moncash" && row.kind !== "natcash") {
-      throw new Error("Solo los retiros MonCash o NatCash se pagan con Bazik");
+      throw new Error("Solo los retiros MonCash o NatCash se pueden pagar por este medio");
     }
     if (row.status !== "pending" && row.status !== "processing") {
       throw new Error("Retiro ya cerrado");
     }
 
-    const { bazikPayout } = await import("@/lib/bazik.server");
-    const result = await bazikPayout({
-      provider: row.kind,
-      phone: row.destination,
-      amount: Number(row.amount_htg),
-      currency: "HTG",
-      reference: row.reference,
-    });
-
-    if (!result.ok) {
-      return { ok: false, error: result.error ?? "Bazik rechazó el pago" };
-    }
-
-    await context.supabase.rpc("settle_crypto_withdrawal", {
-      _id: row.id,
-      _status: "completed",
-      _notes: "Pagado vía Bazik",
-      _provider_ref: result.providerReference ?? row.reference,
-    });
-
-    return { ok: true, providerReference: result.providerReference ?? row.reference };
+    // TODO: la integración con Bazik fue removida; reimplementar el pago de
+    // retiros MonCash/NatCash aquí antes de habilitar este flujo de nuevo.
+    return {
+      ok: false,
+      error: "El pago automático a MonCash/NatCash no está disponible por el momento.",
+    };
   });
