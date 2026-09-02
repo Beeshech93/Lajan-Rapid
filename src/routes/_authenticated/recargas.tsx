@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -24,6 +24,9 @@ import { TOPUP_COUNTRIES, findTopupCountry, prettyOperator } from "@/lib/topup-o
 import { validatePhone, formatNational, expectedLengths, normalizeLocal } from "@/lib/phone";
 
 export const Route = createFileRoute("/_authenticated/recargas")({
+  beforeLoad: () => {
+    throw redirect({ to: "/dashboard" });
+  },
   head: () => ({
     meta: [
       { title: "Recargas de saldo móvil — Lajan Rapid" },
