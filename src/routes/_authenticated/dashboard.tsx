@@ -195,7 +195,6 @@ function Dashboard() {
         </CardContent>
       </Card>
 
-
       {/* Rate card */}
       <Card className="card-elevated border-transparent">
         <CardContent className="p-5">
