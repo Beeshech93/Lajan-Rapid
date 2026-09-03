@@ -4,6 +4,134 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const finalizeSchema = z.object({ transferId: z.string().uuid() });
 const adminConfirmSchema = z.object({ transferId: z.string().uuid() });
+const TRANSFER_STATUSES = [
+  "created",
+  "awaiting_payment",
+  "processing",
+  "completed",
+  "cancelled",
+] as const;
+const adminSetStatusSchema = z.object({
+  transferId: z.string().uuid(),
+  status: z.enum(TRANSFER_STATUSES),
+  note: z.string().trim().max(500).optional(),
+});
+const adminCancelSchema = z.object({
+  transferId: z.string().uuid(),
+  reason: z.string().trim().max(500).optional(),
+});
+
+const ADMIN_STATUS_LABEL: Record<string, string> = {
+  created: "Creado",
+  awaiting_payment: "Esperando pago",
+  processing: "En proceso",
+  completed: "Entregado",
+  cancelled: "Cancelado",
+};
+
+/**
+ * Cambia la etapa de una transacción manualmente a cualquier estado, sin
+ * disparar el pago automático de Bazik. Uso: cuando el admin ya gestionó el
+ * pago por fuera del sistema, o necesita corregir el estado.
+ */
+export const adminSetTransferStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: z.infer<typeof adminSetStatusSchema>) =>
+    adminSetStatusSchema.parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: isAdminData } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!isAdminData) throw new Error("No autorizado");
+
+    const { data: t, error } = await context.supabase
+      .from("transfers")
+      .select("id, user_id, status, reference")
+      .eq("id", data.transferId)
+      .maybeSingle();
+
+    if (error || !t) throw new Error("Envío no encontrado");
+    if (t.status === data.status) {
+      return { ok: true, message: "Ya estaba en esa etapa", status: data.status };
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error: updateError } = await supabaseAdmin
+      .from("transfers")
+      .update({ status: data.status })
+      .eq("id", t.id);
+    if (updateError) throw new Error(updateError.message);
+
+    const label = ADMIN_STATUS_LABEL[data.status] ?? data.status;
+    const eventMessage = data.note
+      ? `Etapa cambiada manualmente a "${label}": ${data.note}`
+      : `Etapa cambiada manualmente a "${label}"`;
+
+    await supabaseAdmin.from("transfer_events").insert({
+      transfer_id: t.id,
+      status: data.status,
+      message: eventMessage,
+    });
+
+    await supabaseAdmin.from("notifications").insert({
+      user_id: t.user_id,
+      title: `${label} · ${t.reference}`,
+      body: data.note ?? `El estado de tu envío cambió a "${label}".`,
+    });
+
+    return { ok: true, message: `Etapa actualizada a "${label}"`, status: data.status };
+  });
+
+/** Cancela una transacción. No puede cancelarse un envío ya completado. */
+export const adminCancelTransfer = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: z.infer<typeof adminCancelSchema>) => adminCancelSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: isAdminData } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!isAdminData) throw new Error("No autorizado");
+
+    const { data: t, error } = await context.supabase
+      .from("transfers")
+      .select("id, user_id, status, reference")
+      .eq("id", data.transferId)
+      .maybeSingle();
+
+    if (error || !t) throw new Error("Envío no encontrado");
+    if (t.status === "completed") throw new Error("No se puede cancelar un envío ya entregado");
+    if (t.status === "cancelled") {
+      return { ok: true, message: "Ya estaba cancelado", status: "cancelled" };
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error: updateError } = await supabaseAdmin
+      .from("transfers")
+      .update({ status: "cancelled" })
+      .eq("id", t.id);
+    if (updateError) throw new Error(updateError.message);
+
+    const eventMessage = data.reason
+      ? `Cancelado por un administrador: ${data.reason}`
+      : "Cancelado por un administrador";
+
+    await supabaseAdmin.from("transfer_events").insert({
+      transfer_id: t.id,
+      status: "cancelled",
+      message: eventMessage,
+    });
+
+    await supabaseAdmin.from("notifications").insert({
+      user_id: t.user_id,
+      title: `Envío cancelado · ${t.reference}`,
+      body: data.reason ?? "Tu envío fue cancelado por un administrador.",
+    });
+
+    return { ok: true, message: "Envío cancelado", status: "cancelled" };
+  });
 
 /** Finaliza el envío pagando automáticamente al MonCash/NatCash del destinatario vía Bazik. */
 export const finalizeTransferPayout = createServerFn({ method: "POST" })

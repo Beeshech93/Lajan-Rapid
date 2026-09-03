@@ -1,14 +1,47 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
 import { toast } from "sonner";
+import { XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
-import { adminConfirmTransfer } from "@/lib/transfers.functions";
+import {
+  adminCancelTransfer,
+  adminConfirmTransfer,
+  adminSetTransferStatus,
+} from "@/lib/transfers.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { money, shortDate, STATUS_LABEL, STATUS_TONE, type TransferStatus } from "@/lib/remesa";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { STATUS_LABEL, STATUS_TONE, money, shortDate, type TransferStatus } from "@/lib/remesa";
+
+const ALL_STATUSES: TransferStatus[] = [
+  "created",
+  "awaiting_payment",
+  "processing",
+  "completed",
+  "cancelled",
+];
 
 export const Route = createFileRoute("/_authenticated/agente")({
   head: () => ({
@@ -39,6 +72,8 @@ function Agente() {
   const { isAdmin } = useProfile();
   const qc = useQueryClient();
   const confirmTransfer = useServerFn(adminConfirmTransfer);
+  const setStatus = useServerFn(adminSetTransferStatus);
+  const cancelTransfer = useServerFn(adminCancelTransfer);
 
   const { data: transfers } = useQuery({
     queryKey: ["agent-transfers"],
@@ -63,6 +98,28 @@ function Agente() {
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Error al procesar");
+    }
+  };
+
+  const changeStage = async (id: string, status: TransferStatus) => {
+    try {
+      const result = await setStatus({ data: { transferId: id, status } });
+      toast.success(result.message);
+      qc.invalidateQueries({ queryKey: ["agent-transfers"] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "No se pudo cambiar la etapa");
+    }
+  };
+
+  const cancel = async (id: string, reason: string) => {
+    try {
+      const result = await cancelTransfer({
+        data: { transferId: id, reason: reason || undefined },
+      });
+      toast.success(result.message);
+      qc.invalidateQueries({ queryKey: ["agent-transfers"] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "No se pudo cancelar");
     }
   };
 
@@ -95,9 +152,30 @@ function Agente() {
         <Stat label="Comisiones acumuladas" value={commissionsLabel} />
       </div>
 
-      <Section title="Solicitudes de pago" rows={pending} advance={advance} isAdmin={isAdmin} />
-      <Section title="En curso" rows={active} advance={advance} isAdmin={isAdmin} />
-      <Section title="Historial de operaciones" rows={done} advance={advance} readOnly />
+      <Section
+        title="Solicitudes de pago"
+        rows={pending}
+        advance={advance}
+        changeStage={changeStage}
+        cancel={cancel}
+        isAdmin={isAdmin}
+      />
+      <Section
+        title="En curso"
+        rows={active}
+        advance={advance}
+        changeStage={changeStage}
+        cancel={cancel}
+        isAdmin={isAdmin}
+      />
+      <Section
+        title="Historial de operaciones"
+        rows={done}
+        advance={advance}
+        changeStage={changeStage}
+        cancel={cancel}
+        readOnly
+      />
     </div>
   );
 }
@@ -122,12 +200,16 @@ function Section({
   title,
   rows,
   advance,
+  changeStage,
+  cancel,
   readOnly,
   isAdmin,
 }: {
   title: string;
   rows: Row[];
   advance: (id: string, status: TransferStatus, message: string) => Promise<void>;
+  changeStage: (id: string, status: TransferStatus) => Promise<void>;
+  cancel: (id: string, reason: string) => Promise<void>;
   readOnly?: boolean;
   isAdmin?: boolean;
 }) {
@@ -169,16 +251,86 @@ function Section({
               <Badge className={STATUS_TONE[t.status as TransferStatus]} variant="secondary">
                 {STATUS_LABEL[t.status as TransferStatus]}
               </Badge>
-              {!readOnly && isAdmin && step && (
+              {isAdmin && step && (
                 <Button size="sm" onClick={() => void advance(t.id, step.to, step.label)}>
                   {step.label}
                 </Button>
+              )}
+              {isAdmin && (
+                <Select
+                  value={t.status}
+                  onValueChange={(value) => void changeStage(t.id, value as TransferStatus)}
+                >
+                  <SelectTrigger className="h-8 w-[150px] text-xs">
+                    <SelectValue placeholder="Cambiar etapa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ALL_STATUSES.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {STATUS_LABEL[s]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {isAdmin && t.status !== "cancelled" && t.status !== "completed" && (
+                <CancelButton
+                  reference={t.reference}
+                  onConfirm={(reason) => cancel(t.id, reason)}
+                />
               )}
             </div>
           );
         })}
       </CardContent>
     </Card>
+  );
+}
+
+function CancelButton({
+  reference,
+  onConfirm,
+}: {
+  reference: string;
+  onConfirm: (reason: string) => Promise<void>;
+}) {
+  const [reason, setReason] = useState("");
+  const [open, setOpen] = useState(false);
+
+  return (
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogTrigger asChild>
+        <Button size="sm" variant="destructive" className="gap-1">
+          <XCircle className="size-4" /> Cancelar
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Cancelar el envío {reference}</AlertDialogTitle>
+          <AlertDialogDescription>
+            Esta acción marcará el envío como cancelado y notificará al usuario. No se puede
+            deshacer desde aquí.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <Textarea
+          placeholder="Motivo de la cancelación (opcional)"
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+        />
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setReason("")}>Volver</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            onClick={() => {
+              void onConfirm(reason);
+              setReason("");
+            }}
+          >
+            Sí, cancelar envío
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 
