@@ -5,7 +5,8 @@ import {
   ArrowRight,
   Bell,
   Coins,
-  History,
+  Eye,
+  EyeOff,
   Send,
   ShieldAlert,
   Smartphone,
@@ -44,6 +45,7 @@ function Dashboard() {
   const { data: countries } = useCountries();
   const [origin, setOrigin] = useState("MX");
   const [destination, setDestination] = useState("HT");
+  const [hideBalance, setHideBalance] = useState(false);
 
   const origins = (countries ?? []).filter((c) => c.is_origin);
   const destinations = (countries ?? []).filter((c) => c.is_destination);
