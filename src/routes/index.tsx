@@ -70,7 +70,7 @@ function Landing() {
             <span className="font-display text-lg font-semibold tracking-tight">Lajan Rapid</span>
           </div>
           <div className="flex items-center gap-2">
-            <LanguageSwitcher className="h-9 w-[132px] border-primary-foreground/20 bg-primary-foreground/10 text-xs text-primary-foreground" />
+            <LanguageSwitcher className="h-9 w-[132px] border-foreground/20 bg-foreground/10 text-xs text-foreground" />
             <Button
               asChild
               variant="ghost"
