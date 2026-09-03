@@ -207,10 +207,12 @@ export async function bazikStatusInfo() {
 //     webhookUrl?: string,       // a donde Bazik notifica el resultado
 //   }
 //
-// TODO: la forma exacta de la respuesta de éxito/error aún no está confirmada
-// para ninguno de los dos endpoints. bazikPayout() maneja esto de forma defensiva
-// (intenta varios nombres de campo comunes); ajustar normaliseBazikResult() en
-// cuanto se confirme.
+// Respuesta real confirmada de ambos endpoints:
+//   {
+//     transaction_id, status ("pending" al crear), provider, amount, fees, total,
+//     currency, wallet, recipient: { first_name, last_name }, description,
+//     referenceId, customerEmail, webhookUrl, created_at, environment, message
+//   }
 
 export type BazikPayoutInput = {
   provider: "moncash" | "natcash";
@@ -227,6 +229,8 @@ export type BazikResult =
       ok: true;
       status?: string;
       providerReference?: string;
+      fees?: number;
+      total?: number;
       raw?: unknown;
     }
   | { ok: false; configured?: boolean; error: string };
@@ -249,35 +253,30 @@ function bazikWebhookUrl(): string {
   return `${base}/api/public/bazik/payout`;
 }
 
-// Intenta reconocer el estado/referencia en la respuesta del payout (moncash/withdraw o natcash/transfers),
-// cuya forma exacta aún no está confirmada.
+// Reconoce la forma real confirmada de la respuesta del payout
+// (moncash/withdraw o natcash/transfers): transaction_id, status, fees, total.
 export function normaliseBazikResult(payload: unknown): {
   providerReference?: string;
   status?: string;
+  fees?: number;
+  total?: number;
 } {
   const data = (payload ?? {}) as Record<string, unknown>;
-  const nested = (data["data"] as Record<string, unknown> | undefined) ?? undefined;
-  const withdrawal = (data["withdrawal"] as Record<string, unknown> | undefined) ?? undefined;
 
   const providerReference =
-    (data["id"] as string | undefined) ??
-    (data["transactionId"] as string | undefined) ??
     (data["transaction_id"] as string | undefined) ??
     (data["referenceId"] as string | undefined) ??
-    (nested?.["id"] as string | undefined) ??
-    (withdrawal?.["id"] as string | undefined) ??
     undefined;
 
-  const status =
-    (data["status"] as string | undefined) ??
-    (data["state"] as string | undefined) ??
-    (nested?.["status"] as string | undefined) ??
-    (withdrawal?.["status"] as string | undefined) ??
-    undefined;
+  const status = (data["status"] as string | undefined) ?? undefined;
+  const fees = typeof data["fees"] === "number" ? (data["fees"] as number) : undefined;
+  const total = typeof data["total"] === "number" ? (data["total"] as number) : undefined;
 
   return {
     ...(providerReference ? { providerReference: String(providerReference) } : {}),
     ...(status ? { status: String(status) } : {}),
+    ...(fees !== undefined ? { fees } : {}),
+    ...(total !== undefined ? { total } : {}),
   };
 }
 
@@ -338,11 +337,13 @@ export async function bazikPayout(input: BazikPayoutInput): Promise<BazikResult>
       };
     }
 
-    const { providerReference, status } = normaliseBazikResult(parsed);
+    const { providerReference, status, fees, total } = normaliseBazikResult(parsed);
     return {
       ok: true,
       ...(status ? { status } : {}),
       ...(providerReference ? { providerReference } : {}),
+      ...(fees !== undefined ? { fees } : {}),
+      ...(total !== undefined ? { total } : {}),
       raw: parsed,
     };
   } catch (error) {
