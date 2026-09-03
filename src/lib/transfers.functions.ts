@@ -13,7 +13,7 @@ export const finalizeTransferPayout = createServerFn({ method: "POST" })
     const { data: t, error } = await context.supabase
       .from("transfers")
       .select(
-        "id, user_id, status, reference, recipient_phone, delivery_method, amount_receive, receive_currency",
+        "id, user_id, status, reference, recipient_name, recipient_phone, delivery_method, amount_receive, receive_currency",
       )
       .eq("id", data.transferId)
       .maybeSingle();
@@ -26,11 +26,30 @@ export const finalizeTransferPayout = createServerFn({ method: "POST" })
       throw new Error("Este método de entrega no se puede finalizar automáticamente");
     }
 
-    // TODO: la integración con Bazik fue removida; reimplementar el pago automático
-    // a MonCash/NatCash aquí antes de habilitar este flujo de nuevo.
-    throw new Error(
-      "El pago automático a MonCash/NatCash no está disponible por el momento. Un administrador debe confirmarlo manualmente.",
-    );
+    const { bazikPayout } = await import("@/lib/bazik.server");
+    const result = await bazikPayout({
+      provider: t.delivery_method,
+      phone: t.recipient_phone,
+      amount: Number(t.amount_receive),
+      currency: t.receive_currency,
+      reference: t.reference,
+      recipientName: t.recipient_name,
+    });
+
+    if (!result.ok) {
+      throw new Error(result.error);
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("transfers").update({ status: "processing" }).eq("id", t.id);
+
+    return {
+      ok: true,
+      provider: t.delivery_method,
+      phone: t.recipient_phone,
+      status: "processing",
+      ...(result.providerReference ? { providerReference: result.providerReference } : {}),
+    };
   });
 
 /** Admin confirma una transacción manualmente llamando a Bazik si es MonCash/NatCash. */
@@ -49,7 +68,7 @@ export const adminConfirmTransfer = createServerFn({ method: "POST" })
     const { data: t, error } = await context.supabase
       .from("transfers")
       .select(
-        "id, status, reference, recipient_phone, delivery_method, amount_receive, receive_currency",
+        "id, status, reference, recipient_name, recipient_phone, delivery_method, amount_receive, receive_currency",
       )
       .eq("id", data.transferId)
       .maybeSingle();
@@ -60,15 +79,33 @@ export const adminConfirmTransfer = createServerFn({ method: "POST" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // Si es MonCash/NatCash, el pago automático (antes vía Bazik) fue removido.
-    // TODO: reimplementar la integración de payout aquí.
+    // Si es MonCash/NatCash, llamar a Bazik (solo MonCash está soportado por su API).
     if (
       (t.delivery_method === "moncash" || t.delivery_method === "natcash") &&
       t.status === "awaiting_payment"
     ) {
-      throw new Error(
-        "El pago automático a MonCash/NatCash no está disponible por el momento. Márcalo como completado manualmente cuando confirmes el pago.",
-      );
+      const { bazikPayout } = await import("@/lib/bazik.server");
+      const result = await bazikPayout({
+        provider: t.delivery_method,
+        phone: t.recipient_phone,
+        amount: Number(t.amount_receive),
+        currency: t.receive_currency,
+        reference: t.reference,
+        recipientName: t.recipient_name,
+      });
+
+      if (!result.ok) {
+        throw new Error(result.error);
+      }
+
+      // Marcar como processing (esperar callback del webhook)
+      await supabaseAdmin.from("transfers").update({ status: "processing" }).eq("id", t.id);
+
+      return {
+        ok: true,
+        message: "Enviado a Bazik. Esperando confirmación...",
+        status: "processing",
+      };
     }
 
     // Si no es MonCash/NatCash o ya está en processing, marcar directo como completed
