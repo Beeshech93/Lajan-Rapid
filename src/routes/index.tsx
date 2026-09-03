@@ -91,12 +91,22 @@ function Landing() {
           </div>
         </header>
 
-        <section className="mx-auto grid max-w-6xl items-center gap-12 px-5 pb-20 pt-8 lg:grid-cols-[1.05fr_1fr] lg:pb-28 lg:pt-16">
+        <section className="mx-auto grid max-w-6xl items-center gap-10 px-5 pb-20 pt-8 lg:grid-cols-[0.95fr_1.1fr_1fr] lg:gap-12 lg:pb-28 lg:pt-16">
+          <div className="relative mx-auto flex w-full max-w-[280px] justify-center lg:max-w-none lg:justify-start">
+            <div className="relative w-full overflow-hidden rounded-[2rem] border border-primary-foreground/10 bg-white/95 p-2 shadow-lift shadow-black/20">
+              <img
+                src={womanPhoneAsset.url}
+                alt="Mujer sonriendo mientras usa Lajan Rapid en su teléfono"
+                className="aspect-[3/4] w-full rounded-[1.5rem] object-cover"
+              />
+            </div>
+          </div>
+
           <div>
             <span className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/35 bg-primary-foreground/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-primary-foreground">
               <TrendingUp className="size-3.5" /> {t("landing.badge")}
             </span>
-            <h1 className="mt-6 font-display text-4xl font-bold leading-[1.03] sm:text-5xl lg:text-[3.7rem]">
+            <h1 className="mt-6 font-display text-4xl font-bold leading-[1.03] sm:text-5xl lg:text-[3.2rem]">
               {t("landing.title")}
             </h1>
             <p className="mt-5 max-w-lg text-base text-primary-foreground/70 sm:text-lg">
