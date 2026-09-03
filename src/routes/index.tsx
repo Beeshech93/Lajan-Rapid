@@ -61,7 +61,7 @@ function Landing() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="bg-brand text-primary-foreground">
+      <div className="bg-brand text-foreground">
         <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5">
           <div className="flex items-center gap-2.5">
             <span className="grid size-9 place-items-center overflow-hidden rounded-xl bg-primary-foreground p-1">
