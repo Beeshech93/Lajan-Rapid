@@ -103,13 +103,13 @@ function Landing() {
           </div>
 
           <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/35 bg-primary-foreground/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-primary-foreground">
+            <span className="inline-flex items-center gap-2 rounded-full border border-foreground/35 bg-foreground/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-foreground">
               <TrendingUp className="size-3.5" /> {t("landing.badge")}
             </span>
             <h1 className="mt-6 font-display text-4xl font-bold leading-[1.03] sm:text-5xl lg:text-[3.2rem]">
               {t("landing.title")}
             </h1>
-            <p className="mt-5 max-w-lg text-base text-primary-foreground/70 sm:text-lg">
+            <p className="mt-5 max-w-lg text-base text-foreground/70 sm:text-lg">
               {t("landing.subtitle")}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
