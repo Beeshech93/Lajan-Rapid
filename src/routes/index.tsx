@@ -75,7 +75,7 @@ function Landing() {
               asChild
               variant="ghost"
               size="sm"
-              className="text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+              className="text-foreground hover:bg-primary-foreground/10 hover:text-foreground"
             >
               <Link to="/auth">{t("auth.signin")}</Link>
             </Button>
