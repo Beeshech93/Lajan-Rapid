@@ -3,6 +3,7 @@ import { useState } from "react";
 import { ArrowRight, ShieldCheck, Timer, Wallet, TrendingUp } from "lucide-react";
 
 import logoAsset from "@/assets/lajan-rapid-logo.png.asset.json";
+import womanPhoneAsset from "@/assets/woman-phone.jpg.asset.json";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
