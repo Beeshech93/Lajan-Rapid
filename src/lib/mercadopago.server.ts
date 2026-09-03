@@ -257,12 +257,8 @@ export async function createMpPreference(opts: {
     ...(opts.cardOnly
       ? {
           payment_methods: {
-            excluded_payment_types: [
-              { id: "ticket" },
-              { id: "atm" },
-              { id: "bank_transfer" },
-              { id: "account_money" },
-            ],
+            // Mercado Pago no permite excluir "account_money" vía excluded_payment_types.
+            excluded_payment_types: [{ id: "ticket" }, { id: "atm" }, { id: "bank_transfer" }],
             installments: 1,
           },
         }
