@@ -298,7 +298,7 @@ export async function bazikPayout(input: BazikPayoutInput): Promise<BazikResult>
   const stored = await loadStoredCreds();
   const creds = credsFor(stored);
   const { firstName, lastName } = splitName(input.recipientName);
-  const path = input.provider === "moncash" ? "/moncash/withdraw" : "/natcash/transfers";
+  const primaryPath = input.provider === "moncash" ? "/moncash/withdraw" : "/natcash/transfers";
 
   const body: Record<string, unknown> = {
     gdes: input.amount,
@@ -311,45 +311,85 @@ export async function bazikPayout(input: BazikPayoutInput): Promise<BazikResult>
   };
   if (input.recipientEmail) body["customerEmail"] = input.recipientEmail;
 
+  const first = await bazikPost(creds.baseUrl, primaryPath, auth.token, body);
+
+  // Bazik puede responder 403 "endpoint_not_authorized" si el tipo de cuenta
+  // (ej. "transfer") no está habilitado para /moncash/withdraw o /natcash/transfers,
+  // que solo aceptan cuentas tipo "online"/"instore". Ese tipo de cuenta usa en
+  // cambio el endpoint genérico /transfers con el mismo body.
+  if (!first.ok && first.status === 403 && first.errorCode === "endpoint_not_authorized") {
+    console.warn(
+      `Bazik ${primaryPath}: cuenta no autorizada (posible tipo "transfer"); reintentando con /transfers`,
+    );
+    const fallback = await bazikPost(creds.baseUrl, "/transfers", auth.token, {
+      ...body,
+      provider: input.provider,
+    });
+    return toBazikResult(fallback, "/transfers");
+  }
+
+  return toBazikResult(first, primaryPath);
+}
+
+type BazikRawResponse =
+  { ok: true; parsed: unknown } | { ok: false; status: number; text: string; errorCode?: string };
+
+async function bazikPost(
+  baseUrl: string,
+  path: string,
+  token: string,
+  body: unknown,
+): Promise<BazikRawResponse> {
+  let response: Response;
   try {
-    const response = await fetch(`${creds.baseUrl}${path}`, {
+    response = await fetch(`${baseUrl}${path}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${auth.token}`,
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(body),
     });
-
-    const text = await response.text();
-    let parsed: unknown = text;
-    try {
-      parsed = JSON.parse(text) as unknown;
-    } catch {
-      // respuesta no-JSON
-    }
-
-    if (!response.ok) {
-      console.error(`Bazik ${path} falló [${response.status}]: ${text}`);
-      return {
-        ok: false,
-        error: `Bazik rechazó el pago (HTTP ${response.status}): ${text.slice(0, 200)}`,
-      };
-    }
-
-    const { providerReference, status, fees, total } = normaliseBazikResult(parsed);
-    return {
-      ok: true,
-      ...(status ? { status } : {}),
-      ...(providerReference ? { providerReference } : {}),
-      ...(fees !== undefined ? { fees } : {}),
-      ...(total !== undefined ? { total } : {}),
-      raw: parsed,
-    };
   } catch (error) {
-    console.error(`Bazik ${path} lanzó error:`, error);
-    return { ok: false, error: "No se pudo contactar a Bazik para procesar el pago." };
+    console.error(`Bazik ${path} lanzó error de red:`, error);
+    return { ok: false, status: 0, text: "No se pudo contactar a Bazik." };
   }
+
+  const text = await response.text();
+  let parsed: unknown = text;
+  try {
+    parsed = JSON.parse(text) as unknown;
+  } catch {
+    // respuesta no-JSON
+  }
+
+  if (!response.ok) {
+    const errorCode = (parsed as Record<string, unknown> | undefined)?.["error"] as
+      string | undefined;
+    console.error(`Bazik ${path} falló [${response.status}]: ${text}`);
+    return { ok: false, status: response.status, text, ...(errorCode ? { errorCode } : {}) };
+  }
+
+  return { ok: true, parsed };
+}
+
+function toBazikResult(response: BazikRawResponse, path: string): BazikResult {
+  if (!response.ok) {
+    return {
+      ok: false,
+      error: `Bazik rechazó el pago en ${path} (HTTP ${response.status}): ${response.text.slice(0, 200)}`,
+    };
+  }
+
+  const { providerReference, status, fees, total } = normaliseBazikResult(response.parsed);
+  return {
+    ok: true,
+    ...(status ? { status } : {}),
+    ...(providerReference ? { providerReference } : {}),
+    ...(fees !== undefined ? { fees } : {}),
+    ...(total !== undefined ? { total } : {}),
+    raw: response.parsed,
+  };
 }
 
 // --- Webhook: recepción de resultados asíncronos ---------------------------
