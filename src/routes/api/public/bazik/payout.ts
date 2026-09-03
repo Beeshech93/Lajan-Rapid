@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-/** Callback de Bazik para envíos MonCash (payouts vía /moncash/withdraw). */
+/** Callback de Bazik para envíos MonCash/NatCash (payouts vía /moncash/withdraw o /natcash/transfers). */
 export const Route = createFileRoute("/api/public/bazik/payout")({
   server: {
     handlers: {

@@ -192,12 +192,13 @@ export async function bazikStatusInfo() {
 
 // --- Payout MonCash (confirmado) -------------------------------------------
 //
-// Endpoint confirmado:
-//   POST /moncash/withdraw
+// Endpoints confirmados (mismo formato de body para ambos):
+//   POST /moncash/withdraw   → provider "moncash"
+//   POST /natcash/transfers  → provider "natcash"
 //   Headers: Authorization: Bearer <access_token>, Content-Type: application/json
 //   Body: {
 //     gdes: number,              // monto en gourdes (HTG)
-//     wallet: string,            // número de MonCash del destinatario, sin código de país
+//     wallet: string,            // número del destinatario, sin código de país
 //     description?: string,
 //     referenceId: string,       // referencia única nuestra para el envío
 //     customerFirstName: string,
@@ -206,9 +207,10 @@ export async function bazikStatusInfo() {
 //     webhookUrl?: string,       // a donde Bazik notifica el resultado
 //   }
 //
-// TODO: la forma exacta de la respuesta de éxito/error de /moncash/withdraw aún no
-// está confirmada. bazikPayout() maneja esto de forma defensiva (intenta varios
-// nombres de campo comunes); ajustar normaliseBazikResult() en cuanto se confirme.
+// TODO: la forma exacta de la respuesta de éxito/error aún no está confirmada
+// para ninguno de los dos endpoints. bazikPayout() maneja esto de forma defensiva
+// (intenta varios nombres de campo comunes); ajustar normaliseBazikResult() en
+// cuanto se confirme.
 
 export type BazikPayoutInput = {
   provider: "moncash" | "natcash";
@@ -229,9 +231,9 @@ export type BazikResult =
     }
   | { ok: false; configured?: boolean; error: string };
 
-function normalisePhoneToMonCashWallet(phone: string): string {
+function normalisePhoneToWallet(phone: string): string {
   const digits = phone.replace(/\D/g, "");
-  // El ejemplo confirmado usa 8 dígitos sin código de país (509).
+  // Los ejemplos confirmados usan 8 dígitos sin código de país (509).
   return digits.length > 8 ? digits.slice(-8) : digits;
 }
 
@@ -247,7 +249,7 @@ function bazikWebhookUrl(): string {
   return `${base}/api/public/bazik/payout`;
 }
 
-// Intenta reconocer el estado/referencia en la respuesta de /moncash/withdraw,
+// Intenta reconocer el estado/referencia en la respuesta del payout (moncash/withdraw o natcash/transfers),
 // cuya forma exacta aún no está confirmada.
 export function normaliseBazikResult(payload: unknown): {
   providerReference?: string;
@@ -279,15 +281,8 @@ export function normaliseBazikResult(payload: unknown): {
   };
 }
 
-/** Envía un pago MonCash real vía Bazik (POST /moncash/withdraw). */
+/** Envía un pago MonCash o NatCash real vía Bazik. */
 export async function bazikPayout(input: BazikPayoutInput): Promise<BazikResult> {
-  if (input.provider !== "moncash") {
-    return {
-      ok: false,
-      error:
-        "Bazik solo soporta MonCash según su spec oficial; NatCash no está confirmado para este proveedor.",
-    };
-  }
   if (input.currency !== "HTG") {
     return { ok: false, error: "Bazik solo soporta pagos en HTG (gourdes)." };
   }
@@ -304,10 +299,11 @@ export async function bazikPayout(input: BazikPayoutInput): Promise<BazikResult>
   const stored = await loadStoredCreds();
   const creds = credsFor(stored);
   const { firstName, lastName } = splitName(input.recipientName);
+  const path = input.provider === "moncash" ? "/moncash/withdraw" : "/natcash/transfers";
 
   const body: Record<string, unknown> = {
     gdes: input.amount,
-    wallet: normalisePhoneToMonCashWallet(input.phone),
+    wallet: normalisePhoneToWallet(input.phone),
     description: `Lajan Rapid · ${input.reference}`,
     referenceId: input.reference,
     customerFirstName: firstName,
@@ -317,7 +313,7 @@ export async function bazikPayout(input: BazikPayoutInput): Promise<BazikResult>
   if (input.recipientEmail) body["customerEmail"] = input.recipientEmail;
 
   try {
-    const response = await fetch(`${creds.baseUrl}/moncash/withdraw`, {
+    const response = await fetch(`${creds.baseUrl}${path}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -335,7 +331,7 @@ export async function bazikPayout(input: BazikPayoutInput): Promise<BazikResult>
     }
 
     if (!response.ok) {
-      console.error(`Bazik /moncash/withdraw falló [${response.status}]: ${text}`);
+      console.error(`Bazik ${path} falló [${response.status}]: ${text}`);
       return {
         ok: false,
         error: `Bazik rechazó el pago (HTTP ${response.status}): ${text.slice(0, 200)}`,
@@ -350,7 +346,7 @@ export async function bazikPayout(input: BazikPayoutInput): Promise<BazikResult>
       raw: parsed,
     };
   } catch (error) {
-    console.error("Bazik /moncash/withdraw lanzó error:", error);
+    console.error(`Bazik ${path} lanzó error:`, error);
     return { ok: false, error: "No se pudo contactar a Bazik para procesar el pago." };
   }
 }
