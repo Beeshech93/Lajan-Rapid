@@ -38,7 +38,9 @@ import { STATUS_LABEL, STATUS_TONE, money, shortDate, type TransferStatus } from
 const ALL_STATUSES: TransferStatus[] = [
   "created",
   "awaiting_payment",
+  "paid",
   "processing",
+  "ready_for_pickup",
   "completed",
   "cancelled",
 ];

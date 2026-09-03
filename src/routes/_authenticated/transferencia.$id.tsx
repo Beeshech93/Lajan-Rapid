@@ -14,6 +14,7 @@ import {
   mercadoPagoOxxoVoucher,
   mercadoPagoSpeiReference,
 } from "@/lib/mercadopago.functions";
+import { stripeInitiatePayment } from "@/lib/stripe.functions";
 import { finalizeTransferPayout } from "@/lib/transfers.functions";
 import {
   money,
@@ -43,6 +44,7 @@ function Detalle() {
   const qc = useQueryClient();
   const { isAdmin } = useProfile();
   const initiatePayment = useServerFn(mercadoPagoInitiatePayment);
+  const initiateStripePayment = useServerFn(stripeInitiatePayment);
   const finalizePayout = useServerFn(finalizeTransferPayout);
   const [isInitiating, setIsInitiating] = useState(false);
 
@@ -101,6 +103,7 @@ function Detalle() {
   const isCardPayment = t
     ? ["mercado_pago", "mercadopago", "card", "tarjeta"].includes(t.payment_method)
     : false;
+  const isStripePayment = isCardPayment && t?.origin_country !== "MX";
   const isOxxo = t?.payment_method === "oxxo";
   const isSpei = t?.payment_method === "spei";
   const isDirectCashDelivery = t ? ["moncash", "natcash"].includes(t.delivery_method) : false;
@@ -158,7 +161,9 @@ function Detalle() {
               </p>
               <p className="text-sm text-muted-foreground">
                 {isCardPayment
-                  ? "Serás redirigido a Mercado Pago para completar el pago."
+                  ? isStripePayment
+                    ? "Serás redirigido a un checkout seguro con Stripe para completar el pago."
+                    : "Serás redirigido a Mercado Pago para completar el pago."
                   : isDirectCashDelivery && !isAdmin
                     ? "Tu pago está siendo procesado para el envío al destinatario."
                     : `${t.recipient_name} · ${t.recipient_phone} · ${money(Number(t.amount_receive), t.receive_currency)}`}
@@ -172,7 +177,9 @@ function Detalle() {
                 onClick={async () => {
                   setIsInitiating(true);
                   try {
-                    const result = await initiatePayment({ data: { transferId: id } });
+                    const result = isStripePayment
+                      ? await initiateStripePayment({ data: { transferId: id } })
+                      : await initiatePayment({ data: { transferId: id } });
                     window.location.href = result.checkoutUrl;
                   } catch (err) {
                     toast.error((err as Error).message || "Error al iniciar el pago");
@@ -181,7 +188,11 @@ function Detalle() {
                 }}
               >
                 {isInitiating && <Loader2 className="size-4 animate-spin" />}
-                {isInitiating ? "Cargando..." : "Ir a Mercado Pago"}
+                {isInitiating
+                  ? "Cargando..."
+                  : isStripePayment
+                    ? "Pagar con tarjeta"
+                    : "Ir a Mercado Pago"}
               </Button>
             ) : !isAdmin && isDirectCashDelivery ? (
               <Button

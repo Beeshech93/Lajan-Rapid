@@ -7,7 +7,9 @@ const adminConfirmSchema = z.object({ transferId: z.string().uuid() });
 const TRANSFER_STATUSES = [
   "created",
   "awaiting_payment",
+  "paid",
   "processing",
+  "ready_for_pickup",
   "completed",
   "cancelled",
 ] as const;
@@ -24,7 +26,9 @@ const adminCancelSchema = z.object({
 const ADMIN_STATUS_LABEL: Record<string, string> = {
   created: "Creado",
   awaiting_payment: "Esperando pago",
+  paid: "Pago confirmado",
   processing: "En proceso",
+  ready_for_pickup: "Listo para retirar",
   completed: "Entregado",
   cancelled: "Cancelado",
 };

@@ -1,10 +1,18 @@
 export type TransferStatus =
-  "created" | "awaiting_payment" | "processing" | "completed" | "cancelled";
+  | "created"
+  | "awaiting_payment"
+  | "paid"
+  | "processing"
+  | "ready_for_pickup"
+  | "completed"
+  | "cancelled";
 
 export const STATUS_LABEL: Record<TransferStatus, string> = {
   created: "Creado",
   awaiting_payment: "Esperando pago",
+  paid: "Pago confirmado",
   processing: "En proceso",
+  ready_for_pickup: "Listo para retirar",
   completed: "Entregado",
   cancelled: "Cancelado",
 };
@@ -12,7 +20,9 @@ export const STATUS_LABEL: Record<TransferStatus, string> = {
 export const STATUS_TONE: Record<TransferStatus, string> = {
   created: "bg-muted text-muted-foreground",
   awaiting_payment: "bg-warning/15 text-warning",
+  paid: "bg-accent/15 text-accent",
   processing: "bg-accent/15 text-accent",
+  ready_for_pickup: "bg-accent/15 text-accent",
   completed: "bg-success/15 text-success",
   cancelled: "bg-destructive/10 text-destructive",
 };
@@ -53,7 +63,7 @@ export const PAYMENT_CATALOG: Record<string, Method> = {
   oxxo: { value: "oxxo", label: "OXXO", hint: "Pago en efectivo en tienda" },
   mercado_pago: { value: "mercado_pago", label: "Mercado Pago", hint: "Saldo o tarjeta" },
   spei: { value: "spei", label: "Transferencia SPEI", hint: "Desde tu banco" },
-  card: { value: "card", label: "Tarjeta de débito", hint: "Visa / Mastercard" },
+  card: { value: "card", label: "Tarjeta", hint: "Visa / Mastercard, pago seguro" },
   ach: { value: "ach", label: "Transferencia ACH", hint: "Desde tu banco en EE.UU." },
   zelle: { value: "zelle", label: "Zelle", hint: "Envío instantáneo" },
   interac: { value: "interac", label: "Interac e-Transfer", hint: "Bancos de Canadá" },
@@ -72,22 +82,24 @@ export const PAYMENT_CATALOG: Record<string, Method> = {
   cash_agent: { value: "cash_agent", label: "Efectivo con agente", hint: "Punto autorizado" },
 };
 
-const DEFAULT_PAYMENTS = ["bank_transfer", "card", "cash_agent"];
+// México paga con Mercado Pago (oxxo, spei, tarjeta vía Mercado Pago o Stripe).
+// El resto de los países solo admite tarjeta, procesada con Stripe.
+const DEFAULT_PAYMENTS = ["card"];
 
 const PAYMENTS_BY_COUNTRY: Record<string, string[]> = {
   MX: ["oxxo", "spei", "mercado_pago", "card"],
-  US: ["ach", "zelle", "card", "cash_agent"],
-  CA: ["interac", "bank_transfer", "card"],
-  BR: ["pix", "bank_transfer", "card"],
-  ES: ["sepa", "card", "cash_agent"],
-  FR: ["sepa", "card", "cash_agent"],
-  DE: ["sepa", "card"],
-  IT: ["sepa", "card"],
-  PT: ["sepa", "card"],
-  NL: ["sepa", "card"],
-  BE: ["sepa", "card"],
-  CH: ["bank_transfer", "card"],
-  GB: ["faster_payments", "bank_transfer", "card"],
+  US: ["card"],
+  CA: ["card"],
+  BR: ["card"],
+  ES: ["card"],
+  FR: ["card"],
+  DE: ["card"],
+  IT: ["card"],
+  PT: ["card"],
+  NL: ["card"],
+  BE: ["card"],
+  CH: ["card"],
+  GB: ["card"],
 };
 
 export function paymentMethods(countryCode: string | undefined): Method[] {

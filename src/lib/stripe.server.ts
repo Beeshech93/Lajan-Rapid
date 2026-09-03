@@ -105,6 +105,84 @@ export async function verifyStripeSignature(opts: {
     : { ok: false, reason: "Firma inválida" };
 }
 
+/** Crea una sesión real de Stripe Checkout (modo pago único, solo tarjeta) y retorna su URL. */
+export async function createStripeCheckoutSession(opts: {
+  transferId: string;
+  reference: string;
+  amount: number;
+  currency: string;
+  description: string;
+  buyerEmail?: string;
+  successUrl?: string;
+  cancelUrl?: string;
+}): Promise<{ ok: true; checkoutUrl: string } | { ok: false; error: string }> {
+  const stored = await loadStripeCreds();
+  const key = pick(stored, "STRIPE_SECRET_KEY");
+  if (!key) {
+    return {
+      ok: false,
+      error:
+        "Falta la conexión de Stripe: necesita STRIPE_SECRET_KEY en el panel de administración.",
+    };
+  }
+
+  const base = process.env["PUBLIC_URL"] || "https://lajanrapid.app";
+  const successUrl = opts.successUrl ?? `${base}/transferencia/${opts.transferId}?payment=success`;
+  const cancelUrl = opts.cancelUrl ?? `${base}/transferencia/${opts.transferId}?payment=failure`;
+
+  // Stripe espera montos en la unidad mínima de la moneda (centavos para monedas
+  // de 2 decimales como MXN/USD/EUR).
+  const unitAmount = Math.round(opts.amount * 100);
+
+  const body = new URLSearchParams();
+  body.set("mode", "payment");
+  body.set("client_reference_id", opts.reference);
+  body.set("success_url", successUrl);
+  body.set("cancel_url", cancelUrl);
+  body.set("payment_method_types[0]", "card");
+  body.set("line_items[0][quantity]", "1");
+  body.set("line_items[0][price_data][currency]", opts.currency.toLowerCase());
+  body.set("line_items[0][price_data][unit_amount]", String(unitAmount));
+  body.set("line_items[0][price_data][product_data][name]", opts.description);
+  body.set("metadata[reference]", opts.reference);
+  if (opts.buyerEmail) body.set("customer_email", opts.buyerEmail);
+
+  try {
+    const response = await fetch(`${STRIPE_API}/checkout/sessions`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body,
+    });
+
+    const text = await response.text();
+    let parsed: Record<string, unknown> = {};
+    try {
+      parsed = JSON.parse(text) as Record<string, unknown>;
+    } catch {
+      // respuesta no-JSON
+    }
+
+    if (!response.ok) {
+      const message =
+        ((parsed["error"] as Record<string, unknown> | undefined)?.["message"] as
+          string | undefined) ?? text.slice(0, 200);
+      console.error(`Stripe checkout/sessions falló [${response.status}]: ${text}`);
+      return { ok: false, error: `Stripe rechazó el pago: ${message}` };
+    }
+
+    const checkoutUrl = parsed["url"] as string | undefined;
+    if (!checkoutUrl) return { ok: false, error: "Stripe no devolvió una URL de pago." };
+
+    return { ok: true, checkoutUrl };
+  } catch (error) {
+    console.error("Stripe checkout/sessions lanzó error:", error);
+    return { ok: false, error: "No se pudo contactar a Stripe para iniciar el pago." };
+  }
+}
+
 export type StripeEvent = {
   id: string;
   type: string;
