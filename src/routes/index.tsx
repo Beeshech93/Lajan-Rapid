@@ -3,6 +3,7 @@ import { useState } from "react";
 import { ArrowRight, ShieldCheck, Timer, Wallet, TrendingUp } from "lucide-react";
 
 import logoAsset from "@/assets/lajan-rapid-logo.png.asset.json";
+import womanPhoneAsset from "@/assets/woman-phone-navy.png.asset.json";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -60,7 +61,7 @@ function Landing() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="bg-brand text-primary-foreground">
+      <div className="bg-brand text-foreground">
         <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5">
           <div className="flex items-center gap-2.5">
             <span className="grid size-9 place-items-center overflow-hidden rounded-xl bg-primary-foreground p-1">
@@ -69,12 +70,12 @@ function Landing() {
             <span className="font-display text-lg font-semibold tracking-tight">Lajan Rapid</span>
           </div>
           <div className="flex items-center gap-2">
-            <LanguageSwitcher className="h-9 w-[132px] border-primary-foreground/20 bg-primary-foreground/10 text-xs text-primary-foreground" />
+            <LanguageSwitcher className="h-9 w-[132px] border-foreground/20 bg-foreground/10 text-xs text-foreground" />
             <Button
               asChild
               variant="ghost"
               size="sm"
-              className="text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+              className="text-foreground hover:bg-primary-foreground/10 hover:text-foreground"
             >
               <Link to="/auth">{t("auth.signin")}</Link>
             </Button>
@@ -90,15 +91,25 @@ function Landing() {
           </div>
         </header>
 
-        <section className="mx-auto grid max-w-6xl items-center gap-12 px-5 pb-20 pt-8 lg:grid-cols-[1.05fr_1fr] lg:pb-28 lg:pt-16">
+        <section className="mx-auto grid max-w-6xl items-center gap-10 px-5 pb-20 pt-8 lg:grid-cols-[0.95fr_1.1fr_1fr] lg:gap-12 lg:pb-28 lg:pt-16">
+          <div className="relative mx-auto flex w-full max-w-[280px] justify-center lg:max-w-none lg:justify-start">
+            <div className="relative w-full overflow-hidden rounded-[2rem] border border-primary-foreground/10 shadow-lift shadow-black/20">
+              <img
+                src={womanPhoneAsset.url}
+                alt="Mujer sonriendo mientras usa Lajan Rapid en su teléfono"
+                className="aspect-[3/4] w-full object-cover"
+              />
+            </div>
+          </div>
+
           <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/35 bg-primary-foreground/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-primary-foreground">
+            <span className="inline-flex items-center gap-2 rounded-full border border-foreground/35 bg-foreground/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-foreground">
               <TrendingUp className="size-3.5" /> {t("landing.badge")}
             </span>
-            <h1 className="mt-6 font-display text-4xl font-bold leading-[1.03] sm:text-5xl lg:text-[3.7rem]">
+            <h1 className="mt-6 font-display text-4xl font-bold leading-[1.03] sm:text-5xl lg:text-[3.2rem]">
               {t("landing.title")}
             </h1>
-            <p className="mt-5 max-w-lg text-base text-primary-foreground/70 sm:text-lg">
+            <p className="mt-5 max-w-lg text-base text-foreground/70 sm:text-lg">
               {t("landing.subtitle")}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
@@ -115,7 +126,7 @@ function Landing() {
                 asChild
                 size="lg"
                 variant="outline"
-                className="border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+                className="border-foreground/30 bg-transparent text-foreground hover:bg-foreground/10 hover:text-foreground"
               >
                 <Link to="/auth">{t("landing.have_account")}</Link>
               </Button>
