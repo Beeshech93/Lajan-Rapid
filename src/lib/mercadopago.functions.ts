@@ -67,7 +67,7 @@ export const mercadoPagoInitiatePayment = createServerFn({ method: "POST" })
     const base = process.env["PUBLIC_URL"] || "https://lajanrapid.app";
 
     const { createMpPreference } = await import("@/lib/mercadopago.server");
-    const checkoutUrl = await createMpPreference({
+    const result = await createMpPreference({
       transferId: transfer.id,
       reference: transfer.reference,
       amount: Number(transfer.total_send),
@@ -80,11 +80,11 @@ export const mercadoPagoInitiatePayment = createServerFn({ method: "POST" })
       failureUrl: `${base}/transferencia/${transfer.id}?payment=failure`,
     });
 
-    if (!checkoutUrl) {
-      throw new Error("No se pudo crear la preferencia de pago");
+    if (!result.ok) {
+      throw new Error(result.error);
     }
 
-    return { checkoutUrl };
+    return { checkoutUrl: result.checkoutUrl };
   });
 
 /** Genera (o recupera) una CLABE SPEI real para un envío propio. */

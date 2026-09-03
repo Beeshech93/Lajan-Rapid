@@ -204,7 +204,7 @@ export async function applyMpPayment(payment: MpPayment) {
 
 /**
  * Crea una preferencia de pago en Mercado Pago.
- * Retorna el `init_point` (URL de checkout) o null si falla.
+ * Retorna el `init_point` (URL de checkout) o el error real si falla.
  */
 export async function createMpPreference(opts: {
   transferId: string;
@@ -218,12 +218,16 @@ export async function createMpPreference(opts: {
   failureUrl?: string;
   /** Restringe el checkout a tarjeta (excluye efectivo y transferencias). */
   cardOnly?: boolean;
-}) {
+}): Promise<{ ok: true; checkoutUrl: string } | { ok: false; error: string }> {
   const stored = await loadMpCreds();
   const token = pick(stored, "MERCADOPAGO_ACCESS_TOKEN");
   if (!token) {
     console.error("Mercado Pago: falta MERCADOPAGO_ACCESS_TOKEN");
-    return null;
+    return {
+      ok: false,
+      error:
+        "Falta la conexión de Mercado Pago: necesita un access token en el panel de administración.",
+    };
   }
 
   const preference = {
@@ -276,16 +280,27 @@ export async function createMpPreference(opts: {
       body: JSON.stringify(preference),
     });
 
+    const text = await res.text();
     if (!res.ok) {
-      console.error(`Mercado Pago: no se pudo crear preferencia [${res.status}]`, await res.text());
-      return null;
+      console.error(`Mercado Pago: no se pudo crear preferencia [${res.status}]`, text);
+      let detail = text.slice(0, 200);
+      try {
+        const parsed = JSON.parse(text) as { message?: string; cause?: unknown[] };
+        detail = parsed.message ?? detail;
+      } catch {
+        // texto plano
+      }
+      return { ok: false, error: `Mercado Pago rechazó el pago: ${detail}` };
     }
 
-    const data = (await res.json()) as { init_point?: string; id?: string };
-    return data.init_point || null;
+    const data = JSON.parse(text) as { init_point?: string; id?: string };
+    if (!data.init_point) {
+      return { ok: false, error: "Mercado Pago no devolvió una URL de pago." };
+    }
+    return { ok: true, checkoutUrl: data.init_point };
   } catch (e) {
     console.error("Mercado Pago: error creando preferencia", e);
-    return null;
+    return { ok: false, error: "No se pudo contactar a Mercado Pago para iniciar el pago." };
   }
 }
 
