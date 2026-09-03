@@ -190,11 +190,13 @@ export async function bazikStatusInfo() {
   };
 }
 
-// --- Payout MonCash (confirmado) -------------------------------------------
+// --- Payout MonCash / NatCash (confirmado en docs.bazik.io/docs/endpoints) --
 //
 // Endpoints confirmados (mismo formato de body para ambos):
-//   POST /moncash/withdraw   → provider "moncash"
+//   POST /moncash/transfers  → provider "moncash"  (fuente: docs oficiales)
 //   POST /natcash/transfers  → provider "natcash"
+//   POST /moncash/withdraw   → variante alterna vista antes; se mantiene como
+//                              fallback por si alguna cuenta la requiere.
 //   Headers: Authorization: Bearer <access_token>, Content-Type: application/json
 //   Body: {
 //     gdes: number,              // monto en gourdes (HTG)
@@ -298,7 +300,9 @@ export async function bazikPayout(input: BazikPayoutInput): Promise<BazikResult>
   const stored = await loadStoredCreds();
   const creds = credsFor(stored);
   const { firstName, lastName } = splitName(input.recipientName);
-  const primaryPath = input.provider === "moncash" ? "/moncash/withdraw" : "/natcash/transfers";
+  // Confirmado en docs.bazik.io/docs/endpoints: ambos proveedores usan el
+  // sufijo /transfers.
+  const primaryPath = input.provider === "moncash" ? "/moncash/transfers" : "/natcash/transfers";
 
   const body: Record<string, unknown> = {
     gdes: input.amount,
@@ -313,19 +317,14 @@ export async function bazikPayout(input: BazikPayoutInput): Promise<BazikResult>
 
   const first = await bazikPost(creds.baseUrl, primaryPath, auth.token, body);
 
-  // Bazik puede responder 403 "endpoint_not_authorized" si el tipo de cuenta
-  // (ej. "transfer") no está habilitado para /moncash/withdraw o /natcash/transfers,
-  // que solo aceptan cuentas tipo "online"/"instore". Ese tipo de cuenta usa en
-  // cambio el endpoint genérico /transfers con el mismo body.
+  // Fallback defensivo: si Bazik responde 403 "endpoint_not_authorized" (el tipo
+  // de cuenta no está habilitado para este endpoint), reintenta contra las
+  // variantes alternas vistas anteriormente, por si el tipo de cuenta las requiere.
   if (!first.ok && first.status === 403 && first.errorCode === "endpoint_not_authorized") {
-    console.warn(
-      `Bazik ${primaryPath}: cuenta no autorizada (posible tipo "transfer"); reintentando con /transfers`,
-    );
-    const fallback = await bazikPost(creds.baseUrl, "/transfers", auth.token, {
-      ...body,
-      provider: input.provider,
-    });
-    return toBazikResult(fallback, "/transfers");
+    const altPath = input.provider === "moncash" ? "/moncash/withdraw" : "/natcash/withdraw";
+    console.warn(`Bazik ${primaryPath}: cuenta no autorizada; reintentando con ${altPath}`);
+    const fallback = await bazikPost(creds.baseUrl, altPath, auth.token, body);
+    return toBazikResult(fallback, altPath);
   }
 
   return toBazikResult(first, primaryPath);
