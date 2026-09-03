@@ -170,6 +170,12 @@ export async function applyMpPayment(payment: MpPayment) {
   const next = mapStatus(payment.status);
   if (!next) return { ok: false, reason: `Estado no manejado: ${payment.status}` };
 
+  if (ref.startsWith("LR-TU-")) {
+    if (next === "awaiting_payment") return { ok: true, ignored: "Pago aún pendiente" };
+    const { applyExternalTopupPayment } = await import("@/lib/dingconnect.server");
+    return applyExternalTopupPayment(ref, next === "paid" ? "paid" : "failed");
+  }
+
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: transfer } = await supabaseAdmin
     .from("transfers")

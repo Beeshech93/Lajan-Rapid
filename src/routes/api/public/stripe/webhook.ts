@@ -42,7 +42,8 @@ export const Route = createFileRoute("/api/public/stripe/webhook")({
           } as const);
 
         const result = await applyStripeEvent(event);
-        if (!result.ok) console.warn("Stripe webhook:", result.reason);
+        if (!result.ok)
+          console.warn("Stripe webhook:", "reason" in result ? result.reason : result);
 
         return Response.json({ received: true });
       },

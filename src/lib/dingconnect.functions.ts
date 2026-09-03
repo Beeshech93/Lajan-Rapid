@@ -68,6 +68,131 @@ export const dingSendTopup = createServerFn({ method: "POST" })
     }
   });
 
+const TOPUP_CARD_METHODS = ["card", "tarjeta", "mercado_pago", "mercadopago"];
+
+/**
+ * Crea una recarga pendiente pagada con un proveedor externo (tarjeta vía
+ * Mercado Pago/Stripe, o OXXO/SPEI en México) en vez de la billetera interna.
+ * El envío real a DingConnect se dispara cuando el webhook del proveedor
+ * confirma el pago (ver applyExternalTopupPayment en dingconnect.server.ts).
+ */
+export const dingCreateTopupCheckout = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (input: {
+      skuCode: string;
+      operator?: string;
+      countryCode?: string;
+      phone: string;
+      amount: number;
+      currency: string;
+      paymentMethod: string;
+      originCountry: string;
+    }) => input,
+  )
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await context.supabase.rpc("create_topup_pending", {
+      _sku_code: data.skuCode,
+      _operator: data.operator ?? "",
+      _country_code: data.countryCode ?? "",
+      _phone: data.phone,
+      _amount: data.amount,
+      _currency: data.currency,
+      _payment_method: data.paymentMethod,
+      _origin_country: data.originCountry,
+    });
+    if (error || !row) throw new Error(error?.message ?? "No se pudo crear la recarga");
+
+    const topup = row as unknown as { id: string; reference: string; currency: string };
+    const email = context.claims?.email as string | undefined;
+    const base = process.env["PUBLIC_URL"] || "https://lajanrapid.app";
+    const description = `Recarga ${data.phone} · ${data.operator ?? ""}`;
+
+    const { data: profile } = await context.supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", context.userId)
+      .maybeSingle();
+    const [firstNameRaw, ...rest] = (profile?.full_name || "Cliente Lajan").split(" ");
+    const firstName = firstNameRaw || "Cliente";
+    const lastName = rest.join(" ") || "Rapid";
+
+    if (data.originCountry === "MX") {
+      if (data.paymentMethod === "oxxo") {
+        if (!email) throw new Error("Necesitamos un correo en tu cuenta para emitir la ficha");
+        const { createOxxoVoucher } = await import("@/lib/mercadopago.server");
+        const result = await createOxxoVoucher({
+          reference: topup.reference,
+          amount: data.amount,
+          description,
+          payerEmail: email,
+          payerFirstName: firstName,
+          payerLastName: lastName,
+        });
+        if (!result.ok) throw new Error(result.error);
+        return { mode: "voucher" as const, voucher: result.voucher, reference: topup.reference };
+      }
+
+      if (data.paymentMethod === "spei") {
+        if (!email) throw new Error("Necesitamos un correo en tu cuenta para emitir la CLABE");
+        const { createSpeiReference } = await import("@/lib/mercadopago.server");
+        const result = await createSpeiReference({
+          reference: topup.reference,
+          amount: data.amount,
+          description,
+          payerEmail: email,
+          payerFirstName: firstName,
+          payerLastName: lastName,
+        });
+        if (!result.ok) throw new Error(result.error);
+        return { mode: "spei" as const, spei: result.spei, reference: topup.reference };
+      }
+
+      // Tarjeta en México vía Mercado Pago.
+      const { createMpPreference } = await import("@/lib/mercadopago.server");
+      const result = await createMpPreference({
+        transferId: topup.id,
+        reference: topup.reference,
+        amount: data.amount,
+        currency: topup.currency,
+        description,
+        ...(email ? { buyerEmail: email } : {}),
+        cardOnly: true,
+        successUrl: `${base}/recargas?payment=success`,
+        pendingUrl: `${base}/recargas?payment=pending`,
+        failureUrl: `${base}/recargas?payment=failure`,
+      });
+      if (!result.ok) throw new Error(result.error);
+      return {
+        mode: "checkout" as const,
+        checkoutUrl: result.checkoutUrl,
+        reference: topup.reference,
+      };
+    }
+
+    // Tarjeta fuera de México vía Stripe.
+    if (!TOPUP_CARD_METHODS.includes(data.paymentMethod)) {
+      throw new Error("Este método de pago no está disponible fuera de México");
+    }
+    const { createStripeCheckoutSession } = await import("@/lib/stripe.server");
+    const result = await createStripeCheckoutSession({
+      transferId: topup.id,
+      reference: topup.reference,
+      amount: data.amount,
+      currency: topup.currency,
+      description,
+      ...(email ? { buyerEmail: email } : {}),
+      successUrl: `${base}/recargas?payment=success`,
+      cancelUrl: `${base}/recargas?payment=failure`,
+    });
+    if (!result.ok) throw new Error(result.error);
+    return {
+      mode: "checkout" as const,
+      checkoutUrl: result.checkoutUrl,
+      reference: topup.reference,
+    };
+  });
+
 /** Estado de configuración de DingConnect (solo administradores). */
 export const dingStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

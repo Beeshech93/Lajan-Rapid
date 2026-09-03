@@ -292,3 +292,62 @@ export async function applyDingResult(opts: {
 
   return { ok: true, topupId: topup.id, status: next };
 }
+
+/**
+ * Se llama desde los webhooks de Stripe/Mercado Pago cuando se confirma (o falla)
+ * el pago externo de una recarga con payment_method distinto de 'wallet'. Si el
+ * pago fue aprobado, dispara el envío real a DingConnect; si falló, marca la
+ * recarga como fallida (sin reembolso de billetera, ya que nunca se descontó de
+ * ahí — el reembolso del pago externo debe gestionarse en Stripe/Mercado Pago).
+ */
+export async function applyExternalTopupPayment(reference: string, outcome: "paid" | "failed") {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: topup } = await supabaseAdmin
+    .from("topups")
+    .select("*")
+    .eq("reference", reference)
+    .maybeSingle();
+
+  if (!topup) return { ok: false, reason: `No existe la recarga ${reference}` };
+  if (topup.status !== "pending") {
+    return { ok: true, unchanged: true, topupId: topup.id };
+  }
+
+  if (outcome === "failed") {
+    await supabaseAdmin
+      .from("topups")
+      .update({ status: "failed", status_detail: "Pago externo rechazado o cancelado" })
+      .eq("id", topup.id);
+    await supabaseAdmin.from("notifications").insert({
+      user_id: topup.user_id,
+      title: `Recarga no completada · ${topup.reference}`,
+      body: "El pago no se pudo confirmar, la recarga fue cancelada.",
+    });
+    return { ok: true, topupId: topup.id, status: "failed" };
+  }
+
+  // Pago confirmado: marcar en proceso y disparar el envío real a DingConnect.
+  await supabaseAdmin.from("topups").update({ status: "processing" }).eq("id", topup.id);
+
+  try {
+    const res = await dingSendTransfer({
+      skuCode: topup.sku_code,
+      sendValue: Number(topup.amount),
+      sendCurrency: topup.currency,
+      accountNumber: topup.phone,
+      distributorRef: topup.reference,
+    });
+    return applyDingResult({
+      reference: topup.reference,
+      state: res.processingState,
+      providerRef: res.providerRef,
+    });
+  } catch (e) {
+    console.error("DingConnect: falló el envío tras pago externo confirmado", e);
+    return applyDingResult({
+      reference: topup.reference,
+      state: "failed",
+      detail: (e as Error).message,
+    });
+  }
+}

@@ -3,8 +3,9 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Smartphone, Send } from "lucide-react";
+import { Smartphone, Send, Copy, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useCountries } from "@/hooks/useCorridors";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,8 +19,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useWallets, useRefreshWallet } from "@/hooks/useWallet";
-import { dingListProducts, dingSendTopup } from "@/lib/dingconnect.functions";
-import { money, shortDate } from "@/lib/remesa";
+import {
+  dingCreateTopupCheckout,
+  dingListProducts,
+  dingSendTopup,
+} from "@/lib/dingconnect.functions";
+import type { OxxoVoucher, SpeiReference } from "@/lib/mercadopago.server";
+import { money, paymentMethods, paymentLabel, shortDate } from "@/lib/remesa";
 import { TOPUP_COUNTRIES, findTopupCountry, prettyOperator } from "@/lib/topup-operators";
 import { validatePhone, formatNational, expectedLengths, normalizeLocal } from "@/lib/phone";
 
@@ -56,14 +62,30 @@ function Recargas() {
   const qc = useQueryClient();
   const refreshWallet = useRefreshWallet();
   const { data: wallets } = useWallets();
+  const { data: countries } = useCountries();
   const listProducts = useServerFn(dingListProducts);
   const sendTopup = useServerFn(dingSendTopup);
+  const createCheckout = useServerFn(dingCreateTopupCheckout);
 
   const [country, setCountry] = useState("HT");
   const [operator, setOperator] = useState("");
   const [sku, setSku] = useState("");
   const [phone, setPhone] = useState("");
   const [amount, setAmount] = useState("");
+  const [payOrigin, setPayOrigin] = useState("MX");
+  const [payMethod, setPayMethod] = useState("wallet");
+  const [pendingResult, setPendingResult] = useState<
+    { mode: "voucher"; voucher: OxxoVoucher } | { mode: "spei"; spei: SpeiReference } | null
+  >(null);
+
+  const payOrigins = (countries ?? []).filter((c) => c.is_origin);
+  const payMethods = useMemo(
+    () => [
+      { value: "wallet", label: "Saldo de mi billetera", hint: "Instantáneo" },
+      ...paymentMethods(payOrigin),
+    ],
+    [payOrigin],
+  );
 
   // Usar la primera billetera disponible como defecto
   const wallet = useMemo(() => (wallets ?? [])[0], [wallets]);
@@ -142,22 +164,58 @@ function Recargas() {
         throw new Error(
           `El monto debe estar entre ${selected.minValue} y ${selected.maxValue} ${selected.currency}`,
         );
-      return sendTopup({
-        data: {
-          walletId,
-          skuCode: sku || operator,
-          operator,
-          countryCode: country,
-          phone: phoneCheck.e164,
-          amount: value,
-        },
-      });
+
+      if (payMethod === "wallet") {
+        return {
+          kind: "wallet" as const,
+          result: await sendTopup({
+            data: {
+              walletId,
+              skuCode: sku || operator,
+              operator,
+              countryCode: country,
+              phone: phoneCheck.e164,
+              amount: value,
+            },
+          }),
+        };
+      }
+
+      const originInfo = payOrigins.find((c) => c.code === payOrigin);
+      return {
+        kind: "checkout" as const,
+        result: await createCheckout({
+          data: {
+            skuCode: sku || operator,
+            operator,
+            countryCode: country,
+            phone: phoneCheck.e164,
+            amount: value,
+            currency: originInfo?.currency ?? "USD",
+            paymentMethod: payMethod,
+            originCountry: payOrigin,
+          },
+        }),
+      };
     },
     onSuccess: (r) => {
-      toast.success(`Recarga enviada · ${r.reference}`);
+      if (r.kind === "wallet") {
+        toast.success(`Recarga enviada · ${r.result.reference}`);
+        setPhone("");
+        setAmount("");
+        refreshWallet();
+        void qc.invalidateQueries({ queryKey: ["topups"] });
+        return;
+      }
+
+      if (r.result.mode === "checkout") {
+        window.location.href = r.result.checkoutUrl;
+        return;
+      }
+
+      setPendingResult(r.result);
       setPhone("");
       setAmount("");
-      refreshWallet();
       void qc.invalidateQueries({ queryKey: ["topups"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -174,6 +232,44 @@ function Recargas() {
           </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label>País desde donde pagas</Label>
+            <Select
+              value={payOrigin}
+              onValueChange={(v) => {
+                setPayOrigin(v);
+                setPayMethod("wallet");
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {payOrigins.map((c) => (
+                  <SelectItem key={c.code} value={c.code}>
+                    {c.name ?? c.code}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Método de pago</Label>
+            <Select value={payMethod} onValueChange={setPayMethod}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {payMethods.map((m) => (
+                  <SelectItem key={m.value} value={m.value}>
+                    {m.value === "wallet" ? m.label : paymentLabel(m.value)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="space-y-1.5">
             <Label>País del número</Label>
             <Select
@@ -302,15 +398,97 @@ function Recargas() {
               onClick={() => sendMut.mutate()}
             >
               <Send className="mr-2 size-4" />
-              {sendMut.isPending ? "Enviando..." : "Enviar recarga"}
+              {sendMut.isPending
+                ? "Enviando..."
+                : payMethod === "wallet"
+                  ? "Enviar recarga"
+                  : payMethod === "oxxo"
+                    ? "Generar ficha OXXO"
+                    : payMethod === "spei"
+                      ? "Generar CLABE SPEI"
+                      : "Pagar con tarjeta"}
             </Button>
             <p className="mt-2 text-xs text-muted-foreground">
-              El monto se descuenta de tu billetera. Si el operador rechaza la recarga, el saldo se
-              devuelve automáticamente y recibes una notificación.
+              {payMethod === "wallet"
+                ? "El monto se descuenta de tu billetera. Si el operador rechaza la recarga, el saldo se devuelve automáticamente y recibes una notificación."
+                : "Se te pedirá completar el pago; la recarga se envía automáticamente en cuanto se confirme."}
             </p>
           </div>
         </CardContent>
       </Card>
+
+      {pendingResult?.mode === "voucher" && (
+        <Card className="border-accent/40">
+          <CardHeader>
+            <CardTitle className="text-base">Ficha de pago en OXXO</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="rounded-xl bg-secondary p-4">
+              <p className="text-xs font-semibold uppercase text-muted-foreground">
+                Referencia OXXO
+              </p>
+              <p className="mt-1 break-all font-display text-2xl font-bold tracking-wider">
+                {pendingResult.voucher.reference}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-2"
+                onClick={() => {
+                  void navigator.clipboard.writeText(pendingResult.voucher.reference);
+                  toast.success("Referencia copiada");
+                }}
+              >
+                <Copy className="size-4" /> Copiar referencia
+              </Button>
+              {pendingResult.voucher.voucherUrl && (
+                <Button size="sm" className="gap-2" asChild>
+                  <a href={pendingResult.voucher.voucherUrl} target="_blank" rel="noreferrer">
+                    Ver comprobante
+                  </a>
+                </Button>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Muestra esta referencia en cualquier tienda OXXO. La recarga se envía automáticamente
+              en cuanto se confirme el pago.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {pendingResult?.mode === "spei" && (
+        <Card className="border-accent/40">
+          <CardHeader>
+            <CardTitle className="text-base">Transferencia SPEI</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="rounded-xl bg-secondary p-4">
+              <p className="text-xs font-semibold uppercase text-muted-foreground">CLABE</p>
+              <p className="mt-1 break-all font-display text-2xl font-bold tracking-wider">
+                {pendingResult.spei.clabe}
+              </p>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-2"
+              onClick={() => {
+                void navigator.clipboard.writeText(pendingResult.spei.clabe);
+                toast.success("CLABE copiada");
+              }}
+            >
+              <Copy className="size-4" /> Copiar CLABE
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Transfiere desde tu banco a esta CLABE. La recarga se envía automáticamente en cuanto
+              se confirme el pago.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

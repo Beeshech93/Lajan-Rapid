@@ -51,7 +51,8 @@ export const Route = createFileRoute("/api/public/mercadopago/webhook")({
         }
 
         const result = await applyMpPayment(payment);
-        if (!result.ok) console.warn("Mercado Pago webhook:", result.reason);
+        if (!result.ok)
+          console.warn("Mercado Pago webhook:", "reason" in result ? result.reason : result);
 
         return Response.json({ received: true });
       },

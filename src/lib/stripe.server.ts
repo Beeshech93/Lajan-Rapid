@@ -259,13 +259,19 @@ const STATUS_TEXT: Record<TransferStatus, { title: string; body: string }> = {
   cancelled: { title: "Pago no completado", body: "El pago fue rechazado, cancelado o devuelto." },
 };
 
-/** Aplica el resultado del evento de Stripe al envío correspondiente. */
+/** Aplica el resultado del evento de Stripe al envío o recarga correspondiente. */
 export async function applyStripeEvent(event: StripeEvent) {
   const next = mapStripeEvent(event.type);
   if (!next) return { ok: true, ignored: `Evento no manejado: ${event.type}` };
 
   const ref = extractReference(event.data?.object ?? {});
   if (!ref) return { ok: false, reason: "El evento no trae la referencia del envío" };
+
+  if (ref.startsWith("LR-TU-")) {
+    if (next === "awaiting_payment") return { ok: true, ignored: "Pago aún pendiente" };
+    const { applyExternalTopupPayment } = await import("@/lib/dingconnect.server");
+    return applyExternalTopupPayment(ref, next === "paid" ? "paid" : "failed");
+  }
 
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: transfer } = await supabaseAdmin

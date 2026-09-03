@@ -456,6 +456,8 @@ export type Database = {
           currency: string;
           id: string;
           operator: string;
+          origin_country: string;
+          payment_method: string;
           phone: string;
           provider: string;
           provider_ref: string | null;
@@ -475,6 +477,8 @@ export type Database = {
           currency: string;
           id?: string;
           operator?: string;
+          origin_country?: string;
+          payment_method?: string;
           phone: string;
           provider?: string;
           provider_ref?: string | null;
@@ -494,6 +498,8 @@ export type Database = {
           currency?: string;
           id?: string;
           operator?: string;
+          origin_country?: string;
+          payment_method?: string;
           phone?: string;
           provider?: string;
           provider_ref?: string | null;
@@ -852,6 +858,45 @@ export type Database = {
           currency: string;
           id: string;
           operator: string;
+          phone: string;
+          provider: string;
+          provider_ref: string | null;
+          reference: string;
+          refunded: boolean;
+          sku_code: string;
+          status: string;
+          status_detail: string | null;
+          updated_at: string;
+          user_id: string;
+          wallet_id: string | null;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "topups";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      create_topup_pending: {
+        Args: {
+          _amount: number;
+          _country_code: string;
+          _currency: string;
+          _operator: string;
+          _origin_country: string;
+          _payment_method: string;
+          _phone: string;
+          _sku_code: string;
+        };
+        Returns: {
+          amount: number;
+          country_code: string;
+          created_at: string;
+          currency: string;
+          id: string;
+          operator: string;
+          origin_country: string;
+          payment_method: string;
           phone: string;
           provider: string;
           provider_ref: string | null;
