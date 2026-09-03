@@ -88,13 +88,6 @@ function Dashboard() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-5 pb-4">
-      <div className="rise-in flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-sm text-muted-foreground">Hola,</p>
-          <h1 className="truncate text-2xl font-bold">{profile?.full_name || "bienvenido"} 👋</h1>
-        </div>
-      </div>
-
       {profile && profile.kyc_status !== "approved" && (
         <Card className="border-warning/40 bg-warning/10 shadow-none">
           <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
@@ -120,27 +113,38 @@ function Dashboard() {
         </Card>
       )}
 
-      {/* Balance hero */}
-      <section className="rise-in bg-brand shadow-lift relative overflow-hidden rounded-[var(--radius-3xl)] p-6 text-primary-foreground">
+      {/* Balance hero — estilo app: marca centrada, saldo grande y acciones pill */}
+      <section className="rise-in bg-brand shadow-lift relative overflow-hidden rounded-[var(--radius-3xl)] px-6 pb-7 pt-6 text-center text-primary-foreground">
         <div
           className="pointer-events-none absolute -right-16 -top-20 size-56 rounded-full bg-accent/25 blur-3xl"
           aria-hidden
         />
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] opacity-70">
-          Saldo disponible
+        <div className="relative flex items-center justify-center gap-2">
+          <span className="grid size-7 place-items-center rounded-full bg-primary-foreground/15">
+            <Coins className="size-4" />
+          </span>
+          <span className="font-display text-lg font-semibold tracking-tight">Lajan Rapid</span>
+        </div>
+        <p className="relative mt-6 text-sm opacity-70">
+          Saldo disponible · {profile?.full_name?.split(" ")[0] || "bienvenido"}
         </p>
-        <p className="mt-2 font-display text-4xl font-bold tracking-tight">
-          {money(totalHtg, "HTG")}
-        </p>
-        <p className="mt-1 text-sm opacity-75">
-          {(wallets ?? []).length === 0
-            ? "Recibe cripto y conviértelo en gourdes."
-            : "Disponible para retirar por MonCash o NatCash."}
-        </p>
-        <div className="mt-5 grid grid-cols-2 gap-3">
+        <div className="relative mt-1 flex items-center justify-center gap-3">
+          <p className="font-display text-4xl font-bold tracking-tight">
+            {hideBalance ? "•••••" : money(totalHtg, "HTG")}
+          </p>
+          <button
+            type="button"
+            onClick={() => setHideBalance((v) => !v)}
+            aria-label={hideBalance ? "Mostrar saldo" : "Ocultar saldo"}
+            className="press grid size-8 place-items-center rounded-full text-primary-foreground/80 hover:bg-primary-foreground/10"
+          >
+            {hideBalance ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
+          </button>
+        </div>
+        <div className="relative mx-auto mt-6 grid max-w-sm grid-cols-2 gap-3">
           <Button
             asChild
-            className="press gap-2 bg-primary-foreground text-primary hover:bg-primary-foreground/90"
+            className="press h-11 rounded-full gap-2 bg-primary-foreground text-primary hover:bg-primary-foreground/90"
           >
             <Link to="/enviar">
               <Send className="size-4" /> Enviar
@@ -148,36 +152,47 @@ function Dashboard() {
           </Button>
           <Button
             asChild
-            variant="outline"
-            className="press gap-2 border-primary-foreground/30 bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/20 hover:text-primary-foreground"
+            className="press h-11 rounded-full gap-2 bg-primary-foreground text-primary hover:bg-primary-foreground/90"
           >
             <Link to="/cripto">
-              <Coins className="size-4" /> Cripto
+              <Coins className="size-4" /> Recibir
             </Link>
           </Button>
         </div>
       </section>
 
       {/* Quick actions */}
-      <div className="grid grid-cols-4 gap-2.5">
-        {[
-          { to: "/enviar", label: "Enviar", icon: Send },
-          { to: "/cripto", label: "Cripto", icon: Coins },
-          { to: "/recargas", label: "Recargas", icon: Smartphone },
-          { to: "/historial", label: "Historial", icon: History },
-        ].map((a) => (
-          <Link
-            key={a.to}
-            to={a.to}
-            className="press card-elevated flex flex-col items-center gap-2 px-2 py-4 text-center"
-          >
-            <span className="grid size-10 place-items-center rounded-xl bg-accent/12 text-accent">
-              <a.icon className="size-5" />
-            </span>
-            <span className="text-[11px] font-semibold text-muted-foreground">{a.label}</span>
-          </Link>
-        ))}
-      </div>
+      <Card className="card-elevated border-transparent">
+        <CardHeader className="flex-row items-center justify-between space-y-0">
+          <CardTitle className="text-base">Acciones rápidas</CardTitle>
+          <Button asChild variant="ghost" size="sm" className="gap-1 text-accent">
+            <Link to="/historial">
+              Ver más <ArrowRight className="size-3.5" />
+            </Link>
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { to: "/enviar", label: "Enviar", icon: Send },
+              { to: "/recargas", label: "Recargas", icon: Smartphone },
+              { to: "/cripto", label: "Cripto", icon: Coins },
+            ].map((a) => (
+              <Link
+                key={a.to}
+                to={a.to}
+                className="press flex flex-col items-center gap-2 rounded-2xl bg-secondary px-2 py-5 text-center"
+              >
+                <span className="grid size-11 place-items-center rounded-full bg-accent/15 text-accent">
+                  <a.icon className="size-5" />
+                </span>
+                <span className="text-xs font-semibold">{a.label}</span>
+              </Link>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
 
       {/* Rate card */}
       <Card className="card-elevated border-transparent">
