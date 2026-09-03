@@ -75,7 +75,10 @@ function Recargas() {
   const [payOrigin, setPayOrigin] = useState("MX");
   const [payMethod, setPayMethod] = useState("wallet");
   const [pendingResult, setPendingResult] = useState<
-    { mode: "voucher"; voucher: OxxoVoucher } | { mode: "spei"; spei: SpeiReference } | null
+    | { mode: "voucher"; voucher: OxxoVoucher }
+    | { mode: "spei"; spei: SpeiReference }
+    | { mode: "checkout"; checkoutUrl: string }
+    | null
   >(null);
 
   const payOrigins = (countries ?? []).filter((c) => c.is_origin);
@@ -209,7 +212,10 @@ function Recargas() {
       }
 
       if (r.result.mode === "checkout") {
-        window.location.href = r.result.checkoutUrl;
+        setPendingResult(r.result);
+        setPhone("");
+        setAmount("");
+        void qc.invalidateQueries({ queryKey: ["topups"] });
         return;
       }
 
@@ -416,6 +422,25 @@ function Recargas() {
           </div>
         </CardContent>
       </Card>
+
+      {pendingResult?.mode === "checkout" && (
+        <Card className="border-accent/40">
+          <CardHeader>
+            <CardTitle className="text-base">Completa tu pago</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Toca el botón para ir al checkout seguro. La recarga se envía automáticamente en
+              cuanto se confirme el pago.
+            </p>
+            <Button asChild className="w-full">
+              <a href={pendingResult.checkoutUrl} target="_blank" rel="noreferrer">
+                Ir a pagar
+              </a>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {pendingResult?.mode === "voucher" && (
         <Card className="border-accent/40">

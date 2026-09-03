@@ -47,6 +47,7 @@ function Detalle() {
   const initiateStripePayment = useServerFn(stripeInitiatePayment);
   const finalizePayout = useServerFn(finalizeTransferPayout);
   const [isInitiating, setIsInitiating] = useState(false);
+  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
 
   const finalize = useMutation({
     mutationFn: () => finalizePayout({ data: { transferId: id } }),
@@ -170,30 +171,39 @@ function Detalle() {
               </p>
             </div>
             {isCardPayment ? (
-              <Button
-                size="sm"
-                className="gap-2"
-                disabled={isInitiating}
-                onClick={async () => {
-                  setIsInitiating(true);
-                  try {
-                    const result = isStripePayment
-                      ? await initiateStripePayment({ data: { transferId: id } })
-                      : await initiatePayment({ data: { transferId: id } });
-                    window.location.href = result.checkoutUrl;
-                  } catch (err) {
-                    toast.error((err as Error).message || "Error al iniciar el pago");
-                    setIsInitiating(false);
-                  }
-                }}
-              >
-                {isInitiating && <Loader2 className="size-4 animate-spin" />}
-                {isInitiating
-                  ? "Cargando..."
-                  : isStripePayment
-                    ? "Pagar con tarjeta"
-                    : "Ir a Mercado Pago"}
-              </Button>
+              checkoutUrl ? (
+                <Button size="sm" className="gap-2" asChild>
+                  <a href={checkoutUrl} target="_blank" rel="noreferrer">
+                    Ir a pagar
+                  </a>
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  className="gap-2"
+                  disabled={isInitiating}
+                  onClick={async () => {
+                    setIsInitiating(true);
+                    try {
+                      const result = isStripePayment
+                        ? await initiateStripePayment({ data: { transferId: id } })
+                        : await initiatePayment({ data: { transferId: id } });
+                      setCheckoutUrl(result.checkoutUrl);
+                    } catch (err) {
+                      toast.error((err as Error).message || "Error al iniciar el pago");
+                    } finally {
+                      setIsInitiating(false);
+                    }
+                  }}
+                >
+                  {isInitiating && <Loader2 className="size-4 animate-spin" />}
+                  {isInitiating
+                    ? "Cargando..."
+                    : isStripePayment
+                      ? "Pagar con tarjeta"
+                      : "Ir a Mercado Pago"}
+                </Button>
+              )
             ) : !isAdmin && isDirectCashDelivery ? (
               <Button
                 size="sm"
