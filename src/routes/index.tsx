@@ -93,11 +93,11 @@ function Landing() {
 
         <section className="mx-auto grid max-w-6xl items-center gap-10 px-5 pb-20 pt-8 lg:grid-cols-[0.95fr_1.1fr_1fr] lg:gap-12 lg:pb-28 lg:pt-16">
           <div className="relative mx-auto flex w-full max-w-[280px] justify-center lg:max-w-none lg:justify-start">
-            <div className="relative w-full overflow-hidden rounded-[2rem] border border-primary-foreground/10 bg-white/95 p-2 shadow-lift shadow-black/20">
+            <div className="relative w-full overflow-hidden rounded-[2rem] border border-primary-foreground/10 shadow-lift shadow-black/20">
               <img
                 src={womanPhoneAsset.url}
                 alt="Mujer sonriendo mientras usa Lajan Rapid en su teléfono"
-                className="aspect-[3/4] w-full rounded-[1.5rem] object-cover"
+                className="aspect-[3/4] w-full object-cover"
               />
             </div>
           </div>
