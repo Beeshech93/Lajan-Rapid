@@ -372,12 +372,35 @@ async function bazikPost(
   return { ok: true, parsed };
 }
 
+// Traduce códigos de error conocidos de Bazik a mensajes claros para el usuario/admin.
+function humaniseBazikError(response: Extract<BazikRawResponse, { ok: false }>): string {
+  let parsed: Record<string, unknown> = {};
+  try {
+    parsed = JSON.parse(response.text) as Record<string, unknown>;
+  } catch {
+    // texto plano, sin JSON
+  }
+
+  if (response.errorCode === "insufficient_balance") {
+    const required = parsed["required"] as number | undefined;
+    const available = parsed["available"] as number | undefined;
+    if (typeof required === "number" && typeof available === "number") {
+      return `Saldo insuficiente en la cuenta de Bazik: disponible ${available.toFixed(2)} HTG, se necesitan ${required.toFixed(2)} HTG (incluye comisiones). Recarga el saldo de Bazik para continuar.`;
+    }
+    return "Saldo insuficiente en la cuenta de Bazik para procesar este pago. Recarga el saldo de Bazik para continuar.";
+  }
+
+  if (response.errorCode === "endpoint_not_authorized") {
+    return "El tipo de cuenta de Bazik no está autorizado para este endpoint.";
+  }
+
+  return `Bazik rechazó el pago (HTTP ${response.status}): ${response.text.slice(0, 200)}`;
+}
+
 function toBazikResult(response: BazikRawResponse, path: string): BazikResult {
   if (!response.ok) {
-    return {
-      ok: false,
-      error: `Bazik rechazó el pago en ${path} (HTTP ${response.status}): ${response.text.slice(0, 200)}`,
-    };
+    console.error(`Bazik ${path}: ${response.errorCode ?? "error"} — ${response.text}`);
+    return { ok: false, error: humaniseBazikError(response) };
   }
 
   const { providerReference, status, fees, total } = normaliseBazikResult(response.parsed);
