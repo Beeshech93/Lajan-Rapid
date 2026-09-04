@@ -3,6 +3,7 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Check, Circle, Copy, Landmark, Loader2, Store } from "lucide-react";
 import { toast } from "sonner";
+import { celebrateLogo } from "@/components/LogoAnimation";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
@@ -53,6 +54,7 @@ function Detalle() {
     mutationFn: () => finalizePayout({ data: { transferId: id } }),
     onSuccess: () => {
       toast.success("Envío completado");
+      celebrateLogo();
       void qc.invalidateQueries({ queryKey: ["transfer", id] });
       void qc.invalidateQueries({ queryKey: ["transfer-events", id] });
     },
