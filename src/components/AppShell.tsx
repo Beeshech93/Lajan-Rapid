@@ -18,6 +18,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { NotificationBell } from "@/components/NotificationBell";
 import { useI18n } from "@/lib/i18n";
 
 const baseNav = [
@@ -82,12 +83,15 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-background md:flex">
       <aside className="hidden w-64 shrink-0 flex-col bg-sidebar p-5 text-sidebar-foreground md:flex">
-        <Link to="/dashboard" className="mb-8 flex items-center gap-2">
-          <span className="grid size-9 place-items-center overflow-hidden rounded-xl bg-logo-surface p-1">
-            <img src={logoAsset.url} alt="Lajan Rapid" className="h-full w-full object-contain" />
-          </span>
-          <span className="font-display text-lg font-semibold">Lajan Rapid</span>
-        </Link>
+        <div className="mb-8 flex items-center justify-between gap-2">
+          <Link to="/dashboard" className="flex min-w-0 items-center gap-2">
+            <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-xl bg-logo-surface p-1">
+              <img src={logoAsset.url} alt="Lajan Rapid" className="h-full w-full object-contain" />
+            </span>
+            <span className="truncate font-display text-lg font-semibold">Lajan Rapid</span>
+          </Link>
+          <NotificationBell triggerClassName="text-sidebar-foreground/70 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/60" />
+        </div>
         <nav className="flex flex-1 flex-col gap-1">
           {nav.map((item) => (
             <Link
@@ -128,6 +132,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <span className="truncate font-display font-semibold">Lajan Rapid</span>
           </Link>
           <div className="flex shrink-0 items-center gap-1">
+            <NotificationBell />
             <LanguageSwitcher className="h-9 w-[96px] text-xs" />
             <Button variant="ghost" size="icon" onClick={signOut} aria-label={t("nav.signout")}>
               <LogOut className="size-4" />
