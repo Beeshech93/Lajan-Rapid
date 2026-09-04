@@ -203,7 +203,10 @@ function Recargas() {
   // Tasa manual (configurada en /admin) de la moneda de pago a la moneda del
   // operador, para calcular cuánto recibe realmente el destinatario.
   const operatorCurrency = selected?.currency || "";
-  const sameCurrency = payCurrency && operatorCurrency && payCurrency === operatorCurrency;
+  // Si no conocemos la moneda del operador (algunos planes de monto libre no
+  // la traen), no hay nada que convertir: se envía el monto tal cual, en la
+  // moneda de pago.
+  const sameCurrency = !operatorCurrency || (!!payCurrency && payCurrency === operatorCurrency);
   const { data: topupRate } = useRate(
     sameCurrency ? undefined : payCurrency || undefined,
     sameCurrency ? undefined : operatorCurrency || undefined,
