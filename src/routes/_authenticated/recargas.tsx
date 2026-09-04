@@ -202,11 +202,13 @@ function Recargas() {
 
   // Tasa manual (configurada en /admin) de la moneda de pago a la moneda del
   // operador, para calcular cuánto recibe realmente el destinatario.
-  const operatorCurrency = selected?.currency || "";
-  // Si no conocemos la moneda del operador (algunos planes de monto libre no
-  // la traen), no hay nada que convertir: se envía el monto tal cual, en la
-  // moneda de pago.
-  const sameCurrency = !operatorCurrency || (!!payCurrency && payCurrency === operatorCurrency);
+  // Moneda real del destinatario: la del producto si DingConnect la trae,
+  // si no, la del país de destino elegido (siempre la conocemos).
+  const destinationCurrency = (countries ?? []).find(
+    (c) => c.is_destination && c.code === country,
+  )?.currency;
+  const operatorCurrency = selected?.currency || destinationCurrency || "";
+  const sameCurrency = !!payCurrency && !!operatorCurrency && payCurrency === operatorCurrency;
   const { data: topupRate } = useRate(
     sameCurrency ? undefined : payCurrency || undefined,
     sameCurrency ? undefined : operatorCurrency || undefined,
