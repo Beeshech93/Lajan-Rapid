@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useId } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell } from "lucide-react";
@@ -36,6 +36,7 @@ function timeAgo(iso: string) {
 export function NotificationBell({ triggerClassName }: { triggerClassName?: string }) {
   const { user } = useProfile();
   const qc = useQueryClient();
+  const instanceId = useId().replace(/[^a-zA-Z0-9]/g, "");
 
   const { data: notifs } = useQuery({
     queryKey: ["notifications", user?.id],
@@ -55,7 +56,7 @@ export function NotificationBell({ triggerClassName }: { triggerClassName?: stri
   useEffect(() => {
     if (!user) return;
     const channel = supabase
-      .channel(`notifications-${user.id}`)
+      .channel(`notifications-${user.id}-${instanceId}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
@@ -65,7 +66,7 @@ export function NotificationBell({ triggerClassName }: { triggerClassName?: stri
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [user, qc]);
+  }, [user, qc, instanceId]);
 
   const unreadCount = (notifs ?? []).filter((n) => !n.is_read).length;
 
