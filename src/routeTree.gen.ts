@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as PrivacidadRouteImport } from './routes/privacidad'
+import { Route as RestablecerPasswordRouteImport } from './routes/restablecer-password'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAgenteRouteImport } from './routes/_authenticated/agente'
 import { Route as AuthenticatedCriptoRouteImport } from './routes/_authenticated/cripto'
@@ -47,6 +48,11 @@ const AuthRoute = AuthRouteImport.update({
 const PrivacidadRoute = PrivacidadRouteImport.update({
   id: '/privacidad',
   path: '/privacidad',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RestablecerPasswordRoute = RestablecerPasswordRouteImport.update({
+  id: '/restablecer-password',
+  path: '/restablecer-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
@@ -137,6 +143,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/privacidad': typeof PrivacidadRoute
+  '/restablecer-password': typeof RestablecerPasswordRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/agente': typeof AuthenticatedAgenteRoute
   '/cripto': typeof AuthenticatedCriptoRoute
@@ -158,6 +165,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/privacidad': typeof PrivacidadRoute
+  '/restablecer-password': typeof RestablecerPasswordRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/agente': typeof AuthenticatedAgenteRoute
   '/cripto': typeof AuthenticatedCriptoRoute
@@ -181,6 +189,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/privacidad': typeof PrivacidadRoute
+  '/restablecer-password': typeof RestablecerPasswordRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/agente': typeof AuthenticatedAgenteRoute
   '/_authenticated/cripto': typeof AuthenticatedCriptoRoute
@@ -204,6 +213,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/privacidad'
+    | '/restablecer-password'
     | '/admin'
     | '/agente'
     | '/cripto'
@@ -225,6 +235,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/privacidad'
+    | '/restablecer-password'
     | '/admin'
     | '/agente'
     | '/cripto'
@@ -247,6 +258,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/privacidad'
+    | '/restablecer-password'
     | '/_authenticated/admin'
     | '/_authenticated/agente'
     | '/_authenticated/cripto'
@@ -270,6 +282,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   PrivacidadRoute: typeof PrivacidadRoute
+  RestablecerPasswordRoute: typeof RestablecerPasswordRoute
   ApiPublicBazikPayoutRoute: typeof ApiPublicBazikPayoutRoute
   ApiPublicDingconnectWebhookRoute: typeof ApiPublicDingconnectWebhookRoute
   ApiPublicMercadopagoWebhookRoute: typeof ApiPublicMercadopagoWebhookRoute
@@ -306,6 +319,13 @@ declare module '@tanstack/react-router' {
       path: '/privacidad'
       fullPath: '/privacidad'
       preLoaderRoute: typeof PrivacidadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/restablecer-password': {
+      id: '/restablecer-password'
+      path: '/restablecer-password'
+      fullPath: '/restablecer-password'
+      preLoaderRoute: typeof RestablecerPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin': {
@@ -457,6 +477,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   PrivacidadRoute: PrivacidadRoute,
+  RestablecerPasswordRoute: RestablecerPasswordRoute,
   ApiPublicBazikPayoutRoute: ApiPublicBazikPayoutRoute,
   ApiPublicDingconnectWebhookRoute: ApiPublicDingconnectWebhookRoute,
   ApiPublicMercadopagoWebhookRoute: ApiPublicMercadopagoWebhookRoute,

@@ -16,6 +16,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import logoAsset from "@/assets/lajan-rapid-logo.png.asset.json";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useI18n } from "@/lib/i18n";
@@ -51,6 +58,9 @@ function AuthPage() {
   const { modo } = Route.useSearch();
   const [tab, setTab] = useState(modo === "registro" ? "registro" : "ingreso");
   const [loading, setLoading] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
   const [dial, setDial] = useState("HT");
   const [phoneInput, setPhoneInput] = useState("");
   const [phoneError, setPhoneError] = useState<string | null>(null);
@@ -126,6 +136,29 @@ function AuthPage() {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = new FormData(e.currentTarget);
+    const email = String(form.get("email") ?? "").trim();
+    const parsed = z.string().trim().email(t("auth.invalid_email")).max(255).safeParse(email);
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0]?.message ?? t("auth.invalid"));
+      return;
+    }
+    setResetLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(parsed.data, {
+        redirectTo: `${window.location.origin}/restablecer-password`,
+      });
+      if (error) throw error;
+      setResetSent(true);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("auth.error"));
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
   const google = async () => {
     const result = await lovable.auth.signInWithOAuth("google", {
       redirect_uri: window.location.origin,
@@ -171,6 +204,16 @@ function AuthPage() {
                   <Button className="w-full" disabled={loading}>
                     {loading ? t("auth.entering") : t("auth.enter")}
                   </Button>
+                  <button
+                    type="button"
+                    className="w-full text-center text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                    onClick={() => {
+                      setShowForgot(true);
+                      setResetSent(false);
+                    }}
+                  >
+                    {t("auth.forgot_password")}
+                  </button>
                 </form>
               </TabsContent>
 
@@ -251,6 +294,36 @@ function AuthPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Dialog
+        open={showForgot}
+        onOpenChange={(open) => {
+          setShowForgot(open);
+          if (!open) setResetSent(false);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("auth.reset_title")}</DialogTitle>
+            <DialogDescription>{t("auth.reset_subtitle")}</DialogDescription>
+          </DialogHeader>
+          {resetSent ? (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">{t("auth.reset_link_sent")}</p>
+              <Button className="w-full" onClick={() => setShowForgot(false)}>
+                {t("auth.back_to_signin")}
+              </Button>
+            </div>
+          ) : (
+            <form className="space-y-3" onSubmit={handleForgotPassword}>
+              <Field id="email-forgot" name="email" label={t("auth.email")} type="email" />
+              <Button className="w-full" disabled={resetLoading}>
+                {resetLoading ? t("auth.sending") : t("auth.send_reset_link")}
+              </Button>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

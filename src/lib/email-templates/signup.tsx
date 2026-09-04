@@ -7,7 +7,6 @@ import {
   Head,
   Heading,
   Html,
-  Link,
   Preview,
   Text,
 } from "@react-email/components";
@@ -19,37 +18,26 @@ interface SignupEmailProps {
   confirmationUrl: string;
 }
 
-export const SignupEmail = ({
-  siteName,
-  siteUrl,
-  recipient,
-  confirmationUrl,
-}: SignupEmailProps) => (
-  <Html lang="en" dir="ltr">
+export const SignupEmail = ({ siteName, recipient, confirmationUrl }: SignupEmailProps) => (
+  <Html lang="es" dir="ltr">
     <Head />
-    <Preview>Confirm your email for {siteName}</Preview>
+    <Preview>¡Bienvenido a {siteName}! Confirma tu correo para empezar</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Confirm your email</Heading>
+        <Heading style={h1}>¡Bienvenido a {siteName}! 🎉</Heading>
         <Text style={text}>
-          Thanks for signing up for{" "}
-          <Link href={siteUrl} style={link}>
-            <strong>{siteName}</strong>
-          </Link>
-          !
+          Gracias por crear tu cuenta con <strong>{recipient}</strong>. Estás a un paso de poder
+          enviar dinero, pagar recargas y mucho más de forma rápida y segura.
         </Text>
-        <Text style={text}>
-          Please confirm your email address (
-          <Link href={`mailto:${recipient}`} style={link}>
-            {recipient}
-          </Link>
-          ) by clicking the button below:
-        </Text>
+        <Text style={text}>Confirma tu correo electrónico para activar tu cuenta:</Text>
         <Button style={button} href={confirmationUrl}>
-          Verify Email
+          Confirmar mi correo
         </Button>
+        <Text style={text}>
+          Una vez confirmado, podrás iniciar sesión y comenzar a usar {siteName} de inmediato.
+        </Text>
         <Text style={footer}>
-          If you didn't create an account, you can safely ignore this email.
+          Si tú no creaste esta cuenta, puedes ignorar este correo con tranquilidad.
         </Text>
       </Container>
     </Body>
@@ -72,7 +60,6 @@ const text = {
   lineHeight: "1.5",
   margin: "0 0 25px",
 };
-const link = { color: "inherit", textDecoration: "underline" };
 const button = {
   backgroundColor: "#0b3a2e",
   color: "#ffffff",
