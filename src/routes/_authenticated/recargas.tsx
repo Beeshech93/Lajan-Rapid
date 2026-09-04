@@ -30,6 +30,7 @@ import type { OxxoVoucher, SpeiReference } from "@/lib/mercadopago.server";
 import { money, paymentMethods, paymentLabel, shortDate } from "@/lib/remesa";
 import { TOPUP_COUNTRIES, findTopupCountry, prettyOperator } from "@/lib/topup-operators";
 import { validatePhone, formatNational, expectedLengths, normalizeLocal } from "@/lib/phone";
+import { interpolate, useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/recargas")({
   head: () => ({
@@ -52,18 +53,18 @@ export const Route = createFileRoute("/_authenticated/recargas")({
   component: Recargas,
 });
 
-const STATUS_LABEL: Record<string, string> = {
-  pending: "Pendiente",
-  processing: "En proceso",
-  completed: "Completada",
-  failed: "Fallida",
-  refunded: "Devuelta",
-};
-
 function Recargas() {
   const qc = useQueryClient();
   const refreshWallet = useRefreshWallet();
   const { profile } = useProfile();
+  const { t } = useI18n();
+  const STATUS_LABEL: Record<string, string> = {
+    pending: t("topup.status_pending"),
+    processing: t("topup.status_processing"),
+    completed: t("topup.status_completed"),
+    failed: t("topup.status_failed"),
+    refunded: t("topup.status_refunded"),
+  };
   const { data: wallets } = useWallets();
   const { data: countries } = useCountries();
   const listProducts = useServerFn(dingListProducts);
@@ -175,10 +176,21 @@ function Recargas() {
     phone.trim() === "" || phoneCheck.ok
       ? null
       : phoneCheck.error === "short"
-        ? `Faltan dígitos: ${countryInfo?.label ?? country} usa ${lengths.join(" o ")} dígitos (llevas ${phoneDigits.length}).`
+        ? interpolate(t("topup.phone_short"), {
+            country: countryInfo?.label ?? country,
+            digits: lengths.join(" o "),
+            have: phoneDigits.length,
+          })
         : phoneCheck.error === "long"
-          ? `Sobran dígitos: ${countryInfo?.label ?? country} usa ${lengths.join(" o ")} dígitos (llevas ${phoneDigits.length}).`
-          : `Número inválido para ${countryInfo?.label ?? country}. Debe tener ${lengths.join(" o ")} dígitos.`;
+          ? interpolate(t("topup.phone_long"), {
+              country: countryInfo?.label ?? country,
+              digits: lengths.join(" o "),
+              have: phoneDigits.length,
+            })
+          : interpolate(t("topup.phone_invalid"), {
+              country: countryInfo?.label ?? country,
+              digits: lengths.join(" o "),
+            });
 
   // Operadores del país: del catálogo del proveedor si hay, si no del catálogo local.
   const operators = useMemo(() => {
@@ -227,26 +239,29 @@ function Recargas() {
 
   const sendMut = useMutation({
     mutationFn: async () => {
-      if (profile?.kyc_status !== "approved")
-        throw new Error("Debes verificar tu identidad (KYC) antes de recargar");
-      if (!operator) throw new Error("Elige el operador");
-      if (!sku && plans.length > 0) throw new Error("Elige el plan del operador");
-      if (!phone.trim()) throw new Error("Escribe el número a recargar");
+      if (profile?.kyc_status !== "approved") throw new Error(t("topup.err_kyc"));
+      if (!operator) throw new Error(t("topup.err_operator"));
+      if (!sku && plans.length > 0) throw new Error(t("topup.err_plan"));
+      if (!phone.trim()) throw new Error(t("topup.err_phone_empty"));
       if (!phoneCheck.ok || !phoneCheck.e164)
-        throw new Error(phoneError ?? "Número de teléfono inválido");
+        throw new Error(phoneError ?? t("topup.err_phone_invalid"));
       const value = Number(amount);
-      if (!Number.isFinite(value) || value <= 0) throw new Error("Monto inválido");
+      if (!Number.isFinite(value) || value <= 0) throw new Error(t("topup.err_amount"));
       if (missingRate)
         throw new Error(
-          `No hay una tasa configurada de ${payCurrency} a ${operatorCurrency}. Pídele a un administrador que la agregue en /admin.`,
+          interpolate(t("topup.err_no_rate"), { from: payCurrency, to: operatorCurrency }),
         );
-      if (receivedAmount == null) throw new Error("No se pudo calcular el monto a recibir");
+      if (receivedAmount == null) throw new Error(t("topup.err_no_received"));
       if (
         selected?.minValue != null &&
         (receivedAmount < Number(selected.minValue) || receivedAmount > Number(selected.maxValue))
       )
         throw new Error(
-          `El destinatario debe recibir entre ${selected.minValue} y ${selected.maxValue} ${selected.currency}`,
+          interpolate(t("topup.err_range"), {
+            min: selected.minValue,
+            max: selected.maxValue ?? selected.minValue,
+            currency: selected.currency,
+          }),
         );
 
       if (payMethod === "wallet") {
@@ -287,7 +302,7 @@ function Recargas() {
     },
     onSuccess: (r) => {
       if (r.kind === "wallet") {
-        toast.success(`Recarga enviada · ${r.result.reference}`);
+        toast.success(interpolate(t("topup.success_sent"), { reference: r.result.reference }));
         celebrateLogo();
         setPhone("");
         setAmount("");
@@ -314,15 +329,13 @@ function Recargas() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-5">
-      <h1 className="text-2xl font-bold">Recargas de saldo móvil</h1>
+      <h1 className="text-2xl font-bold">{t("topup.title")}</h1>
 
       {profile?.kyc_status !== "approved" && (
         <p className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">
-          {profile?.kyc_status === "pending"
-            ? "Tu verificación de identidad (KYC) está en revisión. No podrás recargar hasta que se apruebe."
-            : "Necesitas verificar tu identidad (KYC) antes de poder recargar."}{" "}
+          {profile?.kyc_status === "pending" ? t("topup.kyc_pending") : t("topup.kyc_none")}{" "}
           <Link to="/perfil" className="font-semibold underline">
-            {profile?.kyc_status === "pending" ? "Ver estado" : "Verificar ahora"}
+            {profile?.kyc_status === "pending" ? t("send.kyc_view") : t("send.kyc_verify")}
           </Link>
         </p>
       )}
@@ -330,12 +343,12 @@ function Recargas() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Smartphone className="size-4" /> Enviar recarga
+            <Smartphone className="size-4" /> {t("topup.send_recharge")}
           </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label>País desde donde pagas</Label>
+            <Label>{t("topup.pay_country")}</Label>
             <Select
               value={payOrigin}
               onValueChange={(v) => {
@@ -357,7 +370,7 @@ function Recargas() {
           </div>
 
           <div className="space-y-1.5">
-            <Label>Método de pago</Label>
+            <Label>{t("topup.pay_method")}</Label>
             <Select value={payMethod} onValueChange={setPayMethod}>
               <SelectTrigger>
                 <SelectValue />
@@ -365,7 +378,7 @@ function Recargas() {
               <SelectContent>
                 {payMethods.map((m) => (
                   <SelectItem key={m.value} value={m.value}>
-                    {m.value === "wallet" ? m.label : paymentLabel(m.value)}
+                    {m.value === "wallet" ? t("topup.wallet_balance") : paymentLabel(m.value)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -373,7 +386,7 @@ function Recargas() {
           </div>
 
           <div className="space-y-1.5">
-            <Label>País del número</Label>
+            <Label>{t("topup.number_country")}</Label>
             <Select
               value={country}
               onValueChange={(v) => {
@@ -396,7 +409,9 @@ function Recargas() {
           </div>
 
           <div className="space-y-1.5">
-            <Label>Operador de {countryInfo?.label ?? country}</Label>
+            <Label>
+              {t("topup.operator_of")} {countryInfo?.label ?? country}
+            </Label>
             <Select
               value={operator}
               onValueChange={(v) => {
@@ -406,7 +421,9 @@ function Recargas() {
             >
               <SelectTrigger>
                 <SelectValue
-                  placeholder={isFetching ? "Cargando operadores..." : "Elige el operador"}
+                  placeholder={
+                    isFetching ? t("topup.loading_operators") : t("topup.choose_operator")
+                  }
                 />
               </SelectTrigger>
               <SelectContent>
@@ -418,24 +435,21 @@ function Recargas() {
               </SelectContent>
             </Select>
             {products && !products.ok && (
-              <p className="text-xs text-muted-foreground">
-                Mostrando los operadores habituales de este país. Un administrador debe configurar
-                DingConnect para ver los planes exactos.
-              </p>
+              <p className="text-xs text-muted-foreground">{t("topup.provider_fallback_note")}</p>
             )}
           </div>
 
           <div className="space-y-1.5">
-            <Label>Plan</Label>
+            <Label>{t("topup.plan")}</Label>
             <Select value={sku} onValueChange={setSku} disabled={plans.length === 0}>
               <SelectTrigger>
                 <SelectValue
                   placeholder={
                     !operator
-                      ? "Elige primero el operador"
+                      ? t("topup.choose_operator_first")
                       : plans.length === 0
-                        ? "Monto libre"
-                        : "Elige el plan"
+                        ? t("topup.free_amount")
+                        : t("topup.choose_plan")
                   }
                 />
               </SelectTrigger>
@@ -450,7 +464,7 @@ function Recargas() {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="tu-phone">Número a recargar</Label>
+            <Label htmlFor="tu-phone">{t("topup.number_to_recharge")}</Label>
             <div className="flex items-center gap-2">
               <span className="rounded-md border bg-muted px-2.5 py-2 text-sm text-muted-foreground">
                 {dial}
@@ -469,16 +483,23 @@ function Recargas() {
             {phoneError ? (
               <p className="text-xs text-destructive">{phoneError}</p>
             ) : phoneCheck.ok ? (
-              <p className="text-xs text-muted-foreground">Se enviará a {phoneCheck.e164}</p>
+              <p className="text-xs text-muted-foreground">
+                {t("topup.will_send_to")} {phoneCheck.e164}
+              </p>
             ) : lengths.length ? (
               <p className="text-xs text-muted-foreground">
-                {lengths.join(" o ")} dígitos para {countryInfo?.label ?? country}
+                {interpolate(t("topup.digits_for"), {
+                  n: lengths.join(" o "),
+                  country: countryInfo?.label ?? country,
+                })}
               </p>
             ) : null}
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="tu-amount">Monto a pagar {payCurrency ? `(${payCurrency})` : ""}</Label>
+            <Label htmlFor="tu-amount">
+              {t("topup.amount_to_pay")} {payCurrency ? `(${payCurrency})` : ""}
+            </Label>
             <Input
               id="tu-amount"
               inputMode="decimal"
@@ -488,18 +509,21 @@ function Recargas() {
             />
             {hasAmount && receivedAmount != null && (
               <p className="text-sm font-medium text-accent">
-                El destinatario recibe: {receivedAmount} {receivedCurrency}
+                {t("topup.recipient_gets")}: {receivedAmount} {receivedCurrency}
               </p>
             )}
             {missingRate && (
               <p className="text-xs text-destructive">
-                No hay tasa configurada de {payCurrency} a {operatorCurrency}. Avisa a un
-                administrador.
+                {interpolate(t("topup.no_rate_configured"), {
+                  from: payCurrency,
+                  to: operatorCurrency,
+                })}
               </p>
             )}
             {selected?.minValue != null && (
               <p className="text-xs text-muted-foreground">
-                Rango del operador: {selected.minValue} – {selected.maxValue} {selected.currency}
+                {t("topup.operator_range")}: {selected.minValue} – {selected.maxValue}{" "}
+                {selected.currency}
               </p>
             )}
           </div>
@@ -517,19 +541,17 @@ function Recargas() {
             >
               <Send className="mr-2 size-4" />
               {sendMut.isPending
-                ? "Enviando..."
+                ? t("topup.sending")
                 : payMethod === "wallet"
-                  ? "Enviar recarga"
+                  ? t("topup.send_recharge")
                   : payMethod === "oxxo"
-                    ? "Generar ficha OXXO"
+                    ? t("topup.generate_oxxo")
                     : payMethod === "spei"
-                      ? "Generar CLABE SPEI"
-                      : "Pagar con tarjeta"}
+                      ? t("topup.generate_spei")
+                      : t("topup.pay_card")}
             </Button>
             <p className="mt-2 text-xs text-muted-foreground">
-              {payMethod === "wallet"
-                ? "El monto se descuenta de tu billetera. Si el operador rechaza la recarga, el saldo se devuelve automáticamente y recibes una notificación."
-                : "Se te pedirá completar el pago; la recarga se envía automáticamente en cuanto se confirme."}
+              {payMethod === "wallet" ? t("topup.wallet_note") : t("topup.external_note")}
             </p>
           </div>
         </CardContent>
@@ -538,16 +560,13 @@ function Recargas() {
       {pendingResult?.mode === "checkout" && (
         <Card className="border-accent/40">
           <CardHeader>
-            <CardTitle className="text-base">Completa tu pago</CardTitle>
+            <CardTitle className="text-base">{t("topup.complete_payment")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              Toca el botón para ir al checkout seguro. La recarga se envía automáticamente en
-              cuanto se confirme el pago.
-            </p>
+            <p className="text-sm text-muted-foreground">{t("topup.go_pay_desc")}</p>
             <Button asChild className="w-full">
               <a href={pendingResult.checkoutUrl} target="_blank" rel="noreferrer">
-                Ir a pagar
+                {t("topup.go_pay")}
               </a>
             </Button>
           </CardContent>
@@ -557,12 +576,12 @@ function Recargas() {
       {pendingResult?.mode === "voucher" && (
         <Card className="border-accent/40">
           <CardHeader>
-            <CardTitle className="text-base">Ficha de pago en OXXO</CardTitle>
+            <CardTitle className="text-base">{t("topup.oxxo_voucher_title")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="rounded-xl bg-secondary p-4">
               <p className="text-xs font-semibold uppercase text-muted-foreground">
-                Referencia OXXO
+                {t("topup.oxxo_reference")}
               </p>
               <p className="mt-1 break-all font-display text-2xl font-bold tracking-wider">
                 {pendingResult.voucher.reference}
@@ -575,23 +594,20 @@ function Recargas() {
                 className="gap-2"
                 onClick={() => {
                   void navigator.clipboard.writeText(pendingResult.voucher.reference);
-                  toast.success("Referencia copiada");
+                  toast.success(t("topup.reference_copied"));
                 }}
               >
-                <Copy className="size-4" /> Copiar referencia
+                <Copy className="size-4" /> {t("topup.copy_reference")}
               </Button>
               {pendingResult.voucher.voucherUrl && (
                 <Button size="sm" className="gap-2" asChild>
                   <a href={pendingResult.voucher.voucherUrl} target="_blank" rel="noreferrer">
-                    Ver comprobante
+                    {t("topup.view_receipt")}
                   </a>
                 </Button>
               )}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Muestra esta referencia en cualquier tienda OXXO. La recarga se envía automáticamente
-              en cuanto se confirme el pago.
-            </p>
+            <p className="text-xs text-muted-foreground">{t("topup.oxxo_note")}</p>
           </CardContent>
         </Card>
       )}
@@ -599,11 +615,13 @@ function Recargas() {
       {pendingResult?.mode === "spei" && (
         <Card className="border-accent/40">
           <CardHeader>
-            <CardTitle className="text-base">Transferencia SPEI</CardTitle>
+            <CardTitle className="text-base">{t("topup.spei_title")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="rounded-xl bg-secondary p-4">
-              <p className="text-xs font-semibold uppercase text-muted-foreground">CLABE</p>
+              <p className="text-xs font-semibold uppercase text-muted-foreground">
+                {t("topup.clabe")}
+              </p>
               <p className="mt-1 break-all font-display text-2xl font-bold tracking-wider">
                 {pendingResult.spei.clabe}
               </p>
@@ -614,47 +632,44 @@ function Recargas() {
               className="gap-2"
               onClick={() => {
                 void navigator.clipboard.writeText(pendingResult.spei.clabe);
-                toast.success("CLABE copiada");
+                toast.success(t("topup.clabe_copied"));
               }}
             >
-              <Copy className="size-4" /> Copiar CLABE
+              <Copy className="size-4" /> {t("topup.copy_clabe")}
             </Button>
-            <p className="text-xs text-muted-foreground">
-              Transfiere desde tu banco a esta CLABE. La recarga se envía automáticamente en cuanto
-              se confirme el pago.
-            </p>
+            <p className="text-xs text-muted-foreground">{t("topup.spei_note")}</p>
           </CardContent>
         </Card>
       )}
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Historial de recargas</CardTitle>
+          <CardTitle className="text-base">{t("topup.history_title")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
           {(topups ?? []).length === 0 && (
-            <p className="py-4 text-sm text-muted-foreground">Todavía no hiciste recargas.</p>
+            <p className="py-4 text-sm text-muted-foreground">{t("topup.no_history")}</p>
           )}
-          {(topups ?? []).map((t) => (
+          {(topups ?? []).map((t2) => (
             <div
-              key={t.id}
+              key={t2.id}
               className="flex items-center justify-between rounded-lg border p-3 text-sm"
             >
               <div>
                 <p className="font-medium">
-                  {t.operator || t.sku_code} · {t.phone}
+                  {t2.operator || t2.sku_code} · {t2.phone}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {t.reference} · {shortDate(t.created_at)}
+                  {t2.reference} · {shortDate(t2.created_at)}
                 </p>
               </div>
               <div className="flex items-center gap-3">
                 <div className="text-right">
-                  <p className="font-semibold">{money(Number(t.amount), t.currency)}</p>
-                  <p className="text-[11px] text-muted-foreground">recibido</p>
+                  <p className="font-semibold">{money(Number(t2.amount), t2.currency)}</p>
+                  <p className="text-[11px] text-muted-foreground">{t("topup.received")}</p>
                 </div>
-                <Badge variant={t.status === "completed" ? "default" : "secondary"}>
-                  {STATUS_LABEL[t.status] ?? t.status}
+                <Badge variant={t2.status === "completed" ? "default" : "secondary"}>
+                  {STATUS_LABEL[t2.status] ?? t2.status}
                 </Badge>
               </div>
             </div>
