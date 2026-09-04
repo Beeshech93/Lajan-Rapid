@@ -144,8 +144,8 @@ function AuthPage() {
         <div className="mb-4 flex justify-end">
           <LanguageSwitcher className="h-9 w-[150px] border-white/20 bg-white/10 text-xs text-primary-foreground" />
         </div>
-        <div className="mb-6 text-center text-primary-foreground">
-          <span className="mx-auto grid size-14 place-items-center overflow-hidden rounded-2xl bg-primary-foreground p-1.5">
+        <div className="mb-6 text-center text-foreground">
+          <span className="mx-auto grid size-14 place-items-center overflow-hidden rounded-2xl bg-logo-surface p-1.5 shadow-soft">
             <img src={logoAsset.url} alt="Lajan Rapid" className="h-full w-full object-contain" />
           </span>
           <h1 className="mt-3 font-display text-2xl font-bold">Lajan Rapid</h1>

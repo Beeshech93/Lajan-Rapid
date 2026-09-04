@@ -52,6 +52,7 @@
   --color-surface: var(--surface);
   --color-surface-secondary: var(--surface-secondary);
   --color-surface-elevated: var(--surface-elevated);
+  --color-logo-surface: var(--logo-surface);
   --color-border-strong: var(--border-strong);
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
@@ -87,6 +88,7 @@
   --surface: oklch(0.21 0.05 262);            /* cards, formularios, sheets */
   --surface-secondary: oklch(0.27 0.055 262); /* listas, chips, fills */
   --surface-elevated: oklch(0.24 0.055 262);  /* modales y popovers sobre cards */
+  --logo-surface: oklch(0.99 0 0);             /* fondo claro para el logo */
 
   --text-primary: oklch(0.97 0.005 260);      /* blanco: títulos, montos */
   --text-secondary: oklch(0.82 0.02 260);     /* descripciones */
@@ -229,4 +231,53 @@
     opacity: 1;
     transform: none;
   }
+}
+
+/* ---- Animaciones del logo (entrada a la app y fin de transacción) ---- */
+@keyframes logo-pop {
+  0% { opacity: 0; transform: scale(0.6) translateY(14px); }
+  55% { opacity: 1; transform: scale(1.08) translateY(0); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes logo-veil-out {
+  to { opacity: 0; visibility: hidden; }
+}
+@keyframes logo-shine {
+  0% { transform: scaleX(0); opacity: 0; }
+  60% { transform: scaleX(1); opacity: 1; }
+  100% { transform: scaleX(1); opacity: 0.3; }
+}
+@keyframes logo-celebrate {
+  0% { opacity: 0; transform: scale(0.7) rotate(-6deg); }
+  40% { opacity: 1; transform: scale(1.12) rotate(3deg); }
+  70% { transform: scale(0.98) rotate(0deg); }
+  100% { opacity: 0; transform: scale(1.04); }
+}
+@keyframes logo-ring {
+  0% { opacity: 0.7; transform: scale(0.6); }
+  100% { opacity: 0; transform: scale(1.6); }
+}
+
+@utility logo-pop {
+  animation: logo-pop 700ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+@utility logo-veil-out {
+  animation: logo-veil-out 520ms ease forwards;
+}
+@utility logo-shine {
+  transform-origin: left;
+  animation: logo-shine 900ms 240ms ease-out both;
+}
+@utility logo-celebrate {
+  animation: logo-celebrate 1500ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+@utility logo-ring {
+  animation: logo-ring 1200ms ease-out both;
+}
+@utility logo-ring-delay {
+  animation-delay: 320ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo-pop, .logo-celebrate, .logo-ring, .logo-shine { animation-duration: 1ms; }
 }
