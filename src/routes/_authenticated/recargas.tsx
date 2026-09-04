@@ -644,7 +644,10 @@ function Recargas() {
                 </p>
               </div>
               <div className="flex items-center gap-3">
-                <span className="font-semibold">{money(Number(t.amount), t.currency)}</span>
+                <div className="text-right">
+                  <p className="font-semibold">{money(Number(t.amount), t.currency)}</p>
+                  <p className="text-[11px] text-muted-foreground">recibido</p>
+                </div>
                 <Badge variant={t.status === "completed" ? "default" : "secondary"}>
                   {STATUS_LABEL[t.status] ?? t.status}
                 </Badge>

@@ -421,6 +421,10 @@ function RatesPanel() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Tarifas por corredor</CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Estas mismas tasas se usan para calcular cuánto recibe el destinatario en los envíos de
+            dinero y en las recargas de saldo móvil.
+          </p>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
