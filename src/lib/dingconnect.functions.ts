@@ -34,12 +34,15 @@ export const dingSendTopup = createServerFn({ method: "POST" })
       _country_code: data.countryCode ?? "",
       _phone: data.phone,
       _amount: data.amount,
+      _topup_amount: data.topupAmount ?? null,
+      _topup_currency: data.topupCurrency ?? null,
     });
     if (error || !topup) throw new Error(error?.message ?? "No se pudo crear la recarga");
 
     const row = topup as unknown as {
       id: string;
       reference: string;
+      amount: number;
       currency: string;
     };
 
@@ -47,8 +50,8 @@ export const dingSendTopup = createServerFn({ method: "POST" })
     try {
       const res = await dingSendTransfer({
         skuCode: data.skuCode,
-        sendValue: data.amount,
-        sendCurrency: row.currency,
+        sendValue: data.topupAmount ?? Number(row.amount),
+        sendCurrency: data.topupCurrency ?? row.currency,
         accountNumber: data.phone,
         distributorRef: row.reference,
       });
@@ -84,8 +87,13 @@ export const dingCreateTopupCheckout = createServerFn({ method: "POST" })
       operator?: string;
       countryCode?: string;
       phone: string;
-      amount: number;
-      currency: string;
+      // Monto/moneda que se le cobra al pagador (checkout de Mercado Pago/Stripe).
+      payAmount: number;
+      payCurrency: string;
+      // Monto/moneda real que se envía al operador (DingConnect), calculado con
+      // la tasa manual configurada en /admin.
+      topupAmount: number;
+      topupCurrency: string;
       paymentMethod: string;
       originCountry: string;
     }) => input,
@@ -96,8 +104,8 @@ export const dingCreateTopupCheckout = createServerFn({ method: "POST" })
       _operator: data.operator ?? "",
       _country_code: data.countryCode ?? "",
       _phone: data.phone,
-      _amount: data.amount,
-      _currency: data.currency,
+      _amount: data.topupAmount,
+      _currency: data.topupCurrency,
       _payment_method: data.paymentMethod,
       _origin_country: data.originCountry,
     });
@@ -105,7 +113,7 @@ export const dingCreateTopupCheckout = createServerFn({ method: "POST" })
 
     const topup = row as unknown as { id: string; reference: string; currency: string };
     const email = context.claims?.email as string | undefined;
-    const base = process.env["PUBLIC_URL"] || "https://lajanrapid.app";
+    const base = process.env["PUBLIC_URL"] || "https://lajanrapid-app.lovable.app";
     const description = `Recarga ${data.phone} · ${data.operator ?? ""}`;
 
     const { data: profile } = await context.supabase
@@ -123,7 +131,7 @@ export const dingCreateTopupCheckout = createServerFn({ method: "POST" })
         const { createOxxoVoucher } = await import("@/lib/mercadopago.server");
         const result = await createOxxoVoucher({
           reference: topup.reference,
-          amount: data.amount,
+          amount: data.payAmount,
           description,
           payerEmail: email,
           payerFirstName: firstName,
@@ -138,7 +146,7 @@ export const dingCreateTopupCheckout = createServerFn({ method: "POST" })
         const { createSpeiReference } = await import("@/lib/mercadopago.server");
         const result = await createSpeiReference({
           reference: topup.reference,
-          amount: data.amount,
+          amount: data.payAmount,
           description,
           payerEmail: email,
           payerFirstName: firstName,
@@ -153,8 +161,8 @@ export const dingCreateTopupCheckout = createServerFn({ method: "POST" })
       const result = await createMpPreference({
         transferId: topup.id,
         reference: topup.reference,
-        amount: data.amount,
-        currency: topup.currency,
+        amount: data.payAmount,
+        currency: data.payCurrency,
         description,
         ...(email ? { buyerEmail: email } : {}),
         cardOnly: true,
@@ -178,8 +186,8 @@ export const dingCreateTopupCheckout = createServerFn({ method: "POST" })
     const result = await createStripeCheckoutSession({
       transferId: topup.id,
       reference: topup.reference,
-      amount: data.amount,
-      currency: topup.currency,
+      amount: data.payAmount,
+      currency: data.payCurrency,
       description,
       ...(email ? { buyerEmail: email } : {}),
       successUrl: `${base}/recargas?payment=success`,

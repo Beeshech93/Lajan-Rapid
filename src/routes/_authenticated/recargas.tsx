@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { celebrateLogo } from "@/components/LogoAnimation";
 import { Smartphone, Send, Copy, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useCountries } from "@/hooks/useCorridors";
+import { useCountries, useRate } from "@/hooks/useCorridors";
 import { useProfile } from "@/hooks/useProfile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -200,6 +200,26 @@ function Recargas() {
 
   const selected = (products?.items ?? []).find((p) => p.skuCode === sku);
 
+  // Tasa manual (configurada en /admin) de la moneda de pago a la moneda del
+  // operador, para calcular cuánto recibe realmente el destinatario.
+  const operatorCurrency = selected?.currency || "";
+  const sameCurrency = payCurrency && operatorCurrency && payCurrency === operatorCurrency;
+  const { data: topupRate } = useRate(
+    sameCurrency ? undefined : payCurrency || undefined,
+    sameCurrency ? undefined : operatorCurrency || undefined,
+  );
+  const amountValue = Number(amount);
+  const hasAmount = amount.trim() !== "" && Number.isFinite(amountValue) && amountValue > 0;
+  const receivedAmount = !hasAmount
+    ? null
+    : sameCurrency
+      ? amountValue
+      : topupRate
+        ? Math.round(amountValue * Number(topupRate.rate) * 100) / 100
+        : null;
+  const receivedCurrency = operatorCurrency || payCurrency;
+  const missingRate = Boolean(hasAmount && !sameCurrency && operatorCurrency && !topupRate);
+
   const sendMut = useMutation({
     mutationFn: async () => {
       if (profile?.kyc_status !== "approved")
@@ -211,12 +231,17 @@ function Recargas() {
         throw new Error(phoneError ?? "Número de teléfono inválido");
       const value = Number(amount);
       if (!Number.isFinite(value) || value <= 0) throw new Error("Monto inválido");
+      if (missingRate)
+        throw new Error(
+          `No hay una tasa configurada de ${payCurrency} a ${operatorCurrency}. Pídele a un administrador que la agregue en /admin.`,
+        );
+      if (receivedAmount == null) throw new Error("No se pudo calcular el monto a recibir");
       if (
         selected?.minValue != null &&
-        (value < Number(selected.minValue) || value > Number(selected.maxValue))
+        (receivedAmount < Number(selected.minValue) || receivedAmount > Number(selected.maxValue))
       )
         throw new Error(
-          `El monto debe estar entre ${selected.minValue} y ${selected.maxValue} ${selected.currency}`,
+          `El destinatario debe recibir entre ${selected.minValue} y ${selected.maxValue} ${selected.currency}`,
         );
 
       if (payMethod === "wallet") {
@@ -230,6 +255,8 @@ function Recargas() {
               countryCode: country,
               phone: phoneCheck.e164,
               amount: value,
+              topupAmount: receivedAmount,
+              topupCurrency: receivedCurrency,
             },
           }),
         };
@@ -243,8 +270,10 @@ function Recargas() {
             operator,
             countryCode: country,
             phone: phoneCheck.e164,
-            amount: value,
-            currency: payCurrency || "USD",
+            payAmount: value,
+            payCurrency: payCurrency || "USD",
+            topupAmount: receivedAmount,
+            topupCurrency: receivedCurrency,
             paymentMethod: payMethod,
             originCountry: payOrigin,
           },
@@ -444,7 +473,7 @@ function Recargas() {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="tu-amount">Monto {payCurrency ? `(${payCurrency})` : ""}</Label>
+            <Label htmlFor="tu-amount">Monto a pagar {payCurrency ? `(${payCurrency})` : ""}</Label>
             <Input
               id="tu-amount"
               inputMode="decimal"
@@ -452,6 +481,17 @@ function Recargas() {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
             />
+            {hasAmount && receivedAmount != null && (
+              <p className="text-sm font-medium text-accent">
+                El destinatario recibe: {receivedAmount} {receivedCurrency}
+              </p>
+            )}
+            {missingRate && (
+              <p className="text-xs text-destructive">
+                No hay tasa configurada de {payCurrency} a {operatorCurrency}. Avisa a un
+                administrador.
+              </p>
+            )}
             {selected?.minValue != null && (
               <p className="text-xs text-muted-foreground">
                 Rango del operador: {selected.minValue} – {selected.maxValue} {selected.currency}
@@ -462,7 +502,12 @@ function Recargas() {
           <div className="sm:col-span-2">
             <Button
               className="w-full"
-              disabled={sendMut.isPending || !phoneCheck.ok || profile?.kyc_status !== "approved"}
+              disabled={
+                sendMut.isPending ||
+                !phoneCheck.ok ||
+                profile?.kyc_status !== "approved" ||
+                missingRate
+              }
               onClick={() => sendMut.mutate()}
             >
               <Send className="mr-2 size-4" />

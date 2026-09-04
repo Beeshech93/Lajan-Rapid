@@ -18,6 +18,11 @@ export const dingTopupSchema = z.object({
   countryCode: z.string().trim().max(4).default(""),
   phone: z.string().trim().min(6).max(24),
   amount: z.number().positive().max(100000),
+  // Monto/moneda real que se envía al operador (puede diferir de la moneda de
+  // la billetera si el pagador convierte con una tasa manual). Si no se pasan,
+  // se usa el monto/moneda de la billetera como antes.
+  topupAmount: z.number().positive().max(1000000).optional(),
+  topupCurrency: z.string().trim().max(6).optional(),
 });
 
 export type DingTopupInput = z.input<typeof dingTopupSchema>;
