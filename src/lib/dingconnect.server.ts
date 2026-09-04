@@ -73,11 +73,24 @@ async function dingFetch(path: string, init?: RequestInit) {
     console.error(`DingConnect ${path} falló [${res.status}]: ${text}`);
     throw new Error(`DingConnect [${res.status}]: ${text.slice(0, 300)}`);
   }
+  let parsed: unknown;
   try {
-    return JSON.parse(text) as unknown;
+    parsed = JSON.parse(text) as unknown;
   } catch {
     return {} as unknown;
   }
+
+  // DingConnect devuelve HTTP 200 incluso cuando la operación falla
+  // lógicamente (saldo insuficiente, SKU inválido, etc.); el resultado real
+  // viene en ResultCode/ErrorCodes dentro del cuerpo, no en el status HTTP.
+  const body = parsed as { ResultCode?: number; ErrorCodes?: unknown[] };
+  if (typeof body.ResultCode === "number" && body.ResultCode !== 1) {
+    const codes = Array.isArray(body.ErrorCodes) ? body.ErrorCodes.join(", ") : "desconocido";
+    console.error(`DingConnect ${path}: ResultCode=${body.ResultCode} ErrorCodes=${codes}`);
+    throw new Error(`DingConnect rechazó la operación (código ${body.ResultCode}): ${codes}`);
+  }
+
+  return parsed;
 }
 
 export type DingProduct = {
