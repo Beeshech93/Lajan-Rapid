@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { money, shortDate, STATUS_LABEL, STATUS_TONE, type TransferStatus } from "@/lib/remesa";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -42,6 +43,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function Dashboard() {
   const { profile, user } = useProfile();
+  const { t } = useI18n();
   const { data: countries } = useCountries();
   const [origin, setOrigin] = useState("MX");
   const [destination, setDestination] = useState("HT");
@@ -98,18 +100,16 @@ function Dashboard() {
               <div className="min-w-0">
                 <p className="font-semibold">
                   {profile.kyc_status === "pending"
-                    ? "Verificación en revisión"
+                    ? t("dash.kyc_pending_title")
                     : profile.kyc_status === "rejected"
-                      ? "Verificación rechazada"
-                      : "Verifica tu identidad"}
+                      ? t("dash.kyc_rejected_title")
+                      : t("dash.kyc_none_title")}
                 </p>
-                <p className="text-sm text-muted-foreground">
-                  Necesitas KYC aprobado para que tus envíos se procesen.
-                </p>
+                <p className="text-sm text-muted-foreground">{t("dash.kyc_desc")}</p>
               </div>
             </div>
             <Button asChild size="sm" variant="secondary" className="press">
-              <Link to="/perfil">Ir a verificación</Link>
+              <Link to="/perfil">{t("dash.kyc_cta")}</Link>
             </Button>
           </CardContent>
         </Card>
@@ -128,7 +128,8 @@ function Dashboard() {
           <span className="font-display text-lg font-semibold tracking-tight">Lajan Rapid</span>
         </div>
         <p className="relative mt-6 text-sm opacity-70">
-          Saldo disponible · {profile?.full_name?.split(" ")[0] || "bienvenido"}
+          {t("dash.balance_label")} ·{" "}
+          {profile?.full_name?.split(" ")[0] || t("dash.welcome_fallback")}
         </p>
         <div className="relative mt-1 flex items-center justify-center gap-3">
           <p className="font-display text-4xl font-bold tracking-tight">
@@ -137,7 +138,7 @@ function Dashboard() {
           <button
             type="button"
             onClick={() => setHideBalance((v) => !v)}
-            aria-label={hideBalance ? "Mostrar saldo" : "Ocultar saldo"}
+            aria-label={hideBalance ? t("dash.show_balance") : t("dash.hide_balance")}
             className="press grid size-8 place-items-center rounded-full text-primary-foreground/80 hover:bg-primary-foreground/10"
           >
             {hideBalance ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
@@ -149,7 +150,7 @@ function Dashboard() {
             className="press h-11 rounded-full gap-2 bg-primary-foreground text-primary hover:bg-primary-foreground/90"
           >
             <Link to="/enviar">
-              <Send className="size-4" /> Enviar
+              <Send className="size-4" /> {t("dash.send")}
             </Link>
           </Button>
           <Button
@@ -157,7 +158,7 @@ function Dashboard() {
             className="press h-11 rounded-full gap-2 bg-primary-foreground text-primary hover:bg-primary-foreground/90"
           >
             <Link to="/cripto">
-              <Coins className="size-4" /> Recibir
+              <Coins className="size-4" /> {t("dash.receive")}
             </Link>
           </Button>
         </div>
@@ -166,19 +167,19 @@ function Dashboard() {
       {/* Quick actions */}
       <Card className="card-elevated border-transparent">
         <CardHeader className="flex-row items-center justify-between space-y-0">
-          <CardTitle className="text-base">Acciones rápidas</CardTitle>
+          <CardTitle className="text-base">{t("dash.quick_actions")}</CardTitle>
           <Button asChild variant="ghost" size="sm" className="gap-1 text-accent">
             <Link to="/historial">
-              Ver más <ArrowRight className="size-3.5" />
+              {t("dash.see_more")} <ArrowRight className="size-3.5" />
             </Link>
           </Button>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-3 gap-3">
             {[
-              { to: "/enviar", label: "Enviar", icon: Send },
-              { to: "/recargas", label: "Recargas", icon: Smartphone },
-              { to: "/cripto", label: "Cripto", icon: Coins },
+              { to: "/enviar", label: t("dash.send"), icon: Send },
+              { to: "/recargas", label: t("dash.topups"), icon: Smartphone },
+              { to: "/cripto", label: t("dash.crypto"), icon: Coins },
             ].map((a) => (
               <Link
                 key={a.to}
@@ -199,12 +200,12 @@ function Dashboard() {
       <Card className="card-elevated border-transparent">
         <CardContent className="p-5">
           <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            <TrendingUp className="size-4 text-accent" /> Tipo de cambio de hoy
+            <TrendingUp className="size-4 text-accent" /> {t("dash.rate_today")}
           </p>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
             <Select value={origin} onValueChange={setOrigin}>
               <SelectTrigger>
-                <SelectValue placeholder="Desde" />
+                <SelectValue placeholder={t("dash.from")} />
               </SelectTrigger>
               <SelectContent>
                 {origins.map((c) => (
@@ -216,7 +217,7 @@ function Dashboard() {
             </Select>
             <Select value={destination} onValueChange={setDestination}>
               <SelectTrigger>
-                <SelectValue placeholder="Hacia" />
+                <SelectValue placeholder={t("dash.to")} />
               </SelectTrigger>
               <SelectContent>
                 {destinations.map((c) => (
@@ -231,7 +232,7 @@ function Dashboard() {
             1 {sendCur || "—"} = {rate ? Number(rate.rate).toFixed(4) : "—"} {recvCur || "—"}
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Comisión{" "}
+            {t("dash.fee")}{" "}
             {rate
               ? `${Number(rate.fee_percent)}% + ${money(Number(rate.fee_fixed), sendCur)}`
               : "—"}
@@ -241,16 +242,18 @@ function Dashboard() {
 
       <Card className="card-elevated border-transparent">
         <CardHeader className="flex-row items-center justify-between space-y-0">
-          <CardTitle className="text-base">Envíos recientes</CardTitle>
+          <CardTitle className="text-base">{t("dash.recent_transfers")}</CardTitle>
           <Button asChild variant="ghost" size="sm" className="gap-1 text-accent">
             <Link to="/historial">
-              Ver todo <ArrowRight className="size-3.5" />
+              {t("dash.see_all")} <ArrowRight className="size-3.5" />
             </Link>
           </Button>
         </CardHeader>
         <CardContent className="space-y-2">
           {(transfers ?? []).length === 0 && (
-            <p className="py-6 text-center text-sm text-muted-foreground">Aún no tienes envíos.</p>
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              {t("dash.no_transfers")}
+            </p>
           )}
           {(transfers ?? []).map((t) => (
             <Link
@@ -282,12 +285,12 @@ function Dashboard() {
       <Card className="card-elevated border-transparent">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Bell className="size-4 text-accent" /> Avisos
+            <Bell className="size-4 text-accent" /> {t("dash.notices")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
           {(notifs ?? []).length === 0 && (
-            <p className="py-4 text-center text-sm text-muted-foreground">Sin avisos por ahora.</p>
+            <p className="py-4 text-center text-sm text-muted-foreground">{t("dash.no_notices")}</p>
           )}
           {(notifs ?? []).map((n) => (
             <div key={n.id} className="rounded-2xl bg-secondary p-3">
@@ -298,10 +301,7 @@ function Dashboard() {
         </CardContent>
       </Card>
 
-      <p className="pb-2 text-center text-xs text-muted-foreground">
-        Los montos en moneda de destino se calculan con el tipo de cambio vigente al momento del
-        envío.
-      </p>
+      <p className="pb-2 text-center text-xs text-muted-foreground">{t("dash.footer_note")}</p>
     </div>
   );
 }

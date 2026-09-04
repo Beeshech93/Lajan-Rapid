@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { quote, money, paymentMethods, deliveryMethods, citiesFor, ZERO_RATE } from "@/lib/remesa";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/enviar")({
   head: () => ({
@@ -38,18 +39,26 @@ export const Route = createFileRoute("/_authenticated/enviar")({
   component: Enviar,
 });
 
-const schema = z.object({
-  recipient_name: z.string().trim().min(3, "Nombre del destinatario requerido").max(100),
-  recipient_phone: z.string().trim().min(6, "Teléfono requerido").max(25),
-  recipient_city: z.string().trim().min(2, "Ciudad requerida").max(60),
-  amount: z.number().positive("Ingresa un monto válido").max(5_000_000, "Monto demasiado alto"),
-  note: z.string().trim().max(300).optional(),
-});
-
 function Enviar() {
   const router = useRouter();
   const { user, profile } = useProfile();
+  const { t } = useI18n();
   const { data: countries } = useCountries();
+
+  const schema = useMemo(
+    () =>
+      z.object({
+        recipient_name: z.string().trim().min(3, t("send.error_name")).max(100),
+        recipient_phone: z.string().trim().min(6, t("send.error_phone")).max(25),
+        recipient_city: z.string().trim().min(2, t("send.error_city")).max(60),
+        amount: z
+          .number()
+          .positive(t("send.error_amount"))
+          .max(5_000_000, t("send.error_amount_high")),
+        note: z.string().trim().max(300).optional(),
+      }),
+    [t],
+  );
 
   const [origin, setOrigin] = useState("MX");
   const [destination, setDestination] = useState("HT");
@@ -89,7 +98,7 @@ function Enviar() {
     e.preventDefault();
     if (!cfg || !user) return;
     if (profile?.kyc_status !== "approved") {
-      toast.error("Debes verificar tu identidad (KYC) antes de enviar dinero");
+      toast.error(t("send.kyc_none"));
       return;
     }
     const form = new FormData(e.currentTarget);
@@ -101,7 +110,7 @@ function Enviar() {
       note: String(form.get("note") ?? ""),
     });
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? "Revisa los datos");
+      toast.error(parsed.error.issues[0]?.message ?? t("send.error_generic"));
       return;
     }
     setSaving(true);
@@ -125,39 +134,37 @@ function Enviar() {
       .single();
     setSaving(false);
     if (error) {
-      toast.error("No pudimos crear el envío");
+      toast.error(t("send.error_create"));
       return;
     }
-    toast.success("Envío creado. Completa el pago.");
+    toast.success(t("send.success_create"));
     router.navigate({ to: "/transferencia/$id", params: { id: data.id } });
   };
 
   return (
     <form onSubmit={submit} className="mx-auto max-w-3xl space-y-5">
-      <h1 className="text-2xl font-bold">Enviar dinero</h1>
+      <h1 className="text-2xl font-bold">{t("send.title")}</h1>
 
       {profile?.kyc_status !== "approved" && (
         <p className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">
-          {profile?.kyc_status === "pending"
-            ? "Tu verificación de identidad (KYC) está en revisión. No podrás enviar dinero hasta que se apruebe."
-            : "Necesitas verificar tu identidad (KYC) antes de poder enviar dinero."}{" "}
+          {profile?.kyc_status === "pending" ? t("send.kyc_pending") : t("send.kyc_none")}{" "}
           <Link to="/perfil" className="font-semibold underline">
-            {profile?.kyc_status === "pending" ? "Ver estado" : "Verificar ahora"}
+            {profile?.kyc_status === "pending" ? t("send.kyc_view") : t("send.kyc_verify")}
           </Link>
         </p>
       )}
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">1. Corredor y monto</CardTitle>
+          <CardTitle className="text-base">{t("send.step1")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label>Envías desde</Label>
+              <Label>{t("send.from")}</Label>
               <Select value={origin} onValueChange={changeOrigin}>
                 <SelectTrigger>
-                  <SelectValue placeholder="País de origen" />
+                  <SelectValue placeholder={t("send.from_placeholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   {origins.map((c) => (
@@ -169,10 +176,10 @@ function Enviar() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Recibe en</Label>
+              <Label>{t("send.to")}</Label>
               <Select value={destination} onValueChange={changeDestination}>
                 <SelectTrigger>
-                  <SelectValue placeholder="País de destino" />
+                  <SelectValue placeholder={t("send.to_placeholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   {destinations.map((c) => (
@@ -186,7 +193,9 @@ function Enviar() {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="monto">Tú envías ({sendCur || "—"})</Label>
+            <Label htmlFor="monto">
+              {t("send.you_send")} ({sendCur || "—"})
+            </Label>
             <Input
               id="monto"
               inputMode="decimal"
@@ -198,20 +207,22 @@ function Enviar() {
 
           {!cfg && sendCur && recvCur && (
             <p className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">
-              Este corredor aún no tiene tipo de cambio activo. Elige otro país o vuelve más tarde.
+              {t("send.no_rate")}
             </p>
           )}
 
           <div className="space-y-1.5 rounded-xl bg-secondary p-4 text-sm">
             <Line
-              label="Tipo de cambio"
+              label={t("send.rate")}
               value={cfg ? `1 ${sendCur} = ${Number(cfg.rate).toFixed(4)} ${recvCur}` : "—"}
             />
-            <Line label="Comisión" value={money(q.fee, sendCur)} />
-            <Line label="Total a pagar" value={money(q.total, sendCur)} strong />
+            <Line label={t("send.fee")} value={money(q.fee, sendCur)} />
+            <Line label={t("send.total")} value={money(q.total, sendCur)} strong />
           </div>
           <div className="rounded-xl bg-mint p-4">
-            <p className="text-xs font-semibold text-warning-foreground/80">Tu familia recibe</p>
+            <p className="text-xs font-semibold text-warning-foreground/80">
+              {t("send.family_gets")}
+            </p>
             <p className="font-display text-2xl font-bold text-warning-foreground">
               {money(q.receives, recvCur)}
             </p>
@@ -222,23 +233,23 @@ function Enviar() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">
-            2. Destinatario en {destCountry?.name ?? "destino"}
+            {t("send.step2")} {destCountry?.name ?? t("send.step2_fallback")}
           </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label htmlFor="recipient_name">Nombre completo</Label>
+            <Label htmlFor="recipient_name">{t("send.recipient_name")}</Label>
             <Input id="recipient_name" name="recipient_name" required maxLength={100} />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="recipient_phone">Teléfono</Label>
+            <Label htmlFor="recipient_phone">{t("send.recipient_phone")}</Label>
             <Input id="recipient_phone" name="recipient_phone" type="tel" required maxLength={25} />
           </div>
           <div className="space-y-1.5">
-            <Label>Ciudad</Label>
+            <Label>{t("send.city")}</Label>
             <Select value={city} onValueChange={setCity}>
               <SelectTrigger>
-                <SelectValue placeholder="Selecciona ciudad" />
+                <SelectValue placeholder={t("send.city_placeholder")} />
               </SelectTrigger>
               <SelectContent>
                 {cities.map((c) => (
@@ -250,7 +261,7 @@ function Enviar() {
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label>Forma de entrega</Label>
+            <Label>{t("send.delivery")}</Label>
             <Select value={delivery} onValueChange={setDelivery}>
               <SelectTrigger>
                 <SelectValue />
@@ -265,7 +276,7 @@ function Enviar() {
             </Select>
           </div>
           <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="note">Mensaje (opcional)</Label>
+            <Label htmlFor="note">{t("send.note")}</Label>
             <Textarea id="note" name="note" maxLength={300} rows={2} />
           </div>
         </CardContent>
@@ -273,7 +284,7 @@ function Enviar() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">3. Método de pago</CardTitle>
+          <CardTitle className="text-base">{t("send.step3")}</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-2">
           {payments.map((m) => (
@@ -298,7 +309,7 @@ function Enviar() {
         className="w-full"
         disabled={saving || !cfg || profile?.kyc_status !== "approved"}
       >
-        {saving ? "Creando envío…" : `Confirmar envío de ${money(q.total, sendCur)}`}
+        {saving ? t("send.creating") : `${t("send.confirm")} ${money(q.total, sendCur)}`}
       </Button>
     </form>
   );
