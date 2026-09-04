@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { celebrateLogo } from "@/components/LogoAnimation";
 import { ArrowDownToLine, ArrowUpFromLine, Copy, Coins } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -158,6 +159,7 @@ function Cripto() {
       return;
     }
     toast.success("Retiro solicitado");
+    celebrateLogo();
     setWAmount("");
     setWDestination("");
     refreshCrypto();

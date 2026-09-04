@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
+import { celebrateLogo } from "@/components/LogoAnimation";
 import { Smartphone, Send, Copy, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCountries } from "@/hooks/useCorridors";
@@ -204,6 +205,7 @@ function Recargas() {
     onSuccess: (r) => {
       if (r.kind === "wallet") {
         toast.success(`Recarga enviada · ${r.result.reference}`);
+        celebrateLogo();
         setPhone("");
         setAmount("");
         refreshWallet();
