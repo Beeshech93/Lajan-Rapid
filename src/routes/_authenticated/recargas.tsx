@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -74,6 +74,7 @@ function Recargas() {
   const [amount, setAmount] = useState("");
   const [payOrigin, setPayOrigin] = useState("MX");
   const [payMethod, setPayMethod] = useState("wallet");
+  const [payCurrency, setPayCurrency] = useState("");
   const [pendingResult, setPendingResult] = useState<
     | { mode: "voucher"; voucher: OxxoVoucher }
     | { mode: "spei"; spei: SpeiReference }
@@ -93,6 +94,51 @@ function Recargas() {
   // Usar la primera billetera disponible como defecto
   const wallet = useMemo(() => (wallets ?? [])[0], [wallets]);
   const walletId = wallet?.id ?? "";
+
+  // Convierte el monto automáticamente cuando cambia el país o el método de
+  // pago (por lo tanto la moneda con la que se paga), para que la cifra
+  // escrita siga representando el mismo valor real.
+  useEffect(() => {
+    const originInfo = (countries ?? []).find((c) => c.is_origin && c.code === payOrigin);
+    const nextCurrency =
+      payMethod === "wallet" ? (wallet?.currency ?? "") : (originInfo?.currency ?? "");
+    if (!nextCurrency || nextCurrency === payCurrency) return;
+
+    const value = Number(amount);
+    const hasAmount = amount.trim() !== "" && Number.isFinite(value) && value > 0;
+    if (!payCurrency || !hasAmount) {
+      setPayCurrency(nextCurrency);
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("exchange_rates")
+        .select("rate")
+        .eq("is_active", true)
+        .eq("from_currency", payCurrency)
+        .eq("to_currency", nextCurrency)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (cancelled) return;
+      if (data?.rate) {
+        const converted = Math.round(value * Number(data.rate) * 100) / 100;
+        setAmount(String(converted));
+        toast(`Monto convertido a ${nextCurrency}: ${converted}`);
+      } else {
+        setAmount("");
+        toast(`Ahora pagas en ${nextCurrency}: vuelve a escribir el monto`);
+      }
+      setPayCurrency(nextCurrency);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [payOrigin, payMethod, wallet?.currency, countries]);
 
   const { data: products, isFetching } = useQuery({
     queryKey: ["ding_products", country],
@@ -184,7 +230,6 @@ function Recargas() {
         };
       }
 
-      const originInfo = payOrigins.find((c) => c.code === payOrigin);
       return {
         kind: "checkout" as const,
         result: await createCheckout({
@@ -194,7 +239,7 @@ function Recargas() {
             countryCode: country,
             phone: phoneCheck.e164,
             amount: value,
-            currency: originInfo?.currency ?? "USD",
+            currency: payCurrency || "USD",
             paymentMethod: payMethod,
             originCountry: payOrigin,
           },
@@ -382,7 +427,7 @@ function Recargas() {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="tu-amount">Monto {wallet ? `(${wallet.currency})` : ""}</Label>
+            <Label htmlFor="tu-amount">Monto {payCurrency ? `(${payCurrency})` : ""}</Label>
             <Input
               id="tu-amount"
               inputMode="decimal"
