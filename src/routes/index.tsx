@@ -64,7 +64,7 @@ function Landing() {
       <div className="bg-brand text-foreground">
         <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5">
           <div className="flex items-center gap-2.5">
-            <span className="grid size-9 place-items-center overflow-hidden rounded-xl bg-primary-foreground p-1">
+            <span className="grid size-9 place-items-center overflow-hidden rounded-xl bg-logo-surface p-1 shadow-soft">
               <img src={logoAsset.url} alt="Lajan Rapid" className="h-full w-full object-contain" />
             </span>
             <span className="font-display text-lg font-semibold tracking-tight">Lajan Rapid</span>

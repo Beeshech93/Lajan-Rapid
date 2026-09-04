@@ -33,7 +33,7 @@ function PrivacyPage() {
       <header className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur-sm">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-5 py-4">
           <Link to="/" className="flex items-center gap-2.5">
-            <span className="grid size-9 place-items-center overflow-hidden rounded-xl bg-primary p-1">
+            <span className="grid size-9 place-items-center overflow-hidden rounded-xl bg-logo-surface p-1 shadow-soft">
               <img src={logoAsset.url} alt="Lajan Rapid" className="h-full w-full object-contain" />
             </span>
             <span className="font-display text-lg font-semibold tracking-tight text-foreground">
