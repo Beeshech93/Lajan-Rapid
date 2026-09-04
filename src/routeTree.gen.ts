@@ -24,6 +24,7 @@ import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedRecargasRouteImport } from './routes/_authenticated/recargas'
 import { Route as AuthenticatedSoporteRouteImport } from './routes/_authenticated/soporte'
 import { Route as AuthenticatedTransferenciaIdRouteImport } from './routes/_authenticated/transferencia.$id'
+import { Route as ApiPublicAuthWelcomeRouteImport } from './routes/api/public/auth/welcome'
 import { Route as ApiPublicBazikPayoutRouteImport } from './routes/api/public/bazik/payout'
 import { Route as ApiPublicDingconnectWebhookRouteImport } from './routes/api/public/dingconnect/webhook'
 import { Route as ApiPublicMercadopagoWebhookRouteImport } from './routes/api/public/mercadopago/webhook'
@@ -106,6 +107,11 @@ const AuthenticatedTransferenciaIdRoute =
     path: '/transferencia/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicAuthWelcomeRoute = ApiPublicAuthWelcomeRouteImport.update({
+  id: '/api/public/auth/welcome',
+  path: '/api/public/auth/welcome',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicBazikPayoutRoute = ApiPublicBazikPayoutRouteImport.update({
   id: '/api/public/bazik/payout',
   path: '/api/public/bazik/payout',
@@ -154,6 +160,7 @@ export interface FileRoutesByFullPath {
   '/recargas': typeof AuthenticatedRecargasRoute
   '/soporte': typeof AuthenticatedSoporteRoute
   '/transferencia/$id': typeof AuthenticatedTransferenciaIdRoute
+  '/api/public/auth/welcome': typeof ApiPublicAuthWelcomeRoute
   '/api/public/bazik/payout': typeof ApiPublicBazikPayoutRoute
   '/api/public/dingconnect/webhook': typeof ApiPublicDingconnectWebhookRoute
   '/api/public/mercadopago/webhook': typeof ApiPublicMercadopagoWebhookRoute
@@ -176,6 +183,7 @@ export interface FileRoutesByTo {
   '/recargas': typeof AuthenticatedRecargasRoute
   '/soporte': typeof AuthenticatedSoporteRoute
   '/transferencia/$id': typeof AuthenticatedTransferenciaIdRoute
+  '/api/public/auth/welcome': typeof ApiPublicAuthWelcomeRoute
   '/api/public/bazik/payout': typeof ApiPublicBazikPayoutRoute
   '/api/public/dingconnect/webhook': typeof ApiPublicDingconnectWebhookRoute
   '/api/public/mercadopago/webhook': typeof ApiPublicMercadopagoWebhookRoute
@@ -200,6 +208,7 @@ export interface FileRoutesById {
   '/_authenticated/recargas': typeof AuthenticatedRecargasRoute
   '/_authenticated/soporte': typeof AuthenticatedSoporteRoute
   '/_authenticated/transferencia/$id': typeof AuthenticatedTransferenciaIdRoute
+  '/api/public/auth/welcome': typeof ApiPublicAuthWelcomeRoute
   '/api/public/bazik/payout': typeof ApiPublicBazikPayoutRoute
   '/api/public/dingconnect/webhook': typeof ApiPublicDingconnectWebhookRoute
   '/api/public/mercadopago/webhook': typeof ApiPublicMercadopagoWebhookRoute
@@ -224,6 +233,7 @@ export interface FileRouteTypes {
     | '/recargas'
     | '/soporte'
     | '/transferencia/$id'
+    | '/api/public/auth/welcome'
     | '/api/public/bazik/payout'
     | '/api/public/dingconnect/webhook'
     | '/api/public/mercadopago/webhook'
@@ -246,6 +256,7 @@ export interface FileRouteTypes {
     | '/recargas'
     | '/soporte'
     | '/transferencia/$id'
+    | '/api/public/auth/welcome'
     | '/api/public/bazik/payout'
     | '/api/public/dingconnect/webhook'
     | '/api/public/mercadopago/webhook'
@@ -269,6 +280,7 @@ export interface FileRouteTypes {
     | '/_authenticated/recargas'
     | '/_authenticated/soporte'
     | '/_authenticated/transferencia/$id'
+    | '/api/public/auth/welcome'
     | '/api/public/bazik/payout'
     | '/api/public/dingconnect/webhook'
     | '/api/public/mercadopago/webhook'
@@ -283,6 +295,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   PrivacidadRoute: typeof PrivacidadRoute
   RestablecerPasswordRoute: typeof RestablecerPasswordRoute
+  ApiPublicAuthWelcomeRoute: typeof ApiPublicAuthWelcomeRoute
   ApiPublicBazikPayoutRoute: typeof ApiPublicBazikPayoutRoute
   ApiPublicDingconnectWebhookRoute: typeof ApiPublicDingconnectWebhookRoute
   ApiPublicMercadopagoWebhookRoute: typeof ApiPublicMercadopagoWebhookRoute
@@ -398,6 +411,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTransferenciaIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/auth/welcome': {
+      id: '/api/public/auth/welcome'
+      path: '/api/public/auth/welcome'
+      fullPath: '/api/public/auth/welcome'
+      preLoaderRoute: typeof ApiPublicAuthWelcomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/bazik/payout': {
       id: '/api/public/bazik/payout'
       path: '/api/public/bazik/payout'
@@ -478,6 +498,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   PrivacidadRoute: PrivacidadRoute,
   RestablecerPasswordRoute: RestablecerPasswordRoute,
+  ApiPublicAuthWelcomeRoute: ApiPublicAuthWelcomeRoute,
   ApiPublicBazikPayoutRoute: ApiPublicBazikPayoutRoute,
   ApiPublicDingconnectWebhookRoute: ApiPublicDingconnectWebhookRoute,
   ApiPublicMercadopagoWebhookRoute: ApiPublicMercadopagoWebhookRoute,
