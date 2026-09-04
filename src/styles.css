@@ -52,6 +52,7 @@
   --color-surface: var(--surface);
   --color-surface-secondary: var(--surface-secondary);
   --color-surface-elevated: var(--surface-elevated);
+  --color-logo-surface: var(--logo-surface);
   --color-border-strong: var(--border-strong);
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
@@ -87,6 +88,7 @@
   --surface: oklch(0.21 0.05 262);            /* cards, formularios, sheets */
   --surface-secondary: oklch(0.27 0.055 262); /* listas, chips, fills */
   --surface-elevated: oklch(0.24 0.055 262);  /* modales y popovers sobre cards */
+  --logo-surface: oklch(0.99 0 0);             /* fondo claro para el logo */
 
   --text-primary: oklch(0.97 0.005 260);      /* blanco: títulos, montos */
   --text-secondary: oklch(0.82 0.02 260);     /* descripciones */
