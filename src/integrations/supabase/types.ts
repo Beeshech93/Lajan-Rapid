@@ -351,7 +351,9 @@ export type Database = {
           address: string | null;
           birth_date: string | null;
           created_at: string;
+          document_back_path: string | null;
           document_number: string;
+          document_photo_path: string | null;
           document_type: string;
           id: string;
           review_notes: string | null;
@@ -364,7 +366,9 @@ export type Database = {
           address?: string | null;
           birth_date?: string | null;
           created_at?: string;
+          document_back_path?: string | null;
           document_number: string;
+          document_photo_path?: string | null;
           document_type: string;
           id?: string;
           review_notes?: string | null;
@@ -377,7 +381,9 @@ export type Database = {
           address?: string | null;
           birth_date?: string | null;
           created_at?: string;
+          document_back_path?: string | null;
           document_number?: string;
+          document_photo_path?: string | null;
           document_type?: string;
           id?: string;
           review_notes?: string | null;

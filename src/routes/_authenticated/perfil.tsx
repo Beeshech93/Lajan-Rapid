@@ -49,6 +49,8 @@ function Perfil() {
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingKyc, setSavingKyc] = useState(false);
   const [docType, setDocType] = useState("ine");
+  const [frontFile, setFrontFile] = useState<File | null>(null);
+  const [backFile, setBackFile] = useState<File | null>(null);
 
   const { data: submission } = useQuery({
     queryKey: ["kyc", user?.id],
@@ -100,22 +102,53 @@ function Perfil() {
       toast.error(parsed.error.issues[0]!.message);
       return;
     }
-    setSavingKyc(true);
-    const { error } = await supabase.from("kyc_submissions").insert({
-      user_id: user!.id,
-      ...parsed.data,
-      status: "pending",
-    });
-    if (!error)
-      await supabase.from("profiles").update({ kyc_status: "pending" }).eq("id", user!.id);
-    setSavingKyc(false);
-    if (error) {
-      toast.error("No se pudo enviar la verificación");
+    if (!frontFile) {
+      toast.error("Sube una foto del frente de tu documento");
       return;
     }
-    toast.success("Verificación enviada. Te avisaremos al aprobarla.");
-    qc.invalidateQueries({ queryKey: ["kyc", user?.id] });
-    void reload();
+    if (frontFile.size > 8 * 1024 * 1024 || (backFile && backFile.size > 8 * 1024 * 1024)) {
+      toast.error("Cada foto debe pesar menos de 8 MB");
+      return;
+    }
+
+    setSavingKyc(true);
+    try {
+      const stamp = Date.now();
+      const frontPath = `${user!.id}/${stamp}-frente.${frontFile.name.split(".").pop() ?? "jpg"}`;
+      const { error: uploadFrontError } = await supabase.storage
+        .from("kyc-documents")
+        .upload(frontPath, frontFile);
+      if (uploadFrontError) throw uploadFrontError;
+
+      let backPath: string | null = null;
+      if (backFile) {
+        backPath = `${user!.id}/${stamp}-reverso.${backFile.name.split(".").pop() ?? "jpg"}`;
+        const { error: uploadBackError } = await supabase.storage
+          .from("kyc-documents")
+          .upload(backPath, backFile);
+        if (uploadBackError) throw uploadBackError;
+      }
+
+      const { error } = await supabase.from("kyc_submissions").insert({
+        user_id: user!.id,
+        ...parsed.data,
+        status: "pending",
+        document_photo_path: frontPath,
+        document_back_path: backPath,
+      });
+      if (error) throw error;
+
+      await supabase.from("profiles").update({ kyc_status: "pending" }).eq("id", user!.id);
+      toast.success("Verificación enviada. Te avisaremos al aprobarla.");
+      setFrontFile(null);
+      setBackFile(null);
+      qc.invalidateQueries({ queryKey: ["kyc", user?.id] });
+      void reload();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "No se pudo enviar la verificación");
+    } finally {
+      setSavingKyc(false);
+    }
   };
 
   const kyc = (profile?.kyc_status ?? "none") as KycStatus;
@@ -208,6 +241,26 @@ function Perfil() {
               <div className="space-y-1.5">
                 <Label htmlFor="address">Dirección</Label>
                 <Input id="address" name="address" maxLength={200} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="doc-front">Foto del frente del documento</Label>
+                <Input
+                  id="doc-front"
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={(e) => setFrontFile(e.target.files?.[0] ?? null)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="doc-back">Foto del reverso (opcional)</Label>
+                <Input
+                  id="doc-back"
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={(e) => setBackFile(e.target.files?.[0] ?? null)}
+                />
               </div>
               <Button type="submit" disabled={savingKyc} className="sm:col-span-2">
                 {savingKyc ? "Enviando…" : "Enviar verificación"}

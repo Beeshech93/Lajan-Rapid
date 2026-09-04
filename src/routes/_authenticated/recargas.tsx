@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -7,6 +7,7 @@ import { celebrateLogo } from "@/components/LogoAnimation";
 import { Smartphone, Send, Copy, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCountries } from "@/hooks/useCorridors";
+import { useProfile } from "@/hooks/useProfile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,6 +63,7 @@ const STATUS_LABEL: Record<string, string> = {
 function Recargas() {
   const qc = useQueryClient();
   const refreshWallet = useRefreshWallet();
+  const { profile } = useProfile();
   const { data: wallets } = useWallets();
   const { data: countries } = useCountries();
   const listProducts = useServerFn(dingListProducts);
@@ -200,6 +202,8 @@ function Recargas() {
 
   const sendMut = useMutation({
     mutationFn: async () => {
+      if (profile?.kyc_status !== "approved")
+        throw new Error("Debes verificar tu identidad (KYC) antes de recargar");
       if (!operator) throw new Error("Elige el operador");
       if (!sku && plans.length > 0) throw new Error("Elige el plan del operador");
       if (!phone.trim()) throw new Error("Escribe el número a recargar");
@@ -277,6 +281,17 @@ function Recargas() {
   return (
     <div className="mx-auto max-w-4xl space-y-5">
       <h1 className="text-2xl font-bold">Recargas de saldo móvil</h1>
+
+      {profile?.kyc_status !== "approved" && (
+        <p className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">
+          {profile?.kyc_status === "pending"
+            ? "Tu verificación de identidad (KYC) está en revisión. No podrás recargar hasta que se apruebe."
+            : "Necesitas verificar tu identidad (KYC) antes de poder recargar."}{" "}
+          <Link to="/perfil" className="font-semibold underline">
+            {profile?.kyc_status === "pending" ? "Ver estado" : "Verificar ahora"}
+          </Link>
+        </p>
+      )}
 
       <Card>
         <CardHeader>
@@ -447,7 +462,7 @@ function Recargas() {
           <div className="sm:col-span-2">
             <Button
               className="w-full"
-              disabled={sendMut.isPending || !phoneCheck.ok}
+              disabled={sendMut.isPending || !phoneCheck.ok || profile?.kyc_status !== "approved"}
               onClick={() => sendMut.mutate()}
             >
               <Send className="mr-2 size-4" />

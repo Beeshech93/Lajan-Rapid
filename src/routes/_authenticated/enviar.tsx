@@ -1,4 +1,4 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -88,6 +88,10 @@ function Enviar() {
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!cfg || !user) return;
+    if (profile?.kyc_status !== "approved") {
+      toast.error("Debes verificar tu identidad (KYC) antes de enviar dinero");
+      return;
+    }
     const form = new FormData(e.currentTarget);
     const parsed = schema.safeParse({
       recipient_name: String(form.get("recipient_name") ?? ""),
@@ -133,8 +137,13 @@ function Enviar() {
       <h1 className="text-2xl font-bold">Enviar dinero</h1>
 
       {profile?.kyc_status !== "approved" && (
-        <p className="rounded-xl bg-warning/10 p-3 text-sm text-warning">
-          Puedes crear el envío, pero se procesará cuando tu identidad esté verificada.
+        <p className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">
+          {profile?.kyc_status === "pending"
+            ? "Tu verificación de identidad (KYC) está en revisión. No podrás enviar dinero hasta que se apruebe."
+            : "Necesitas verificar tu identidad (KYC) antes de poder enviar dinero."}{" "}
+          <Link to="/perfil" className="font-semibold underline">
+            {profile?.kyc_status === "pending" ? "Ver estado" : "Verificar ahora"}
+          </Link>
         </p>
       )}
 
@@ -283,7 +292,12 @@ function Enviar() {
         </CardContent>
       </Card>
 
-      <Button type="submit" size="lg" className="w-full" disabled={saving || !cfg}>
+      <Button
+        type="submit"
+        size="lg"
+        className="w-full"
+        disabled={saving || !cfg || profile?.kyc_status !== "approved"}
+      >
         {saving ? "Creando envío…" : `Confirmar envío de ${money(q.total, sendCur)}`}
       </Button>
     </form>
