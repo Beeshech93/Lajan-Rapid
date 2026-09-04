@@ -145,6 +145,9 @@ export async function createStripeCheckoutSession(opts: {
   body.set("line_items[0][price_data][unit_amount]", String(unitAmount));
   body.set("line_items[0][price_data][product_data][name]", opts.description);
   body.set("metadata[reference]", opts.reference);
+  // Sin esto, Stripe puede mostrar al comprador una moneda distinta a la que
+  // especificamos (según su ubicación/IP), vía su función "Adaptive Pricing".
+  body.set("adaptive_pricing[enabled]", "false");
   if (opts.buyerEmail) body.set("customer_email", opts.buyerEmail);
 
   try {
