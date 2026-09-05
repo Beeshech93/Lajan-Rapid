@@ -26,6 +26,7 @@ import { SecurityPanel } from "@/components/admin/SecurityPanel";
 import { DingConnectPanel } from "@/components/admin/DingConnectPanel";
 import { AccountingPanel } from "@/components/admin/AccountingPanel";
 import { SupportPanel } from "@/components/admin/SupportPanel";
+import { KycPanel } from "@/components/admin/KycPanel";
 import {
   money,
   shortDate,
@@ -193,76 +194,6 @@ function Resumen() {
         </CardContent>
       </Card>
     </div>
-  );
-}
-
-function KycPanel() {
-  const qc = useQueryClient();
-  const { data } = useQuery({
-    queryKey: ["admin-kyc"],
-    queryFn: async () =>
-      (await supabase.from("kyc_submissions").select("*").order("created_at", { ascending: false }))
-        .data ?? [],
-  });
-
-  const review = async (id: string, userId: string, status: "approved" | "rejected") => {
-    const notes = status === "rejected" ? "Documentación ilegible o incompleta." : null;
-    const { error } = await supabase
-      .from("kyc_submissions")
-      .update({ status, review_notes: notes })
-      .eq("id", id);
-    if (!error) await supabase.from("profiles").update({ kyc_status: status }).eq("id", userId);
-    if (error) {
-      toast.error("No se pudo actualizar");
-      return;
-    }
-    toast.success(status === "approved" ? "KYC aprobado" : "KYC rechazado");
-    qc.invalidateQueries({ queryKey: ["admin-kyc"] });
-  };
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Solicitudes de verificación</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        {(data ?? []).length === 0 && (
-          <p className="py-4 text-sm text-muted-foreground">Sin solicitudes.</p>
-        )}
-        {(data ?? []).map((k) => (
-          <div
-            key={k.id}
-            className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3"
-          >
-            <div>
-              <p className="font-medium">
-                {k.document_type.toUpperCase()} · {k.document_number}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {k.address} · nac. {k.birth_date} · {shortDate(k.created_at)}
-              </p>
-            </div>
-            <Badge className={KYC_TONE[k.status as KycStatus]} variant="secondary">
-              {KYC_LABEL[k.status as KycStatus]}
-            </Badge>
-            {k.status === "pending" && (
-              <div className="flex gap-2">
-                <Button size="sm" onClick={() => void review(k.id, k.user_id, "approved")}>
-                  Aprobar
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => void review(k.id, k.user_id, "rejected")}
-                >
-                  Rechazar
-                </Button>
-              </div>
-            )}
-          </div>
-        ))}
-      </CardContent>
-    </Card>
   );
 }
 
