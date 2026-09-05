@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as PrivacidadRouteImport } from './routes/privacidad'
 import { Route as RestablecerPasswordRouteImport } from './routes/restablecer-password'
+import { Route as UsaToHaitiRouteImport } from './routes/usa-to-haiti'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAgenteRouteImport } from './routes/_authenticated/agente'
 import { Route as AuthenticatedCriptoRouteImport } from './routes/_authenticated/cripto'
@@ -54,6 +55,11 @@ const PrivacidadRoute = PrivacidadRouteImport.update({
 const RestablecerPasswordRoute = RestablecerPasswordRouteImport.update({
   id: '/restablecer-password',
   path: '/restablecer-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UsaToHaitiRoute = UsaToHaitiRouteImport.update({
+  id: '/usa-to-haiti',
+  path: '/usa-to-haiti',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
@@ -150,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/privacidad': typeof PrivacidadRoute
   '/restablecer-password': typeof RestablecerPasswordRoute
+  '/usa-to-haiti': typeof UsaToHaitiRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/agente': typeof AuthenticatedAgenteRoute
   '/cripto': typeof AuthenticatedCriptoRoute
@@ -173,6 +180,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/privacidad': typeof PrivacidadRoute
   '/restablecer-password': typeof RestablecerPasswordRoute
+  '/usa-to-haiti': typeof UsaToHaitiRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/agente': typeof AuthenticatedAgenteRoute
   '/cripto': typeof AuthenticatedCriptoRoute
@@ -198,6 +206,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/privacidad': typeof PrivacidadRoute
   '/restablecer-password': typeof RestablecerPasswordRoute
+  '/usa-to-haiti': typeof UsaToHaitiRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/agente': typeof AuthenticatedAgenteRoute
   '/_authenticated/cripto': typeof AuthenticatedCriptoRoute
@@ -223,6 +232,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/privacidad'
     | '/restablecer-password'
+    | '/usa-to-haiti'
     | '/admin'
     | '/agente'
     | '/cripto'
@@ -246,6 +256,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/privacidad'
     | '/restablecer-password'
+    | '/usa-to-haiti'
     | '/admin'
     | '/agente'
     | '/cripto'
@@ -270,6 +281,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/privacidad'
     | '/restablecer-password'
+    | '/usa-to-haiti'
     | '/_authenticated/admin'
     | '/_authenticated/agente'
     | '/_authenticated/cripto'
@@ -295,6 +307,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   PrivacidadRoute: typeof PrivacidadRoute
   RestablecerPasswordRoute: typeof RestablecerPasswordRoute
+  UsaToHaitiRoute: typeof UsaToHaitiRoute
   ApiPublicAuthWelcomeRoute: typeof ApiPublicAuthWelcomeRoute
   ApiPublicBazikPayoutRoute: typeof ApiPublicBazikPayoutRoute
   ApiPublicDingconnectWebhookRoute: typeof ApiPublicDingconnectWebhookRoute
@@ -339,6 +352,13 @@ declare module '@tanstack/react-router' {
       path: '/restablecer-password'
       fullPath: '/restablecer-password'
       preLoaderRoute: typeof RestablecerPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/usa-to-haiti': {
+      id: '/usa-to-haiti'
+      path: '/usa-to-haiti'
+      fullPath: '/usa-to-haiti'
+      preLoaderRoute: typeof UsaToHaitiRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin': {
@@ -498,6 +518,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   PrivacidadRoute: PrivacidadRoute,
   RestablecerPasswordRoute: RestablecerPasswordRoute,
+  UsaToHaitiRoute: UsaToHaitiRoute,
   ApiPublicAuthWelcomeRoute: ApiPublicAuthWelcomeRoute,
   ApiPublicBazikPayoutRoute: ApiPublicBazikPayoutRoute,
   ApiPublicDingconnectWebhookRoute: ApiPublicDingconnectWebhookRoute,
