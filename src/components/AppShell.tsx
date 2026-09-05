@@ -132,6 +132,11 @@ export function AppShell({ children }: { children: ReactNode }) {
             <span className="truncate font-display font-semibold">Lajan Rapid</span>
           </Link>
           <div className="flex shrink-0 items-center gap-1">
+            <Button variant="ghost" size="icon" asChild aria-label={t("nav.support")}>
+              <Link to="/soporte">
+                <LifeBuoy className="size-4" />
+              </Link>
+            </Button>
             <NotificationBell />
             <LanguageSwitcher className="h-9 w-[96px] text-xs" />
             <Button variant="ghost" size="icon" onClick={signOut} aria-label={t("nav.signout")}>
