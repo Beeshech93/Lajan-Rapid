@@ -35,6 +35,57 @@ export const Route = createFileRoute("/")({
           "Envía dinero y criptomonedas desde América y Europa a Haití en minutos. Tipo de cambio transparente y seguimiento en tiempo real.",
       },
     ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: "Lajan Rapid",
+          url: "https://lajanrapid.app/",
+          description:
+            "Lajan Rapid is an international money transfer and remittance service connecting customers with recipients in Haiti.",
+          knowsAbout: [
+            "Money transfers",
+            "Remittances",
+            "Haiti money transfers",
+            "USA to Haiti money transfer",
+            "Canada to Haiti money transfer",
+            "Mexico to Haiti money transfer",
+            "Brazil to Haiti money transfer",
+            "Chile to Haiti money transfer",
+            "France to Haiti money transfer",
+          ],
+        }),
+      },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "Lajan Rapid",
+          url: "https://lajanrapid.app/",
+          // Solo los idiomas que la app realmente soporta (ver src/lib/i18n.tsx).
+          inLanguage: ["en", "es", "fr", "ht"],
+        }),
+      },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Service",
+          name: "Lajan Rapid International Money Transfer",
+          provider: {
+            "@type": "Organization",
+            name: "Lajan Rapid",
+            url: "https://lajanrapid.app/",
+          },
+          serviceType: "Money transfer and remittance service",
+          areaServed: ["United States", "Canada", "Mexico", "Brazil", "Chile", "France", "Haiti"],
+          url: "https://lajanrapid.app/",
+        }),
+      },
+    ],
   }),
   component: Landing,
 });
