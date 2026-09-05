@@ -27,6 +27,7 @@ import {
   deliveryLabel,
   type TransferStatus,
 } from "@/lib/remesa";
+import { interpolate, useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/transferencia/$id")({
   head: () => ({
@@ -44,6 +45,16 @@ function Detalle() {
   const { id } = Route.useParams();
   const qc = useQueryClient();
   const { isAdmin } = useProfile();
+  const { t: t2 } = useI18n();
+  const STATUS_LABEL_T: Record<TransferStatus, string> = {
+    created: t2("history.status_created"),
+    awaiting_payment: t2("history.status_awaiting_payment"),
+    paid: t2("history.status_paid"),
+    processing: t2("history.status_processing"),
+    ready_for_pickup: t2("history.status_ready_for_pickup"),
+    completed: t2("history.status_completed"),
+    cancelled: t2("history.status_cancelled"),
+  };
   const initiatePayment = useServerFn(mercadoPagoInitiatePayment);
   const initiateStripePayment = useServerFn(stripeInitiatePayment);
   const finalizePayout = useServerFn(finalizeTransferPayout);
@@ -53,12 +64,12 @@ function Detalle() {
   const finalize = useMutation({
     mutationFn: () => finalizePayout({ data: { transferId: id } }),
     onSuccess: () => {
-      toast.success("Envío completado");
+      toast.success(t2("detail.success_complete"));
       celebrateLogo();
       void qc.invalidateQueries({ queryKey: ["transfer", id] });
       void qc.invalidateQueries({ queryKey: ["transfer-events", id] });
     },
-    onError: (err: Error) => toast.error(err.message || "No pudimos completar el envío"),
+    onError: (err: Error) => toast.error(err.message || t2("detail.err_complete")),
   });
 
   const { data: t } = useQuery({
@@ -121,7 +132,10 @@ function Detalle() {
     finalize.mutate();
   }, [finalize, shouldAutoFinalizeUser, status, t]);
 
-  if (!t) return <p className="py-10 text-center text-sm text-muted-foreground">Cargando…</p>;
+  if (!t)
+    return (
+      <p className="py-10 text-center text-sm text-muted-foreground">{t2("detail.loading")}</p>
+    );
 
   const definiteStatus = t.status as TransferStatus;
   const currentIndex = STATUS_FLOW.indexOf(definiteStatus);
@@ -132,20 +146,27 @@ function Detalle() {
     <div className="mx-auto max-w-3xl space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Envío {t.reference}</h1>
-          <p className="text-sm text-muted-foreground">Creado el {shortDate(t.created_at)}</p>
+          <h1 className="text-2xl font-bold">
+            {t2("detail.title")} {t.reference}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {t2("detail.created_on")} {shortDate(t.created_at)}
+          </p>
         </div>
         <Badge className={STATUS_TONE[definiteStatus]} variant="secondary">
-          {STATUS_LABEL[definiteStatus]}
+          {STATUS_LABEL_T[definiteStatus]}
         </Badge>
       </div>
 
       <Card className="bg-brand text-primary-foreground">
         <CardContent className="grid gap-4 p-5 sm:grid-cols-3">
-          <Metric label="Tú pagas" value={money(Number(t.total_send), t.send_currency)} />
-          <Metric label="Comisión" value={money(Number(t.fee_send), t.send_currency)} />
           <Metric
-            label={`${t.recipient_name} recibe`}
+            label={t2("detail.you_pay")}
+            value={money(Number(t.total_send), t.send_currency)}
+          />
+          <Metric label={t2("detail.fee")} value={money(Number(t.fee_send), t.send_currency)} />
+          <Metric
+            label={`${t.recipient_name} ${t2("detail.recipient_gets")}`}
             value={money(Number(t.amount_receive), t.receive_currency)}
           />
         </CardContent>
@@ -157,18 +178,18 @@ function Detalle() {
             <div>
               <p className="font-semibold">
                 {isCardPayment
-                  ? `Completa tu pago con ${paymentName}`
+                  ? `${t2("detail.complete_payment")} ${paymentName}`
                   : isDirectCashDelivery && !isAdmin
-                    ? `Procesando envío a ${deliveryName}...`
-                    : `Finalizar envío por ${deliveryName}`}
+                    ? `${t2("detail.processing_to")} ${deliveryName}...`
+                    : `${t2("detail.finalize_to")} ${deliveryName}`}
               </p>
               <p className="text-sm text-muted-foreground">
                 {isCardPayment
                   ? isStripePayment
-                    ? "Serás redirigido a un checkout seguro con Stripe para completar el pago."
-                    : "Serás redirigido a Mercado Pago para completar el pago."
+                    ? t2("detail.stripe_note")
+                    : t2("detail.mp_note")
                   : isDirectCashDelivery && !isAdmin
-                    ? "Tu pago está siendo procesado para el envío al destinatario."
+                    ? t2("detail.processing_note")
                     : `${t.recipient_name} · ${t.recipient_phone} · ${money(Number(t.amount_receive), t.receive_currency)}`}
               </p>
             </div>
@@ -176,7 +197,7 @@ function Detalle() {
               checkoutUrl ? (
                 <Button size="sm" className="gap-2" asChild>
                   <a href={checkoutUrl} target="_blank" rel="noreferrer">
-                    Ir a pagar
+                    {t2("detail.go_pay")}
                   </a>
                 </Button>
               ) : (
@@ -192,7 +213,7 @@ function Detalle() {
                         : await initiatePayment({ data: { transferId: id } });
                       setCheckoutUrl(result.checkoutUrl);
                     } catch (err) {
-                      toast.error((err as Error).message || "Error al iniciar el pago");
+                      toast.error((err as Error).message || t2("detail.err_pay_start"));
                     } finally {
                       setIsInitiating(false);
                     }
@@ -200,10 +221,10 @@ function Detalle() {
                 >
                   {isInitiating && <Loader2 className="size-4 animate-spin" />}
                   {isInitiating
-                    ? "Cargando..."
+                    ? t2("detail.loading_short")
                     : isStripePayment
-                      ? "Pagar con tarjeta"
-                      : "Ir a Mercado Pago"}
+                      ? t2("detail.pay_card")
+                      : t2("detail.go_mp")}
                 </Button>
               )
             ) : !isAdmin && isDirectCashDelivery ? (
@@ -214,7 +235,7 @@ function Detalle() {
                 onClick={() => finalize.mutate()}
               >
                 {finalize.isPending && <Loader2 className="size-4 animate-spin" />}
-                {finalize.isPending ? "Enviando…" : "Reintentar envío"}
+                {finalize.isPending ? t2("detail.sending") : t2("detail.retry_send")}
               </Button>
             ) : (
               <Button
@@ -224,7 +245,9 @@ function Detalle() {
                 onClick={() => finalize.mutate()}
               >
                 {finalize.isPending && <Loader2 className="size-4 animate-spin" />}
-                {finalize.isPending ? "Enviando…" : `Enviar a ${deliveryName}`}
+                {finalize.isPending
+                  ? t2("detail.sending")
+                  : `${t2("detail.send_to")} ${deliveryName}`}
               </Button>
             )}
           </CardContent>
@@ -241,11 +264,11 @@ function Detalle() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Seguimiento en tiempo real</CardTitle>
+          <CardTitle className="text-base">{t2("detail.tracking")}</CardTitle>
         </CardHeader>
         <CardContent>
           {status === "cancelled" ? (
-            <p className="text-sm text-destructive">Este envío fue cancelado.</p>
+            <p className="text-sm text-destructive">{t2("detail.cancelled")}</p>
           ) : (
             <ol className="space-y-4">
               {STATUS_FLOW.map((s, i) => {
@@ -261,7 +284,7 @@ function Detalle() {
                     </span>
                     <div>
                       <p className={done ? "font-medium" : "text-muted-foreground"}>
-                        {STATUS_LABEL[s]}
+                        {STATUS_LABEL_T[s]}
                       </p>
                       {events
                         ?.filter((e) => e.status === s)
@@ -281,20 +304,23 @@ function Detalle() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Detalles</CardTitle>
+          <CardTitle className="text-base">{t2("detail.details")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 text-sm">
-          <Row label="Destinatario" value={t.recipient_name} />
-          <Row label="Teléfono" value={t.recipient_phone} />
-          <Row label="Ciudad" value={t.recipient_city} />
-          <Row label="Entrega" value={deliveryName} />
-          <Row label="Corredor" value={`${t.origin_country} → ${t.destination_country}`} />
-          <Row label="Método de pago" value={paymentName} />
+          <Row label={t2("detail.recipient")} value={t.recipient_name} />
+          <Row label={t2("detail.phone")} value={t.recipient_phone} />
+          <Row label={t2("detail.city")} value={t.recipient_city} />
+          <Row label={t2("detail.delivery")} value={deliveryName} />
           <Row
-            label="Tipo de cambio"
+            label={t2("detail.corridor")}
+            value={`${t.origin_country} → ${t.destination_country}`}
+          />
+          <Row label={t2("detail.payment_method")} value={paymentName} />
+          <Row
+            label={t2("detail.rate")}
             value={`1 ${t.send_currency} = ${Number(t.rate).toFixed(4)} ${t.receive_currency}`}
           />
-          {t.note && <Row label="Mensaje" value={t.note} />}
+          {t.note && <Row label={t2("detail.message")} value={t.note} />}
         </CardContent>
       </Card>
     </div>
@@ -320,6 +346,7 @@ function Row({ label, value }: { label: string; value: string }) {
 }
 
 function OxxoVoucherCard({ transferId, amount }: { transferId: string; amount: string }) {
+  const { t } = useI18n();
   const getVoucher = useServerFn(mercadoPagoOxxoVoucher);
   const { data, isPending, isError, error, refetch, isFetching } = useQuery({
     queryKey: ["oxxo-voucher", transferId],
@@ -335,19 +362,19 @@ function OxxoVoucherCard({ transferId, amount }: { transferId: string; amount: s
     <Card className="border-accent/40">
       <CardHeader className="flex-row items-center gap-2 space-y-0">
         <Store className="size-4 text-accent" />
-        <CardTitle className="text-base">Ficha de pago en OXXO</CardTitle>
+        <CardTitle className="text-base">{t("detail.oxxo_title")}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {isPending && (
           <p className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" /> Generando tu referencia…
+            <Loader2 className="size-4 animate-spin" /> {t("detail.oxxo_generating")}
           </p>
         )}
 
         {isError && (
           <div className="space-y-3">
             <p className="text-sm text-destructive">
-              {(error as Error).message || "No pudimos generar la ficha."}
+              {(error as Error).message || t("detail.oxxo_err")}
             </p>
             <Button
               size="sm"
@@ -355,7 +382,7 @@ function OxxoVoucherCard({ transferId, amount }: { transferId: string; amount: s
               disabled={isFetching}
               onClick={() => void refetch()}
             >
-              Reintentar
+              {t("detail.retry")}
             </Button>
           </div>
         )}
@@ -364,25 +391,28 @@ function OxxoVoucherCard({ transferId, amount }: { transferId: string; amount: s
           <>
             <div className="rounded-xl bg-secondary p-4">
               <p className="text-xs font-semibold uppercase text-muted-foreground">
-                Referencia OXXO
+                {t("detail.oxxo_reference")}
               </p>
               <p className="mt-1 break-all font-display text-2xl font-bold tracking-wider">
                 {data.reference}
               </p>
               <p className="mt-2 text-sm text-muted-foreground">
-                Monto a pagar: <span className="font-semibold text-foreground">{amount}</span>
+                {t("detail.amount_to_pay")}:{" "}
+                <span className="font-semibold text-foreground">{amount}</span>
               </p>
             </div>
 
             <p className={`text-sm ${expired ? "text-destructive" : "text-muted-foreground"}`}>
               {expires
                 ? expired
-                  ? `La ficha venció el ${expires.toLocaleString("es-MX")}. Genera una nueva.`
-                  : `Vence el ${expires.toLocaleString("es-MX", {
-                      dateStyle: "long",
-                      timeStyle: "short",
-                    })}`
-                : "Sin fecha de vencimiento informada."}
+                  ? interpolate(t("detail.expired_oxxo"), { date: expires.toLocaleString("es-MX") })
+                  : interpolate(t("detail.expires"), {
+                      date: expires.toLocaleString("es-MX", {
+                        dateStyle: "long",
+                        timeStyle: "short",
+                      }),
+                    })
+                : t("detail.no_expiry")}
             </p>
 
             <div className="flex flex-wrap gap-2">
@@ -392,15 +422,15 @@ function OxxoVoucherCard({ transferId, amount }: { transferId: string; amount: s
                 className="gap-2"
                 onClick={() => {
                   void navigator.clipboard.writeText(data.reference);
-                  toast.success("Referencia copiada");
+                  toast.success(t("detail.reference_copied"));
                 }}
               >
-                <Copy className="size-4" /> Copiar referencia
+                <Copy className="size-4" /> {t("detail.copy_reference")}
               </Button>
               {data.voucherUrl && (
                 <Button size="sm" className="gap-2" asChild>
                   <a href={data.voucherUrl} target="_blank" rel="noreferrer">
-                    Ver comprobante
+                    {t("detail.view_receipt")}
                   </a>
                 </Button>
               )}
@@ -411,15 +441,12 @@ function OxxoVoucherCard({ transferId, amount }: { transferId: string; amount: s
                   disabled={isFetching}
                   onClick={() => void refetch()}
                 >
-                  Generar nueva ficha
+                  {t("detail.new_voucher")}
                 </Button>
               )}
             </div>
 
-            <p className="text-xs text-muted-foreground">
-              Muestra esta referencia en cualquier tienda OXXO. Tu envío se activa automáticamente
-              en cuanto la tienda reporta el pago (puede tardar unos minutos).
-            </p>
+            <p className="text-xs text-muted-foreground">{t("detail.oxxo_note")}</p>
           </>
         )}
       </CardContent>
@@ -428,6 +455,7 @@ function OxxoVoucherCard({ transferId, amount }: { transferId: string; amount: s
 }
 
 function SpeiCard({ transferId, amount }: { transferId: string; amount: string }) {
+  const { t } = useI18n();
   const getSpei = useServerFn(mercadoPagoSpeiReference);
   const { data, isPending, isError, error, refetch, isFetching } = useQuery({
     queryKey: ["spei-reference", transferId],
@@ -443,19 +471,19 @@ function SpeiCard({ transferId, amount }: { transferId: string; amount: string }
     <Card className="border-accent/40">
       <CardHeader className="flex-row items-center gap-2 space-y-0">
         <Landmark className="size-4 text-accent" />
-        <CardTitle className="text-base">Transferencia SPEI</CardTitle>
+        <CardTitle className="text-base">{t("detail.spei_title")}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {isPending && (
           <p className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" /> Generando tu CLABE…
+            <Loader2 className="size-4 animate-spin" /> {t("detail.spei_generating")}
           </p>
         )}
 
         {isError && (
           <div className="space-y-3">
             <p className="text-sm text-destructive">
-              {(error as Error).message || "No pudimos generar la CLABE."}
+              {(error as Error).message || t("detail.spei_err")}
             </p>
             <Button
               size="sm"
@@ -463,7 +491,7 @@ function SpeiCard({ transferId, amount }: { transferId: string; amount: string }
               disabled={isFetching}
               onClick={() => void refetch()}
             >
-              Reintentar
+              {t("detail.retry")}
             </Button>
           </div>
         )}
@@ -472,28 +500,37 @@ function SpeiCard({ transferId, amount }: { transferId: string; amount: string }
           <>
             <div className="rounded-xl bg-secondary p-4">
               <p className="text-xs font-semibold uppercase text-muted-foreground">
-                CLABE interbancaria
+                {t("detail.clabe_label")}
               </p>
               <p className="mt-1 break-all font-display text-2xl font-bold tracking-wider">
                 {data.clabe}
               </p>
               {data.bank && (
-                <p className="mt-1 text-sm text-muted-foreground">Banco receptor: {data.bank}</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {t("detail.receiving_bank")}: {data.bank}
+                </p>
               )}
               <p className="mt-2 text-sm text-muted-foreground">
-                Concepto: <span className="font-semibold text-foreground">{data.concept}</span>
+                {t("detail.concept")}:{" "}
+                <span className="font-semibold text-foreground">{data.concept}</span>
               </p>
               <p className="text-sm text-muted-foreground">
-                Monto exacto: <span className="font-semibold text-foreground">{amount}</span>
+                {t("detail.exact_amount")}:{" "}
+                <span className="font-semibold text-foreground">{amount}</span>
               </p>
             </div>
 
             <p className={`text-sm ${expired ? "text-destructive" : "text-muted-foreground"}`}>
               {expires
                 ? expired
-                  ? `La CLABE venció el ${expires.toLocaleString("es-MX")}. Genera una nueva.`
-                  : `Vence el ${expires.toLocaleString("es-MX", { dateStyle: "long", timeStyle: "short" })}`
-                : "Sin fecha de vencimiento informada."}
+                  ? interpolate(t("detail.expired_spei"), { date: expires.toLocaleString("es-MX") })
+                  : interpolate(t("detail.expires"), {
+                      date: expires.toLocaleString("es-MX", {
+                        dateStyle: "long",
+                        timeStyle: "short",
+                      }),
+                    })
+                : t("detail.no_expiry")}
             </p>
 
             <div className="flex flex-wrap gap-2">
@@ -503,10 +540,10 @@ function SpeiCard({ transferId, amount }: { transferId: string; amount: string }
                 className="gap-2"
                 onClick={() => {
                   void navigator.clipboard.writeText(data.clabe);
-                  toast.success("CLABE copiada");
+                  toast.success(t("detail.clabe_copied"));
                 }}
               >
-                <Copy className="size-4" /> Copiar CLABE
+                <Copy className="size-4" /> {t("detail.copy_clabe")}
               </Button>
               <Button
                 size="sm"
@@ -514,15 +551,15 @@ function SpeiCard({ transferId, amount }: { transferId: string; amount: string }
                 className="gap-2"
                 onClick={() => {
                   void navigator.clipboard.writeText(data.concept);
-                  toast.success("Concepto copiado");
+                  toast.success(t("detail.concept_copied"));
                 }}
               >
-                <Copy className="size-4" /> Copiar concepto
+                <Copy className="size-4" /> {t("detail.copy_concept")}
               </Button>
               {data.voucherUrl && (
                 <Button size="sm" className="gap-2" asChild>
                   <a href={data.voucherUrl} target="_blank" rel="noreferrer">
-                    Ver instrucciones
+                    {t("detail.view_instructions")}
                   </a>
                 </Button>
               )}
@@ -533,15 +570,12 @@ function SpeiCard({ transferId, amount }: { transferId: string; amount: string }
                   disabled={isFetching}
                   onClick={() => void refetch()}
                 >
-                  Generar nueva CLABE
+                  {t("detail.new_clabe")}
                 </Button>
               )}
             </div>
 
-            <p className="text-xs text-muted-foreground">
-              Haz la transferencia desde tu banca en línea por el monto exacto. Tu envío se activa
-              automáticamente en cuanto el banco confirma el depósito.
-            </p>
+            <p className="text-xs text-muted-foreground">{t("detail.spei_note")}</p>
           </>
         )}
       </CardContent>
