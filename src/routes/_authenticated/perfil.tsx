@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,7 +17,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { KYC_LABEL, KYC_TONE, type KycStatus } from "@/lib/remesa";
+import { KYC_TONE, type KycStatus } from "@/lib/remesa";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/perfil")({
   head: () => ({
@@ -31,26 +32,42 @@ export const Route = createFileRoute("/_authenticated/perfil")({
   component: Perfil,
 });
 
-const profileSchema = z.object({
-  full_name: z.string().trim().min(3, "Nombre requerido").max(100),
-  phone: z.string().trim().min(6, "Teléfono requerido").max(25),
-});
-
-const kycSchema = z.object({
-  document_type: z.string().min(2),
-  document_number: z.string().trim().min(4, "Número de documento requerido").max(40),
-  birth_date: z.string().min(4, "Fecha de nacimiento requerida"),
-  address: z.string().trim().min(6, "Dirección requerida").max(200),
-});
-
 function Perfil() {
   const { user, profile, roles, reload } = useProfile();
+  const { t } = useI18n();
   const qc = useQueryClient();
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingKyc, setSavingKyc] = useState(false);
   const [docType, setDocType] = useState("ine");
   const [frontFile, setFrontFile] = useState<File | null>(null);
   const [backFile, setBackFile] = useState<File | null>(null);
+
+  const profileSchema = useMemo(
+    () =>
+      z.object({
+        full_name: z.string().trim().min(3, t("profile.err_name")).max(100),
+        phone: z.string().trim().min(6, t("profile.err_phone")).max(25),
+      }),
+    [t],
+  );
+
+  const kycSchema = useMemo(
+    () =>
+      z.object({
+        document_type: z.string().min(2),
+        document_number: z.string().trim().min(4, t("profile.err_doc_number")).max(40),
+        birth_date: z.string().min(4, t("profile.err_birth_date")),
+        address: z.string().trim().min(6, t("profile.err_address")).max(200),
+      }),
+    [t],
+  );
+
+  const KYC_LABEL: Record<KycStatus, string> = {
+    none: t("profile.kyc_none"),
+    pending: t("profile.kyc_pending"),
+    approved: t("profile.kyc_approved"),
+    rejected: t("profile.kyc_rejected"),
+  };
 
   const { data: submission } = useQuery({
     queryKey: ["kyc", user?.id],
@@ -82,10 +99,10 @@ function Perfil() {
     const { error } = await supabase.from("profiles").update(parsed.data).eq("id", user!.id);
     setSavingProfile(false);
     if (error) {
-      toast.error("No se pudo guardar");
+      toast.error(t("profile.err_save"));
       return;
     }
-    toast.success("Perfil actualizado");
+    toast.success(t("profile.success_save"));
     void reload();
   };
 
@@ -103,11 +120,11 @@ function Perfil() {
       return;
     }
     if (!frontFile) {
-      toast.error("Sube una foto del frente de tu documento");
+      toast.error(t("profile.err_no_front"));
       return;
     }
     if (frontFile.size > 8 * 1024 * 1024 || (backFile && backFile.size > 8 * 1024 * 1024)) {
-      toast.error("Cada foto debe pesar menos de 8 MB");
+      toast.error(t("profile.err_file_size"));
       return;
     }
 
@@ -139,13 +156,13 @@ function Perfil() {
       if (error) throw error;
 
       await supabase.from("profiles").update({ kyc_status: "pending" }).eq("id", user!.id);
-      toast.success("Verificación enviada. Te avisaremos al aprobarla.");
+      toast.success(t("profile.success_kyc"));
       setFrontFile(null);
       setBackFile(null);
       qc.invalidateQueries({ queryKey: ["kyc", user?.id] });
       void reload();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "No se pudo enviar la verificación");
+      toast.error(err instanceof Error ? err.message : t("profile.err_kyc_send"));
     } finally {
       setSavingKyc(false);
     }
@@ -155,11 +172,11 @@ function Perfil() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
-      <h1 className="text-2xl font-bold">Mi perfil</h1>
+      <h1 className="text-2xl font-bold">{t("profile.title")}</h1>
 
       <Card>
         <CardHeader className="flex-row items-center justify-between space-y-0">
-          <CardTitle className="text-base">Datos personales</CardTitle>
+          <CardTitle className="text-base">{t("profile.personal_data")}</CardTitle>
           <div className="flex gap-1">
             {roles.map((r) => (
               <Badge key={r} variant="outline">
@@ -171,7 +188,7 @@ function Perfil() {
         <CardContent>
           <form onSubmit={saveProfile} className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="full_name">Nombre completo</Label>
+              <Label htmlFor="full_name">{t("profile.full_name")}</Label>
               <Input
                 id="full_name"
                 name="full_name"
@@ -180,15 +197,15 @@ function Perfil() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="phone">Teléfono</Label>
+              <Label htmlFor="phone">{t("profile.phone")}</Label>
               <Input id="phone" name="phone" defaultValue={profile?.phone ?? ""} maxLength={25} />
             </div>
             <div className="space-y-1.5 sm:col-span-2">
-              <Label>Correo</Label>
+              <Label>{t("profile.email")}</Label>
               <Input value={user?.email ?? ""} disabled />
             </div>
             <Button type="submit" disabled={savingProfile} className="sm:col-span-2">
-              {savingProfile ? "Guardando…" : "Guardar cambios"}
+              {savingProfile ? t("profile.saving") : t("profile.save_changes")}
             </Button>
           </form>
         </CardContent>
@@ -196,20 +213,16 @@ function Perfil() {
 
       <Card>
         <CardHeader className="flex-row items-center justify-between space-y-0">
-          <CardTitle className="text-base">Verificación de identidad (KYC)</CardTitle>
+          <CardTitle className="text-base">{t("profile.kyc_title")}</CardTitle>
           <Badge className={KYC_TONE[kyc]} variant="secondary">
             {KYC_LABEL[kyc]}
           </Badge>
         </CardHeader>
         <CardContent>
           {kyc === "approved" ? (
-            <p className="text-sm text-muted-foreground">
-              Tu identidad está verificada. Puedes enviar sin límites adicionales.
-            </p>
+            <p className="text-sm text-muted-foreground">{t("profile.kyc_approved_desc")}</p>
           ) : kyc === "pending" ? (
-            <p className="text-sm text-muted-foreground">
-              Tu documentación está en revisión. Normalmente tarda menos de 24 horas.
-            </p>
+            <p className="text-sm text-muted-foreground">{t("profile.kyc_pending_desc")}</p>
           ) : (
             <form onSubmit={saveKyc} className="grid gap-4 sm:grid-cols-2">
               {submission?.review_notes && (
@@ -218,32 +231,32 @@ function Perfil() {
                 </p>
               )}
               <div className="space-y-1.5">
-                <Label>Tipo de documento</Label>
+                <Label>{t("profile.doc_type")}</Label>
                 <Select value={docType} onValueChange={setDocType}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ine">INE / IFE</SelectItem>
-                    <SelectItem value="passport">Pasaporte</SelectItem>
-                    <SelectItem value="residency">Tarjeta de residencia</SelectItem>
+                    <SelectItem value="ine">{t("profile.doc_ine")}</SelectItem>
+                    <SelectItem value="passport">{t("profile.doc_passport")}</SelectItem>
+                    <SelectItem value="residency">{t("profile.doc_residency")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="document_number">Número de documento</Label>
+                <Label htmlFor="document_number">{t("profile.doc_number")}</Label>
                 <Input id="document_number" name="document_number" maxLength={40} />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="birth_date">Fecha de nacimiento</Label>
+                <Label htmlFor="birth_date">{t("profile.birth_date")}</Label>
                 <Input id="birth_date" name="birth_date" type="date" />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="address">Dirección</Label>
+                <Label htmlFor="address">{t("profile.address")}</Label>
                 <Input id="address" name="address" maxLength={200} />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="doc-front">Foto del frente del documento</Label>
+                <Label htmlFor="doc-front">{t("profile.doc_front")}</Label>
                 <Input
                   id="doc-front"
                   type="file"
@@ -253,7 +266,7 @@ function Perfil() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="doc-back">Foto del reverso (opcional)</Label>
+                <Label htmlFor="doc-back">{t("profile.doc_back")}</Label>
                 <Input
                   id="doc-back"
                   type="file"
@@ -263,7 +276,7 @@ function Perfil() {
                 />
               </div>
               <Button type="submit" disabled={savingKyc} className="sm:col-span-2">
-                {savingKyc ? "Enviando…" : "Enviar verificación"}
+                {savingKyc ? t("profile.sending") : t("profile.send_verification")}
               </Button>
             </form>
           )}
