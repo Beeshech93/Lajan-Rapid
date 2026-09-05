@@ -276,6 +276,7 @@ function Perfil() {
                     <SelectItem value="ine">{t("profile.doc_ine")}</SelectItem>
                     <SelectItem value="passport">{t("profile.doc_passport")}</SelectItem>
                     <SelectItem value="residency">{t("profile.doc_residency")}</SelectItem>
+                    <SelectItem value="license">{t("profile.doc_license")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
