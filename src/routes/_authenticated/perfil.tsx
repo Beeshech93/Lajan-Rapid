@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
+import { Check, Circle, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -218,7 +219,42 @@ function Perfil() {
             {KYC_LABEL[kyc]}
           </Badge>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          <ol className="flex items-center gap-2">
+            {kyc === "rejected" ? (
+              <li className="flex items-center gap-1.5 text-sm font-medium text-destructive">
+                <span className="grid size-6 shrink-0 place-items-center rounded-full bg-destructive/15">
+                  <X className="size-3.5" />
+                </span>
+                {t("profile.step_rejected")}
+              </li>
+            ) : (
+              [
+                { key: "sent", label: t("profile.step_sent"), done: kyc !== "none" },
+                {
+                  key: "review",
+                  label: t("profile.step_review"),
+                  done: kyc === "pending" || kyc === "approved",
+                },
+                { key: "approved", label: t("profile.step_approved"), done: kyc === "approved" },
+              ].map((s, i, arr) => (
+                <li key={s.key} className="flex flex-1 items-center gap-1.5">
+                  <span
+                    className={`grid size-6 shrink-0 place-items-center rounded-full ${
+                      s.done ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {s.done ? <Check className="size-3.5" /> : <Circle className="size-2.5" />}
+                  </span>
+                  <span className={`text-xs font-medium ${s.done ? "" : "text-muted-foreground"}`}>
+                    {s.label}
+                  </span>
+                  {i < arr.length - 1 && <span className="h-px flex-1 bg-border" />}
+                </li>
+              ))
+            )}
+          </ol>
+
           {kyc === "approved" ? (
             <p className="text-sm text-muted-foreground">{t("profile.kyc_approved_desc")}</p>
           ) : kyc === "pending" ? (
