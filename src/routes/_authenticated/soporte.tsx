@@ -10,6 +10,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { getSupportConfig } from "@/lib/support.functions";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/soporte")({
   head: () => ({
@@ -23,26 +24,14 @@ export const Route = createFileRoute("/_authenticated/soporte")({
   component: Soporte,
 });
 
-const FAQ = [
-  {
-    q: "¿Cuánto tarda un envío?",
-    a: "Después de confirmar tu pago, la mayoría de los envíos están disponibles en Haití en menos de 30 minutos.",
-  },
-  {
-    q: "¿Por qué necesito verificar mi identidad?",
-    a: "La regulación mexicana exige verificar la identidad de quien envía dinero al extranjero. Solo lo haces una vez.",
-  },
-  {
-    q: "¿Qué métodos de pago aceptan?",
-    a: "OXXO, Mercado Pago, transferencia SPEI y tarjeta de débito.",
-  },
-  {
-    q: "¿Puedo cancelar un envío?",
-    a: "Sí, mientras esté en estado 'Esperando pago'. Después de confirmado, escríbenos a soporte.",
-  },
-];
-
 function Soporte() {
+  const { t } = useI18n();
+  const FAQ = [
+    { q: t("support.faq_q1"), a: t("support.faq_a1") },
+    { q: t("support.faq_q2"), a: t("support.faq_a2") },
+    { q: t("support.faq_q3"), a: t("support.faq_a3") },
+    { q: t("support.faq_q4"), a: t("support.faq_a4") },
+  ];
   const getConfig = useServerFn(getSupportConfig);
   const { data: config } = useQuery({
     queryKey: ["support_config"],
@@ -55,13 +44,13 @@ function Soporte() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
-      <h1 className="text-2xl font-bold">Soporte</h1>
+      <h1 className="text-2xl font-bold">{t("support.title")}</h1>
 
       <div className="grid gap-3 sm:grid-cols-2">
         {whatsapp && (
           <Channel
             icon={<MessageCircle className="size-4" />}
-            title="WhatsApp"
+            title={t("support.whatsapp")}
             value={whatsapp}
             {...(whatsappUrl ? { href: whatsappUrl } : {})}
           />
@@ -69,25 +58,25 @@ function Soporte() {
         {email && (
           <Channel
             icon={<Mail className="size-4" />}
-            title="Correo"
+            title={t("support.email")}
             value={email}
             href={`mailto:${email}`}
           />
         )}
         {!whatsapp && !email && (
-          <p className="text-sm text-muted-foreground sm:col-span-2">
-            Todavía no se configuraron los canales de contacto.
-          </p>
+          <p className="text-sm text-muted-foreground sm:col-span-2">{t("support.no_channels")}</p>
         )}
       </div>
 
       {config?.support_hours && (
-        <p className="text-sm text-muted-foreground">Horario de atención: {config.support_hours}</p>
+        <p className="text-sm text-muted-foreground">
+          {t("support.hours")}: {config.support_hours}
+        </p>
       )}
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Preguntas frecuentes</CardTitle>
+          <CardTitle className="text-base">{t("support.faq")}</CardTitle>
         </CardHeader>
         <CardContent>
           <Accordion type="single" collapsible>

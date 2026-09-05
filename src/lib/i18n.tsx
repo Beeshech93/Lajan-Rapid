@@ -251,6 +251,33 @@ const es: Dict = {
   "profile.err_file_size": "Cada foto debe pesar menos de 8 MB",
   "profile.success_kyc": "Verificación enviada. Te avisaremos al aprobarla.",
   "profile.err_kyc_send": "No se pudo enviar la verificación",
+  "support.title": "Soporte",
+  "support.whatsapp": "WhatsApp",
+  "support.email": "Correo",
+  "support.no_channels": "Todavía no se configuraron los canales de contacto.",
+  "support.hours": "Horario de atención",
+  "support.faq": "Preguntas frecuentes",
+  "support.faq_q1": "¿Cuánto tarda un envío?",
+  "support.faq_a1":
+    "Después de confirmar tu pago, la mayoría de los envíos están disponibles en Haití en menos de 30 minutos.",
+  "support.faq_q2": "¿Por qué necesito verificar mi identidad?",
+  "support.faq_a2":
+    "La regulación mexicana exige verificar la identidad de quien envía dinero al extranjero. Solo lo haces una vez.",
+  "support.faq_q3": "¿Qué métodos de pago aceptan?",
+  "support.faq_a3": "OXXO, Mercado Pago, transferencia SPEI y tarjeta de débito.",
+  "support.faq_q4": "¿Puedo cancelar un envío?",
+  "support.faq_a4":
+    "Sí, mientras esté en estado 'Esperando pago'. Después de confirmado, escríbenos a soporte.",
+  "history.title": "Historial",
+  "history.search_placeholder": "Buscar por destinatario o referencia",
+  "history.no_results": "Sin resultados.",
+  "history.status_created": "Creado",
+  "history.status_awaiting_payment": "Esperando pago",
+  "history.status_paid": "Pago confirmado",
+  "history.status_processing": "En proceso",
+  "history.status_ready_for_pickup": "Listo para retirar",
+  "history.status_completed": "Entregado",
+  "history.status_cancelled": "Cancelado",
 };
 
 const fr: Dict = {
@@ -495,6 +522,33 @@ const fr: Dict = {
   "profile.err_file_size": "Chaque photo doit peser moins de 8 Mo",
   "profile.success_kyc": "Vérification envoyée. Nous vous préviendrons une fois approuvée.",
   "profile.err_kyc_send": "Impossible d'envoyer la vérification",
+  "support.title": "Support",
+  "support.whatsapp": "WhatsApp",
+  "support.email": "E-mail",
+  "support.no_channels": "Les canaux de contact ne sont pas encore configurés.",
+  "support.hours": "Horaires d'assistance",
+  "support.faq": "Questions fréquentes",
+  "support.faq_q1": "Combien de temps prend un envoi ?",
+  "support.faq_a1":
+    "Après confirmation de votre paiement, la plupart des envois sont disponibles en Haïti en moins de 30 minutes.",
+  "support.faq_q2": "Pourquoi dois-je vérifier mon identité ?",
+  "support.faq_a2":
+    "La réglementation mexicaine exige de vérifier l'identité de la personne qui envoie de l'argent à l'étranger. Vous ne le faites qu'une seule fois.",
+  "support.faq_q3": "Quels modes de paiement acceptez-vous ?",
+  "support.faq_a3": "OXXO, Mercado Pago, virement SPEI et carte de débit.",
+  "support.faq_q4": "Puis-je annuler un envoi ?",
+  "support.faq_a4":
+    "Oui, tant qu'il est au statut « En attente de paiement ». Une fois confirmé, écrivez-nous au support.",
+  "history.title": "Historique",
+  "history.search_placeholder": "Rechercher par destinataire ou référence",
+  "history.no_results": "Aucun résultat.",
+  "history.status_created": "Créé",
+  "history.status_awaiting_payment": "En attente de paiement",
+  "history.status_paid": "Paiement confirmé",
+  "history.status_processing": "En cours",
+  "history.status_ready_for_pickup": "Prêt à retirer",
+  "history.status_completed": "Livré",
+  "history.status_cancelled": "Annulé",
 };
 
 const ht: Dict = {
@@ -734,6 +788,33 @@ const ht: Dict = {
   "profile.err_file_size": "Chak foto dwe fè mwens pase 8 MB",
   "profile.success_kyc": "Verifikasyon voye. N ap avèti w lè yo apwouve l.",
   "profile.err_kyc_send": "Nou pa t kapab voye verifikasyon an",
+  "support.title": "Sipò",
+  "support.whatsapp": "WhatsApp",
+  "support.email": "Imèl",
+  "support.no_channels": "Kanal kontak yo poko konfigire.",
+  "support.hours": "Orè sipò",
+  "support.faq": "Kesyon moun poze souvan",
+  "support.faq_q1": "Konbyen tan yon voyaj pran?",
+  "support.faq_a1":
+    "Apre ou konfime peman w, pifò voyaj disponib an Ayiti nan mwens pase 30 minit.",
+  "support.faq_q2": "Poukisa mwen bezwen verifye idantite m?",
+  "support.faq_a2":
+    "Règleman meksiken an egzije verifye idantite moun k ap voye lajan aletranje. Ou fè l yon sèl fwa.",
+  "support.faq_q3": "Ki metòd peman nou aksepte?",
+  "support.faq_a3": "OXXO, Mercado Pago, transfè SPEI ak kat debi.",
+  "support.faq_q4": "Èske mwen ka anile yon voyaj?",
+  "support.faq_a4":
+    "Wi, toutotan li nan estati 'Ap tann peman'. Apre li konfime, ekri nou nan sipò.",
+  "history.title": "Istorik",
+  "history.search_placeholder": "Chèche pa destinatè oswa referans",
+  "history.no_results": "Pa gen rezilta.",
+  "history.status_created": "Kreye",
+  "history.status_awaiting_payment": "Ap tann peman",
+  "history.status_paid": "Peman konfime",
+  "history.status_processing": "Ap trete",
+  "history.status_ready_for_pickup": "Pare pou retire",
+  "history.status_completed": "Livre",
+  "history.status_cancelled": "Anile",
 };
 
 const en: Dict = {
@@ -974,6 +1055,33 @@ const en: Dict = {
   "profile.err_file_size": "Each photo must be under 8 MB",
   "profile.success_kyc": "Verification sent. We'll let you know once it's approved.",
   "profile.err_kyc_send": "Couldn't send the verification",
+  "support.title": "Support",
+  "support.whatsapp": "WhatsApp",
+  "support.email": "Email",
+  "support.no_channels": "Contact channels haven't been set up yet.",
+  "support.hours": "Support hours",
+  "support.faq": "Frequently asked questions",
+  "support.faq_q1": "How long does a transfer take?",
+  "support.faq_a1":
+    "After your payment is confirmed, most transfers are available in Haiti in under 30 minutes.",
+  "support.faq_q2": "Why do I need to verify my identity?",
+  "support.faq_a2":
+    "Mexican regulation requires verifying the identity of anyone sending money abroad. You only need to do it once.",
+  "support.faq_q3": "What payment methods do you accept?",
+  "support.faq_a3": "OXXO, Mercado Pago, SPEI transfer, and debit card.",
+  "support.faq_q4": "Can I cancel a transfer?",
+  "support.faq_a4":
+    'Yes, as long as it\'s in "Awaiting payment" status. Once confirmed, write to support.',
+  "history.title": "History",
+  "history.search_placeholder": "Search by recipient or reference",
+  "history.no_results": "No results.",
+  "history.status_created": "Created",
+  "history.status_awaiting_payment": "Awaiting payment",
+  "history.status_paid": "Payment confirmed",
+  "history.status_processing": "Processing",
+  "history.status_ready_for_pickup": "Ready for pickup",
+  "history.status_completed": "Delivered",
+  "history.status_cancelled": "Cancelled",
 };
 
 const DICTS: Record<Lang, Dict> = { es, fr, ht, en };

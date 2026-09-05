@@ -6,7 +6,8 @@ import { useProfile } from "@/hooks/useProfile";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { money, shortDate, STATUS_LABEL, STATUS_TONE, type TransferStatus } from "@/lib/remesa";
+import { money, shortDate, STATUS_TONE, type TransferStatus } from "@/lib/remesa";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/historial")({
   head: () => ({
@@ -22,7 +23,18 @@ export const Route = createFileRoute("/_authenticated/historial")({
 
 function Historial() {
   const { user } = useProfile();
+  const { t } = useI18n();
   const [q, setQ] = useState("");
+
+  const STATUS_LABEL: Record<TransferStatus, string> = {
+    created: t("history.status_created"),
+    awaiting_payment: t("history.status_awaiting_payment"),
+    paid: t("history.status_paid"),
+    processing: t("history.status_processing"),
+    ready_for_pickup: t("history.status_ready_for_pickup"),
+    completed: t("history.status_completed"),
+    cancelled: t("history.status_cancelled"),
+  };
 
   const { data } = useQuery({
     queryKey: ["history", user?.id],
@@ -39,43 +51,43 @@ function Historial() {
 
   const term = q.trim().toLowerCase();
   const rows = (data ?? []).filter(
-    (t) =>
+    (tr) =>
       !term ||
-      t.recipient_name.toLowerCase().includes(term) ||
-      t.reference.toLowerCase().includes(term),
+      tr.recipient_name.toLowerCase().includes(term) ||
+      tr.reference.toLowerCase().includes(term),
   );
 
   return (
     <div className="mx-auto max-w-4xl space-y-4">
-      <h1 className="text-2xl font-bold">Historial</h1>
+      <h1 className="text-2xl font-bold">{t("history.title")}</h1>
       <Input
-        placeholder="Buscar por destinatario o referencia"
+        placeholder={t("history.search_placeholder")}
         value={q}
         onChange={(e) => setQ(e.target.value)}
         maxLength={60}
       />
       {rows.length === 0 && (
-        <p className="py-10 text-center text-sm text-muted-foreground">Sin resultados.</p>
+        <p className="py-10 text-center text-sm text-muted-foreground">{t("history.no_results")}</p>
       )}
       <div className="space-y-2">
-        {rows.map((t) => (
-          <Link key={t.id} to="/transferencia/$id" params={{ id: t.id }}>
+        {rows.map((tr) => (
+          <Link key={tr.id} to="/transferencia/$id" params={{ id: tr.id }}>
             <Card className="transition-colors hover:bg-secondary">
               <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
                 <div>
-                  <p className="font-medium">{t.recipient_name}</p>
+                  <p className="font-medium">{tr.recipient_name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {t.reference} · {t.recipient_city} · {shortDate(t.created_at)}
+                    {tr.reference} · {tr.recipient_city} · {shortDate(tr.created_at)}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold">{money(Number(t.amount_send), t.send_currency)}</p>
+                  <p className="font-semibold">{money(Number(tr.amount_send), tr.send_currency)}</p>
                   <p className="text-xs text-muted-foreground">
-                    {money(Number(t.amount_receive), t.receive_currency)}
+                    {money(Number(tr.amount_receive), tr.receive_currency)}
                   </p>
                 </div>
-                <Badge className={STATUS_TONE[t.status as TransferStatus]} variant="secondary">
-                  {STATUS_LABEL[t.status as TransferStatus]}
+                <Badge className={STATUS_TONE[tr.status as TransferStatus]} variant="secondary">
+                  {STATUS_LABEL[tr.status as TransferStatus]}
                 </Badge>
               </CardContent>
             </Card>
