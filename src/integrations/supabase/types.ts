@@ -8,6 +8,33 @@ export type Database = {
   };
   public: {
     Tables: {
+      security_events: {
+        Row: {
+          created_at: string;
+          detail: Json;
+          event_type: string;
+          id: string;
+          severity: string;
+          user_id: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          detail?: Json;
+          event_type: string;
+          id?: string;
+          severity?: string;
+          user_id?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          detail?: Json;
+          event_type?: string;
+          id?: string;
+          severity?: string;
+          user_id?: string | null;
+        };
+        Relationships: [];
+      };
       card_limits: {
         Row: {
           card_id: string;

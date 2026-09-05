@@ -29,6 +29,11 @@ export const Route = createFileRoute("/api/public/dingconnect/webhook")({
         });
         if (!verified.ok) {
           console.error("DingConnect webhook rechazado:", verified.reason);
+          const { logAndAlertSecurityEvent } = await import("@/lib/security.server");
+          await logAndAlertSecurityEvent({
+            eventType: "webhook_invalid_signature",
+            detail: { webhook: "dingconnect", reason: verified.reason },
+          });
           return new Response("Invalid signature", { status: 401 });
         }
 

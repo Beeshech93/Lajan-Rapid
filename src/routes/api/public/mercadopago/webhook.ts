@@ -36,6 +36,11 @@ export const Route = createFileRoute("/api/public/mercadopago/webhook")({
         });
         if (!verified.ok) {
           console.error("Mercado Pago webhook rechazado:", verified.reason);
+          const { logAndAlertSecurityEvent } = await import("@/lib/security.server");
+          await logAndAlertSecurityEvent({
+            eventType: "webhook_invalid_signature",
+            detail: { webhook: "mercadopago", reason: verified.reason },
+          });
           return new Response("Invalid signature", { status: 401 });
         }
 

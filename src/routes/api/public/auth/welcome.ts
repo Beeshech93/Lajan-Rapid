@@ -16,6 +16,11 @@ export const Route = createFileRoute("/api/public/auth/welcome")({
         const secret = request.headers.get("x-webhook-secret");
         const validSecret = await verifyWelcomeWebhookSecret(secret);
         if (!validSecret) {
+          const { logAndAlertSecurityEvent } = await import("@/lib/security.server");
+          await logAndAlertSecurityEvent({
+            eventType: "webhook_invalid_signature",
+            detail: { webhook: "welcome-email" },
+          });
           return new Response("Invalid signature", { status: 401 });
         }
 

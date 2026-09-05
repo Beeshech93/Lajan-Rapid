@@ -30,6 +30,7 @@ import { Route as ApiPublicAuthWelcomeRouteImport } from './routes/api/public/au
 import { Route as ApiPublicBazikPayoutRouteImport } from './routes/api/public/bazik/payout'
 import { Route as ApiPublicDingconnectWebhookRouteImport } from './routes/api/public/dingconnect/webhook'
 import { Route as ApiPublicMercadopagoWebhookRouteImport } from './routes/api/public/mercadopago/webhook'
+import { Route as ApiPublicSecurityAlertRouteImport } from './routes/api/public/security/alert'
 import { Route as ApiPublicStripeWebhookRouteImport } from './routes/api/public/stripe/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
@@ -141,6 +142,11 @@ const ApiPublicMercadopagoWebhookRoute =
     path: '/api/public/mercadopago/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicSecurityAlertRoute = ApiPublicSecurityAlertRouteImport.update({
+  id: '/api/public/security/alert',
+  path: '/api/public/security/alert',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicStripeWebhookRoute = ApiPublicStripeWebhookRouteImport.update({
   id: '/api/public/stripe/webhook',
   path: '/api/public/stripe/webhook',
@@ -178,6 +184,7 @@ export interface FileRoutesByFullPath {
   '/api/public/bazik/payout': typeof ApiPublicBazikPayoutRoute
   '/api/public/dingconnect/webhook': typeof ApiPublicDingconnectWebhookRoute
   '/api/public/mercadopago/webhook': typeof ApiPublicMercadopagoWebhookRoute
+  '/api/public/security/alert': typeof ApiPublicSecurityAlertRoute
   '/api/public/stripe/webhook': typeof ApiPublicStripeWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -203,6 +210,7 @@ export interface FileRoutesByTo {
   '/api/public/bazik/payout': typeof ApiPublicBazikPayoutRoute
   '/api/public/dingconnect/webhook': typeof ApiPublicDingconnectWebhookRoute
   '/api/public/mercadopago/webhook': typeof ApiPublicMercadopagoWebhookRoute
+  '/api/public/security/alert': typeof ApiPublicSecurityAlertRoute
   '/api/public/stripe/webhook': typeof ApiPublicStripeWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -230,6 +238,7 @@ export interface FileRoutesById {
   '/api/public/bazik/payout': typeof ApiPublicBazikPayoutRoute
   '/api/public/dingconnect/webhook': typeof ApiPublicDingconnectWebhookRoute
   '/api/public/mercadopago/webhook': typeof ApiPublicMercadopagoWebhookRoute
+  '/api/public/security/alert': typeof ApiPublicSecurityAlertRoute
   '/api/public/stripe/webhook': typeof ApiPublicStripeWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -257,6 +266,7 @@ export interface FileRouteTypes {
     | '/api/public/bazik/payout'
     | '/api/public/dingconnect/webhook'
     | '/api/public/mercadopago/webhook'
+    | '/api/public/security/alert'
     | '/api/public/stripe/webhook'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -282,6 +292,7 @@ export interface FileRouteTypes {
     | '/api/public/bazik/payout'
     | '/api/public/dingconnect/webhook'
     | '/api/public/mercadopago/webhook'
+    | '/api/public/security/alert'
     | '/api/public/stripe/webhook'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -308,6 +319,7 @@ export interface FileRouteTypes {
     | '/api/public/bazik/payout'
     | '/api/public/dingconnect/webhook'
     | '/api/public/mercadopago/webhook'
+    | '/api/public/security/alert'
     | '/api/public/stripe/webhook'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -325,6 +337,7 @@ export interface RootRouteChildren {
   ApiPublicBazikPayoutRoute: typeof ApiPublicBazikPayoutRoute
   ApiPublicDingconnectWebhookRoute: typeof ApiPublicDingconnectWebhookRoute
   ApiPublicMercadopagoWebhookRoute: typeof ApiPublicMercadopagoWebhookRoute
+  ApiPublicSecurityAlertRoute: typeof ApiPublicSecurityAlertRoute
   ApiPublicStripeWebhookRoute: typeof ApiPublicStripeWebhookRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -479,6 +492,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicMercadopagoWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/security/alert': {
+      id: '/api/public/security/alert'
+      path: '/api/public/security/alert'
+      fullPath: '/api/public/security/alert'
+      preLoaderRoute: typeof ApiPublicSecurityAlertRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/stripe/webhook': {
       id: '/api/public/stripe/webhook'
       path: '/api/public/stripe/webhook'
@@ -544,6 +564,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicBazikPayoutRoute: ApiPublicBazikPayoutRoute,
   ApiPublicDingconnectWebhookRoute: ApiPublicDingconnectWebhookRoute,
   ApiPublicMercadopagoWebhookRoute: ApiPublicMercadopagoWebhookRoute,
+  ApiPublicSecurityAlertRoute: ApiPublicSecurityAlertRoute,
   ApiPublicStripeWebhookRoute: ApiPublicStripeWebhookRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,

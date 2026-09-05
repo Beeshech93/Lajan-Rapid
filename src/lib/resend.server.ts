@@ -6,6 +6,7 @@ export const RESEND_CRED_NAMES = [
   "RESEND_API_KEY",
   "RESEND_FROM_EMAIL",
   "WELCOME_EMAIL_WEBHOOK_SECRET",
+  "ADMIN_ALERT_EMAIL",
 ] as const;
 
 export type ResendCredName = (typeof RESEND_CRED_NAMES)[number];
@@ -50,6 +51,7 @@ export async function resendStatusInfo() {
     hasFromEmail: Boolean(pick(stored, "RESEND_FROM_EMAIL")),
     hasWebhookSecret: Boolean(pick(stored, "WELCOME_EMAIL_WEBHOOK_SECRET")),
     fromEmail: pick(stored, "RESEND_FROM_EMAIL") ?? null,
+    alertEmail: pick(stored, "ADMIN_ALERT_EMAIL") ?? null,
   };
 }
 

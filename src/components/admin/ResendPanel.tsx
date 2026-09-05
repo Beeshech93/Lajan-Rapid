@@ -15,7 +15,7 @@ import {
   resendStatus,
 } from "@/lib/resend.functions";
 
-const CRED_KEYS = ["RESEND_API_KEY", "RESEND_FROM_EMAIL"] as const;
+const CRED_KEYS = ["RESEND_API_KEY", "RESEND_FROM_EMAIL", "ADMIN_ALERT_EMAIL"] as const;
 type CredKey = (typeof CRED_KEYS)[number];
 
 export function ResendPanel() {
@@ -33,6 +33,7 @@ export function ResendPanel() {
   const [creds, setCreds] = useState<Record<CredKey, string>>({
     RESEND_API_KEY: "",
     RESEND_FROM_EMAIL: "",
+    ADMIN_ALERT_EMAIL: "",
   });
   const setCred = (k: CredKey, v: string) => setCreds((p) => ({ ...p, [k]: v }));
 
@@ -45,7 +46,7 @@ export function ResendPanel() {
     },
     onSuccess: () => {
       toast.success("Credenciales guardadas");
-      setCreds({ RESEND_API_KEY: "", RESEND_FROM_EMAIL: "" });
+      setCreds({ RESEND_API_KEY: "", RESEND_FROM_EMAIL: "", ADMIN_ALERT_EMAIL: "" });
       void queryClient.invalidateQueries({ queryKey: ["resend_status"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -150,6 +151,23 @@ export function ResendPanel() {
             )}
             <p className="text-xs text-muted-foreground">
               El dominio de este correo debe estar verificado en tu cuenta de Resend.
+            </p>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="resend-alert">Correo de alertas de seguridad</Label>
+            <Input
+              id="resend-alert"
+              type="email"
+              placeholder="admin@lajanrapid.app"
+              value={creds.ADMIN_ALERT_EMAIL}
+              onChange={(e) => setCred("ADMIN_ALERT_EMAIL", e.target.value)}
+            />
+            {info?.alertEmail && (
+              <p className="text-xs text-muted-foreground">Actual: {info.alertEmail}</p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Aquí llegan las alertas cuando se detecta actividad sospechosa (firmas de webhook
+              inválidas, intentos de auto-aprobar KYC, etc.).
             </p>
           </div>
           <Button onClick={() => saveMut.mutate()} disabled={saveMut.isPending} className="w-full">

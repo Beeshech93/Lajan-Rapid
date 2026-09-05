@@ -17,9 +17,15 @@ export const Route = createFileRoute("/api/public/bazik/payout")({
 
         const { bazikExtractReference, bazikWebhookSecret, applyBazikResult } =
           await import("@/lib/bazik.server");
+        const { logAndAlertSecurityEvent } = await import("@/lib/security.server");
         const secret = await bazikWebhookSecret();
         if (!secret) {
           console.error("Bazik webhook: BAZIK_WEBHOOK_SECRET no configurado, rechazando");
+          await logAndAlertSecurityEvent({
+            eventType: "webhook_not_configured",
+            severity: "critical",
+            detail: { webhook: "bazik" },
+          });
           return new Response("Webhook not configured", { status: 401 });
         }
         const provided = request.headers.get("x-bazik-signature");
@@ -28,6 +34,10 @@ export const Route = createFileRoute("/api/public/bazik/payout")({
         const validSignature = Boolean(provided && provided === secret);
         const validShared = Boolean(sharedSecret && sharedSecret === secret);
         if (!validSignature && !validShared) {
+          await logAndAlertSecurityEvent({
+            eventType: "webhook_invalid_signature",
+            detail: { webhook: "bazik", ip: request.headers.get("x-forwarded-for") },
+          });
           return new Response("Invalid signature", { status: 401 });
         }
 

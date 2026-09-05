@@ -6,6 +6,7 @@ export const resendCredentialsSchema = z.object({
   RESEND_API_KEY: credField,
   RESEND_FROM_EMAIL: credField,
   WELCOME_EMAIL_WEBHOOK_SECRET: credField,
+  ADMIN_ALERT_EMAIL: credField,
 });
 
 export type ResendCredentialsInput = z.infer<typeof resendCredentialsSchema>;
