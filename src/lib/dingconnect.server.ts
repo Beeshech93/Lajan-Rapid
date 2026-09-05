@@ -150,6 +150,53 @@ export async function dingSendTransfer(opts: {
   };
 }
 
+/**
+ * Verifica con el operador real (sin cobrar ni enviar nada) que el número
+ * existe y puede recibir este producto, usando SendTransfer con
+ * ValidateOnly=true. No todos los operadores soportan esta validación —
+ * en ese caso DingConnect no puede confirmar de antemano y se deja pasar.
+ */
+export async function dingValidateAccountNumber(opts: {
+  skuCode: string;
+  sendValue: number;
+  sendCurrency: string;
+  accountNumber: string;
+}): Promise<{ ok: true } | { ok: false; reason: string }> {
+  try {
+    const raw = (await dingFetch("/SendTransfer", {
+      method: "POST",
+      body: JSON.stringify({
+        SkuCode: opts.skuCode,
+        SendValue: opts.sendValue,
+        SendCurrencyIso: opts.sendCurrency,
+        AccountNumber: opts.accountNumber,
+        DistributorRef: `validate-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        ValidateOnly: true,
+      }),
+    })) as {
+      TransferRecord?: { ProcessingState?: string; ErrorCodes?: unknown[] };
+    };
+    const state = String(raw.TransferRecord?.ProcessingState ?? "").toLowerCase();
+    if (state === "failed") {
+      const codes = Array.isArray(raw.TransferRecord?.ErrorCodes)
+        ? raw.TransferRecord.ErrorCodes.join(", ")
+        : "";
+      return {
+        ok: false,
+        reason: codes
+          ? `El operador rechazó el número (${codes}).`
+          : "El operador indicó que este número no es válido.",
+      };
+    }
+    return { ok: true };
+  } catch (e) {
+    console.error("DingConnect: no se pudo validar el número", e);
+    // Si la validación en sí falla (por ejemplo, el operador no la soporta),
+    // no bloqueamos la recarga — solo no pudimos confirmar de antemano.
+    return { ok: true };
+  }
+}
+
 function timingSafeEqual(a: string, b: string) {
   if (a.length !== b.length) return false;
   let diff = 0;

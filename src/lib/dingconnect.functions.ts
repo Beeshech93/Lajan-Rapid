@@ -27,6 +27,15 @@ export const dingSendTopup = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: DingTopupInput) => parseDingTopupInput(input))
   .handler(async ({ data, context }) => {
+    const { dingValidateAccountNumber } = await import("@/lib/dingconnect.server");
+    const validation = await dingValidateAccountNumber({
+      skuCode: data.skuCode,
+      sendValue: data.topupAmount ?? data.amount,
+      sendCurrency: data.topupCurrency ?? "",
+      accountNumber: data.phone,
+    });
+    if (!validation.ok) throw new Error(validation.reason);
+
     const { data: topup, error } = await context.supabase.rpc("create_topup", {
       _wallet_id: data.walletId,
       _sku_code: data.skuCode,
@@ -99,6 +108,15 @@ export const dingCreateTopupCheckout = createServerFn({ method: "POST" })
     }) => input,
   )
   .handler(async ({ data, context }) => {
+    const { dingValidateAccountNumber } = await import("@/lib/dingconnect.server");
+    const validation = await dingValidateAccountNumber({
+      skuCode: data.skuCode,
+      sendValue: data.topupAmount,
+      sendCurrency: data.topupCurrency,
+      accountNumber: data.phone,
+    });
+    if (!validation.ok) throw new Error(validation.reason);
+
     const { data: row, error } = await context.supabase.rpc("create_topup_pending", {
       _sku_code: data.skuCode,
       _operator: data.operator ?? "",
