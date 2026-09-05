@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as FaqRouteImport } from './routes/faq'
 import { Route as PrivacidadRouteImport } from './routes/privacidad'
 import { Route as RestablecerPasswordRouteImport } from './routes/restablecer-password'
 import { Route as UsaToHaitiRouteImport } from './routes/usa-to-haiti'
@@ -45,6 +46,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacidadRoute = PrivacidadRouteImport.update({
@@ -154,6 +160,7 @@ const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/faq': typeof FaqRoute
   '/privacidad': typeof PrivacidadRoute
   '/restablecer-password': typeof RestablecerPasswordRoute
   '/usa-to-haiti': typeof UsaToHaitiRoute
@@ -178,6 +185,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/faq': typeof FaqRoute
   '/privacidad': typeof PrivacidadRoute
   '/restablecer-password': typeof RestablecerPasswordRoute
   '/usa-to-haiti': typeof UsaToHaitiRoute
@@ -204,6 +212,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/faq': typeof FaqRoute
   '/privacidad': typeof PrivacidadRoute
   '/restablecer-password': typeof RestablecerPasswordRoute
   '/usa-to-haiti': typeof UsaToHaitiRoute
@@ -230,6 +239,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/faq'
     | '/privacidad'
     | '/restablecer-password'
     | '/usa-to-haiti'
@@ -254,6 +264,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/faq'
     | '/privacidad'
     | '/restablecer-password'
     | '/usa-to-haiti'
@@ -279,6 +290,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/faq'
     | '/privacidad'
     | '/restablecer-password'
     | '/usa-to-haiti'
@@ -305,6 +317,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  FaqRoute: typeof FaqRoute
   PrivacidadRoute: typeof PrivacidadRoute
   RestablecerPasswordRoute: typeof RestablecerPasswordRoute
   UsaToHaitiRoute: typeof UsaToHaitiRoute
@@ -338,6 +351,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacidad': {
@@ -516,6 +536,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  FaqRoute: FaqRoute,
   PrivacidadRoute: PrivacidadRoute,
   RestablecerPasswordRoute: RestablecerPasswordRoute,
   UsaToHaitiRoute: UsaToHaitiRoute,
