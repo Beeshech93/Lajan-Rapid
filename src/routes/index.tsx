@@ -22,19 +22,32 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Lajan Rapid — Envía dinero y criptomoneda a Haití" },
+      {
+        title: "Lajan Rapid | Send Money to Haiti from USA, Canada, Mexico, Brazil, Chile & France",
+      },
       {
         name: "description",
         content:
-          "Envía dinero y criptomonedas desde América y Europa a Haití  en minutos. Tipo de cambio transparente y seguimiento en tiempo real.",
+          "Lajan Rapid makes international money transfers to Haiti simple, fast and secure. Send money to Haiti from the USA, Canada, Mexico, Brazil, Chile and France.",
       },
-      { property: "og:title", content: "Lajan Rapid — Envía dinero y criptomoneda a Haití" },
+      {
+        name: "keywords",
+        content:
+          "Lajan Rapid, send money to Haiti, Haiti remittance, Haiti money transfer, USA Haiti money transfer, Canada Haiti money transfer, Mexico Haiti remittance, Brazil Haiti transfer, Chile Haiti remittance, France Haiti transfer, MonCash, NatCash",
+      },
+      { name: "robots", content: "index, follow, max-image-preview:large" },
+      {
+        property: "og:title",
+        content:
+          "Lajan Rapid | Send Money to Haiti from USA, Canada, Mexico, Brazil, Chile & France",
+      },
       {
         property: "og:description",
         content:
-          "Envía dinero y criptomonedas desde América y Europa a Haití en minutos. Tipo de cambio transparente y seguimiento en tiempo real.",
+          "Lajan Rapid makes international money transfers to Haiti simple, fast and secure. Send money to Haiti from the USA, Canada, Mexico, Brazil, Chile and France.",
       },
     ],
+    links: [{ rel: "canonical", href: "https://lajanrapid.app/" }],
     scripts: [
       {
         type: "application/ld+json",
