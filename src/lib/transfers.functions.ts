@@ -154,6 +154,10 @@ export const finalizeTransferPayout = createServerFn({ method: "POST" })
     if (t.user_id !== context.userId) throw new Error("No autorizado");
     if (t.status === "completed") throw new Error("Este envío ya fue completado");
     if (t.status === "cancelled") throw new Error("Este envío fue cancelado");
+    if (t.status === "processing") throw new Error("Este envío ya se está procesando");
+    if (t.status !== "paid") {
+      throw new Error("Este envío aún no tiene el pago confirmado");
+    }
     if (t.delivery_method !== "moncash" && t.delivery_method !== "natcash") {
       throw new Error("Este método de entrega no se puede finalizar automáticamente");
     }
