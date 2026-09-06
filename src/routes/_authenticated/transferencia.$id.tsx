@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Check, Circle, Copy, Landmark, Loader2, Store } from "lucide-react";
 import { toast } from "sonner";
 import { celebrateLogo } from "@/components/LogoAnimation";
@@ -124,13 +124,20 @@ function Detalle() {
   const shouldAutoFinalizeUser =
     !isAdmin && isDirectCashDelivery && !isCardPayment && !isOxxo && !isSpei;
 
+  // El pago automático solo puede dispararse una vez, y únicamente cuando el
+  // pago ya fue confirmado ("paid"). Sin esto, abrir la página reintentaba el
+  // envío en cada render.
+  const autoFinalizeFired = useRef(false);
+  const finalizeRef = useRef(finalize);
+  finalizeRef.current = finalize;
+
   useEffect(() => {
-    if (!t) return;
     if (!shouldAutoFinalizeUser) return;
-    if (status === "completed" || status === "cancelled") return;
-    if (finalize.isPending) return;
-    finalize.mutate();
-  }, [finalize, shouldAutoFinalizeUser, status, t]);
+    if (status !== "paid") return;
+    if (autoFinalizeFired.current) return;
+    autoFinalizeFired.current = true;
+    finalizeRef.current.mutate();
+  }, [shouldAutoFinalizeUser, status]);
 
   if (!t)
     return (
