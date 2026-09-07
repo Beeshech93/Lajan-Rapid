@@ -1,5 +1,6 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,6 +29,8 @@ import { DingConnectPanel } from "@/components/admin/DingConnectPanel";
 import { AccountingPanel } from "@/components/admin/AccountingPanel";
 import { SupportPanel } from "@/components/admin/SupportPanel";
 import { KycPanel } from "@/components/admin/KycPanel";
+import { TopupsPanel } from "@/components/admin/TopupsPanel";
+import { adminCancelTransfer, adminSetTransferStatus } from "@/lib/transfers.functions";
 import {
   money,
   shortDate,
@@ -79,6 +82,7 @@ function Admin() {
           <TabsTrigger value="bazik">Bazik API</TabsTrigger>
           <TabsTrigger value="kyc">KYC</TabsTrigger>
           <TabsTrigger value="tx">Transacciones</TabsTrigger>
+          <TabsTrigger value="recargas">Recargas</TabsTrigger>
           <TabsTrigger value="usuarios">Usuarios</TabsTrigger>
           <TabsTrigger value="tarifas">Tarifas</TabsTrigger>
         </TabsList>
@@ -96,6 +100,9 @@ function Admin() {
         </TabsContent>
         <TabsContent value="tx" className="mt-4">
           <TxPanel />
+        </TabsContent>
+        <TabsContent value="recargas" className="mt-4">
+          <TopupsPanel />
         </TabsContent>
         <TabsContent value="usuarios" className="mt-4">
           <UsersPanel />
