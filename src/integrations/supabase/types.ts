@@ -834,6 +834,36 @@ export type Database = {
         Args: { _amount: number; _description?: string; _wallet_id: string }
         Returns: number
       }
+      admin_set_topup_status: {
+        Args: { _detail?: string; _status: string; _topup_id: string }
+        Returns: {
+          amount: number
+          country_code: string
+          created_at: string
+          currency: string
+          id: string
+          operator: string
+          origin_country: string
+          payment_method: string
+          phone: string
+          provider: string
+          provider_ref: string | null
+          reference: string
+          refunded: boolean
+          sku_code: string
+          status: string
+          status_detail: string | null
+          updated_at: string
+          user_id: string
+          wallet_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "topups"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       approve_crypto_deposit: {
         Args: { _approve: boolean; _deposit_id: string; _notes?: string }
         Returns: boolean
