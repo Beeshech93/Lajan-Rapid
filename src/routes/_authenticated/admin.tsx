@@ -332,6 +332,7 @@ function TxPanel() {
 
 function UsersPanel() {
   const qc = useQueryClient();
+  const [userSearch, setUserSearch] = useState("");
   const { data: profiles } = useQuery({
     queryKey: ["admin-profiles"],
     queryFn: async () => (await supabase.from("profiles").select("*")).data ?? [],
@@ -357,9 +358,21 @@ function UsersPanel() {
     <Card>
       <CardHeader>
         <CardTitle className="text-base">Usuarios y agentes</CardTitle>
+        <Input
+          className="mt-3"
+          placeholder="Buscar por nombre o teléfono"
+          value={userSearch}
+          onChange={(e) => setUserSearch(e.target.value)}
+        />
       </CardHeader>
       <CardContent className="space-y-2">
-        {(profiles ?? []).map((p) => {
+        {(profiles ?? [])
+          .filter((p) => {
+            const q = userSearch.trim().toLowerCase();
+            if (!q) return true;
+            return [p.full_name, p.phone].filter(Boolean).some((v) => String(v).toLowerCase().includes(q));
+          })
+          .map((p) => {
           const mine = (roles ?? []).filter((r) => r.user_id === p.id).map((r) => r.role);
           const isAgent = mine.includes("agent");
           return (
