@@ -202,20 +202,88 @@ function Resumen() {
   );
 }
 
+const ALL_TRANSFER_STATUSES: TransferStatus[] = [
+  "created",
+  "awaiting_payment",
+  "paid",
+  "processing",
+  "ready_for_pickup",
+  "completed",
+  "cancelled",
+];
+
 function TxPanel() {
-  const { data } = useTransfers();
+  const qc = useQueryClient();
+  const { data, isLoading } = useTransfers();
+  const setStatus = useServerFn(adminSetTransferStatus);
+  const cancelTransfer = useServerFn(adminCancelTransfer);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<"all" | TransferStatus>("all");
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const rows = (data ?? []).filter((t) => {
+    if (filter !== "all" && t.status !== filter) return false;
+    const q = search.trim().toLowerCase();
+    if (!q) return true;
+    return [t.reference, t.recipient_name, t.recipient_phone, t.destination_country]
+      .filter(Boolean)
+      .some((v) => String(v).toLowerCase().includes(q));
+  });
+
+  const change = async (id: string, status: TransferStatus) => {
+    setBusy(id);
+    try {
+      if (status === "cancelled") {
+        const r = await cancelTransfer({ data: { transferId: id } });
+        toast.success(r.message);
+      } else {
+        const r = await setStatus({ data: { transferId: id, status } });
+        toast.success(r.message);
+      }
+      qc.invalidateQueries({ queryKey: ["admin-transfers"] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "No se pudo actualizar");
+    } finally {
+      setBusy(null);
+    }
+  };
+
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="space-y-3">
         <CardTitle className="text-base">Todas las transacciones</CardTitle>
+        <div className="grid gap-2 sm:grid-cols-[1fr_200px]">
+          <Input
+            placeholder="Buscar por referencia o destinatario"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <Select value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los estados</SelectItem>
+              {ALL_TRANSFER_STATUSES.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {STATUS_LABEL[s]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </CardHeader>
       <CardContent className="space-y-2">
-        {(data ?? []).map((t) => (
+        {isLoading && <p className="text-sm text-muted-foreground">Cargando envíos…</p>}
+        {!isLoading && rows.length === 0 && (
+          <p className="text-sm text-muted-foreground">No hay envíos para este filtro.</p>
+        )}
+        {rows.map((t) => (
           <div
             key={t.id}
             className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3"
           >
-            <div>
+            <div className="min-w-0">
               <p className="font-medium">{t.recipient_name}</p>
               <p className="text-xs text-muted-foreground">
                 {t.reference} · {t.origin_country} → {t.destination_country} · {t.payment_method} ·{" "}
@@ -231,12 +299,29 @@ function TxPanel() {
             <Badge className={STATUS_TONE[t.status as TransferStatus]} variant="secondary">
               {STATUS_LABEL[t.status as TransferStatus]}
             </Badge>
+            <Select
+              value={t.status}
+              disabled={busy === t.id || t.status === "cancelled" || t.status === "completed"}
+              onValueChange={(v) => void change(t.id, v as TransferStatus)}
+            >
+              <SelectTrigger className="h-9 w-[170px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ALL_TRANSFER_STATUSES.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {STATUS_LABEL[s]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         ))}
       </CardContent>
     </Card>
   );
 }
+
 
 function UsersPanel() {
   const qc = useQueryClient();
