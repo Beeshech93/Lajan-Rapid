@@ -96,33 +96,73 @@ async function dingFetch(path: string, init?: RequestInit) {
 export type DingProduct = {
   skuCode: string;
   operator: string;
+  planName: string;
   countryCode: string;
   minValue: number | null;
   maxValue: number | null;
   currency: string;
 };
 
-/** Catálogo de productos (operadores y montos) por país. */
+/** Nombre real de cada proveedor (GetProducts solo da un código interno como "4RHT"). */
+async function dingProviderNames(countryCode: string): Promise<Record<string, string>> {
+  try {
+    const raw = (await dingFetch(
+      `/GetProviders?countryIsos=${encodeURIComponent(countryCode.toUpperCase())}`,
+    )) as { Items?: Array<{ ProviderCode?: unknown; Name?: unknown }> };
+    const out: Record<string, string> = {};
+    for (const p of raw.Items ?? []) {
+      const code = String(p["ProviderCode"] ?? "");
+      const name = String(p["Name"] ?? "");
+      if (code && name) out[code] = name;
+    }
+    return out;
+  } catch (e) {
+    console.error("DingConnect: no se pudieron obtener los nombres de proveedor", e);
+    return {};
+  }
+}
+
+/** Catálogo de productos (operadores y montos) por país — solo recarga móvil real. */
 export async function dingProducts(countryCode: string): Promise<DingProduct[]> {
   type DingProductItem = {
     SkuCode?: unknown;
     ProviderCode?: unknown;
     ProviderName?: unknown;
     CountryIso?: unknown;
+    Benefits?: unknown;
+    DefaultDisplayText?: unknown;
     Minimum?: { SendValue?: number; SendCurrencyIso?: string };
     Maximum?: { SendValue?: number };
   };
-  const raw = (await dingFetch(
-    `/GetProducts?countryIsos=${encodeURIComponent(countryCode.toUpperCase())}`,
-  )) as { Items?: DingProductItem[] };
-  return (raw.Items ?? []).slice(0, 200).map((p) => ({
-    skuCode: String(p["SkuCode"] ?? ""),
-    operator: String(p["ProviderCode"] ?? p["ProviderName"] ?? ""),
-    countryCode: String(p["CountryIso"] ?? countryCode).toUpperCase(),
-    minValue: p["Minimum"]?.["SendValue"] ?? null,
-    maxValue: p["Maximum"]?.["SendValue"] ?? null,
-    currency: String(p["Minimum"]?.["SendCurrencyIso"] ?? ""),
-  }));
+  const [raw, providerNames] = await Promise.all([
+    dingFetch(
+      `/GetProducts?countryIsos=${encodeURIComponent(countryCode.toUpperCase())}`,
+    ) as Promise<{
+      Items?: DingProductItem[];
+    }>,
+    dingProviderNames(countryCode),
+  ]);
+
+  const items = (raw.Items ?? []).filter((p) => {
+    const benefits = Array.isArray(p["Benefits"]) ? (p["Benefits"] as unknown[]) : [];
+    // Solo recarga de saldo/minutos/datos móviles — DingConnect también mezcla
+    // en el mismo catálogo tarjetas de regalo digitales (ej. Roblox) que usan
+    // el mismo formato de número que un teléfono, pero no son recargas reales.
+    return benefits.includes("Mobile");
+  });
+
+  return items.slice(0, 200).map((p) => {
+    const code = String(p["ProviderCode"] ?? "");
+    return {
+      skuCode: String(p["SkuCode"] ?? ""),
+      operator: providerNames[code] || String(p["ProviderName"] ?? "") || code,
+      planName: String(p["DefaultDisplayText"] ?? ""),
+      countryCode: String(p["CountryIso"] ?? countryCode).toUpperCase(),
+      minValue: p["Minimum"]?.["SendValue"] ?? null,
+      maxValue: p["Maximum"]?.["SendValue"] ?? null,
+      currency: String(p["Minimum"]?.["SendCurrencyIso"] ?? ""),
+    };
+  });
 }
 
 /** Envía la recarga al proveedor. La confirmación final llega por webhook. */

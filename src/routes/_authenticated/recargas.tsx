@@ -456,7 +456,10 @@ function Recargas() {
               <SelectContent>
                 {plans.map((p) => (
                   <SelectItem key={p.skuCode} value={p.skuCode}>
-                    {p.minValue != null ? `${p.minValue} – ${p.maxValue} ${p.currency}` : p.skuCode}
+                    {p.planName ||
+                      (p.minValue != null
+                        ? `${p.minValue} – ${p.maxValue} ${p.currency}`
+                        : p.skuCode)}
                   </SelectItem>
                 ))}
               </SelectContent>
