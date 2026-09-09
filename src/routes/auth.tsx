@@ -2,7 +2,7 @@ import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Loader2, ArrowRight } from "lucide-react";
+import { Loader2, ArrowRight, Mail, Lock, User, Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
@@ -249,7 +249,10 @@ function AuthPage() {
                           setPhoneInput(formatNational(v, phoneInput, c?.dial));
                         }}
                       >
-                        <SelectTrigger className="w-[136px]" aria-label={t("auth.country_code")}>
+                        <SelectTrigger
+                          className="h-12 w-[136px] rounded-full"
+                          aria-label={t("auth.country_code")}
+                        >
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="max-h-72">
@@ -267,7 +270,7 @@ function AuthPage() {
                         inputMode="tel"
                         required
                         maxLength={24}
-                        className="flex-1"
+                        className="h-12 flex-1 rounded-full"
                         placeholder={formatNational(dial, "0".repeat(lens[0] ?? 8))}
                         value={phoneInput}
                         onChange={(e) => {
@@ -383,10 +386,34 @@ function Field({
   label: string;
   type?: string;
 }) {
+  const [show, setShow] = useState(false);
+  const isPassword = type === "password";
+  const Icon = isPassword ? Lock : type === "email" ? Mail : User;
+
   return (
     <div className="space-y-1.5">
       <Label htmlFor={id}>{label}</Label>
-      <Input id={id} name={name} type={type} required maxLength={255} />
+      <div className="relative">
+        <Icon className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          id={id}
+          name={name}
+          type={isPassword && show ? "text" : type}
+          required
+          maxLength={255}
+          className={`h-12 rounded-full pl-11 ${isPassword ? "pr-11" : "pr-4"}`}
+        />
+        {isPassword && (
+          <button
+            type="button"
+            onClick={() => setShow((v) => !v)}
+            aria-label={show ? "Ocultar contraseña" : "Mostrar contraseña"}
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          >
+            {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+          </button>
+        )}
+      </div>
     </div>
   );
 }
