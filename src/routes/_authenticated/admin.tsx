@@ -329,7 +329,6 @@ function TxPanel() {
   );
 }
 
-
 function UsersPanel() {
   const qc = useQueryClient();
   const [userSearch, setUserSearch] = useState("");
@@ -370,36 +369,38 @@ function UsersPanel() {
           .filter((p) => {
             const q = userSearch.trim().toLowerCase();
             if (!q) return true;
-            return [p.full_name, p.phone].filter(Boolean).some((v) => String(v).toLowerCase().includes(q));
+            return [p.full_name, p.phone]
+              .filter(Boolean)
+              .some((v) => String(v).toLowerCase().includes(q));
           })
           .map((p) => {
-          const mine = (roles ?? []).filter((r) => r.user_id === p.id).map((r) => r.role);
-          const isAgent = mine.includes("agent");
-          return (
-            <div
-              key={p.id}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3"
-            >
-              <div>
-                <p className="font-medium">{p.full_name || "Sin nombre"}</p>
-                <p className="text-xs text-muted-foreground">{p.phone || "sin teléfono"}</p>
-              </div>
-              <div className="flex flex-wrap gap-1">
-                {mine.map((r) => (
-                  <Badge key={r} variant="outline">
-                    {r}
+            const mine = (roles ?? []).filter((r) => r.user_id === p.id).map((r) => r.role);
+            const isAgent = mine.includes("agent");
+            return (
+              <div
+                key={p.id}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3"
+              >
+                <div>
+                  <p className="font-medium">{p.full_name || "Sin nombre"}</p>
+                  <p className="text-xs text-muted-foreground">{p.phone || "sin teléfono"}</p>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {mine.map((r) => (
+                    <Badge key={r} variant="outline">
+                      {r}
+                    </Badge>
+                  ))}
+                  <Badge className={KYC_TONE[p.kyc_status as KycStatus]} variant="secondary">
+                    {KYC_LABEL[p.kyc_status as KycStatus]}
                   </Badge>
-                ))}
-                <Badge className={KYC_TONE[p.kyc_status as KycStatus]} variant="secondary">
-                  {KYC_LABEL[p.kyc_status as KycStatus]}
-                </Badge>
+                </div>
+                <Button size="sm" variant="outline" onClick={() => void toggleAgent(p.id, isAgent)}>
+                  {isAgent ? "Quitar agente" : "Hacer agente"}
+                </Button>
               </div>
-              <Button size="sm" variant="outline" onClick={() => void toggleAgent(p.id, isAgent)}>
-                {isAgent ? "Quitar agente" : "Hacer agente"}
-              </Button>
-            </div>
-          );
-        })}
+            );
+          })}
       </CardContent>
     </Card>
   );
