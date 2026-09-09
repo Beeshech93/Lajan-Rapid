@@ -173,161 +173,164 @@ function AuthPage() {
   };
 
   return (
-    <div className="grid min-h-screen place-items-center bg-brand px-4 py-10">
-      <div className="w-full max-w-md">
-        <div className="mb-4 flex justify-end">
+    <div className="min-h-screen bg-brand px-5 py-10 text-primary-foreground">
+      <div className="mx-auto flex w-full max-w-sm flex-col">
+        <div className="mb-2 flex justify-end">
           <LanguageSwitcher className="h-9 w-[150px] border-white/20 bg-white/10 text-xs text-primary-foreground" />
         </div>
-        <div className="mb-6 text-center text-foreground">
-          <span className="mx-auto grid size-14 place-items-center overflow-hidden rounded-2xl bg-logo-surface p-1.5 shadow-soft">
+
+        <div className="mb-8 mt-6 text-center">
+          <span className="mx-auto grid size-16 place-items-center overflow-hidden rounded-2xl bg-logo-surface p-2 shadow-lift">
             <img src={logoAsset.url} alt="Lajan Rapid" className="h-full w-full object-contain" />
           </span>
-          <h1 className="mt-3 font-display text-2xl font-bold">Lajan Rapid</h1>
-          <p className="text-sm opacity-80">{t("app.tagline")}</p>
+          <h1 className="mt-5 font-display text-3xl font-bold leading-tight">
+            {tab === "registro" ? t("auth.welcome") : t("auth.welcome")}
+          </h1>
+          <p className="mx-auto mt-2 max-w-[280px] text-sm text-primary-foreground/70">
+            {t("auth.subtitle")}
+          </p>
         </div>
 
-        <Card className="shadow-lift">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xl">{t("auth.welcome")}</CardTitle>
-            <CardDescription>{t("auth.subtitle")}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs value={tab} onValueChange={setTab}>
-              <TabsList className="grid w-full grid-cols-2 rounded-full bg-secondary p-1">
-                <TabsTrigger value="ingreso" className="rounded-full press">
-                  {t("auth.signin")}
-                </TabsTrigger>
-                <TabsTrigger value="registro" className="rounded-full press">
-                  {t("auth.signup")}
-                </TabsTrigger>
-              </TabsList>
+        <Tabs value={tab} onValueChange={setTab}>
+          <TabsList className="grid w-full grid-cols-2 rounded-full bg-white/10 p-1">
+            <TabsTrigger
+              value="ingreso"
+              className="press rounded-full text-primary-foreground/70 data-[state=active]:bg-primary-foreground data-[state=active]:text-primary"
+            >
+              {t("auth.signin")}
+            </TabsTrigger>
+            <TabsTrigger
+              value="registro"
+              className="press rounded-full text-primary-foreground/70 data-[state=active]:bg-primary-foreground data-[state=active]:text-primary"
+            >
+              {t("auth.signup")}
+            </TabsTrigger>
+          </TabsList>
 
-              <TabsContent value="ingreso">
-                <form className="space-y-3" onSubmit={(e) => handle(e, "ingreso")}>
-                  <Field id="email-in" name="email" label={t("auth.email")} type="email" />
-                  <Field id="pass-in" name="password" label={t("auth.password")} type="password" />
-                  <Button
-                    className="press h-11 w-full gap-2 rounded-full shadow-lift"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="size-4 animate-spin" /> {t("auth.entering")}
-                      </>
-                    ) : (
-                      <>
-                        {t("auth.enter")} <ArrowRight className="size-4" />
-                      </>
-                    )}
-                  </Button>
-                  <button
-                    type="button"
-                    className="w-full text-center text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
-                    onClick={() => {
-                      setShowForgot(true);
-                      setResetSent(false);
+          <TabsContent value="ingreso" className="mt-6">
+            <form className="space-y-4" onSubmit={(e) => handle(e, "ingreso")}>
+              <Field id="email-in" name="email" label={t("auth.email")} type="email" />
+              <Field id="pass-in" name="password" label={t("auth.password")} type="password" />
+              <Button
+                className="press h-12 w-full gap-2 rounded-full bg-primary-foreground text-primary shadow-lift hover:bg-primary-foreground/90"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" /> {t("auth.entering")}
+                  </>
+                ) : (
+                  <>
+                    {t("auth.enter")} <ArrowRight className="size-4" />
+                  </>
+                )}
+              </Button>
+              <button
+                type="button"
+                className="w-full text-center text-xs text-primary-foreground/70 underline underline-offset-2 hover:text-primary-foreground"
+                onClick={() => {
+                  setShowForgot(true);
+                  setResetSent(false);
+                }}
+              >
+                {t("auth.forgot_password")}
+              </button>
+            </form>
+          </TabsContent>
+
+          <TabsContent value="registro" className="mt-6">
+            <form className="space-y-4" onSubmit={(e) => handle(e, "registro")}>
+              <Field id="name-up" name="full_name" label={t("auth.fullname")} />
+
+              <div className="space-y-1.5">
+                <Label htmlFor="phone-up">{t("auth.phone")}</Label>
+                <div className="flex gap-2">
+                  <Select
+                    value={dial}
+                    onValueChange={(v) => {
+                      setDial(v);
+                      setPhoneError(null);
+                      const c = DIAL_COUNTRIES.find((x) => x.code === v);
+                      setPhoneInput(formatNational(v, phoneInput, c?.dial));
                     }}
                   >
-                    {t("auth.forgot_password")}
-                  </button>
-                </form>
-              </TabsContent>
-
-              <TabsContent value="registro">
-                <form className="space-y-3" onSubmit={(e) => handle(e, "registro")}>
-                  <Field id="name-up" name="full_name" label={t("auth.fullname")} />
-
-                  <div className="space-y-1.5">
-                    <Label htmlFor="phone-up">{t("auth.phone")}</Label>
-                    <div className="flex gap-2">
-                      <Select
-                        value={dial}
-                        onValueChange={(v) => {
-                          setDial(v);
-                          setPhoneError(null);
-                          const c = DIAL_COUNTRIES.find((x) => x.code === v);
-                          setPhoneInput(formatNational(v, phoneInput, c?.dial));
-                        }}
-                      >
-                        <SelectTrigger
-                          className="h-12 w-[136px] rounded-full"
-                          aria-label={t("auth.country_code")}
-                        >
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-72">
-                          {DIAL_COUNTRIES.map((c) => (
-                            <SelectItem key={c.code} value={c.code}>
-                              {c.flag} {c.dial}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Input
-                        id="phone-up"
-                        name="phone"
-                        type="tel"
-                        inputMode="tel"
-                        required
-                        maxLength={24}
-                        className="h-12 flex-1 rounded-full"
-                        placeholder={formatNational(dial, "0".repeat(lens[0] ?? 8))}
-                        value={phoneInput}
-                        onChange={(e) => {
-                          setPhoneInput(formatNational(dial, e.target.value, country?.dial));
-                          setPhoneError(null);
-                        }}
-                        onBlur={() => setPhoneError(check.ok ? null : t("auth.invalid_phone"))}
-                        aria-invalid={!!phoneError}
-                        aria-describedby="phone-help"
-                      />
-                    </div>
-                    <p
-                      id="phone-help"
-                      className={`text-xs ${phoneError ? "text-destructive" : "text-muted-foreground"}`}
+                    <SelectTrigger
+                      className="h-12 w-[136px] rounded-full"
+                      aria-label={t("auth.country_code")}
                     >
-                      {phoneError
-                        ? `${phoneError} (${digitsHint} ${t("auth.digits")})`
-                        : check.ok
-                          ? check.e164
-                          : `${t("auth.phone_hint")} · ${digitsHint} ${t("auth.digits")}`}
-                    </p>
-                  </div>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-72">
+                      {DIAL_COUNTRIES.map((c) => (
+                        <SelectItem key={c.code} value={c.code}>
+                          {c.flag} {c.dial}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    id="phone-up"
+                    name="phone"
+                    type="tel"
+                    inputMode="tel"
+                    required
+                    maxLength={24}
+                    className="h-12 flex-1 rounded-full"
+                    placeholder={formatNational(dial, "0".repeat(lens[0] ?? 8))}
+                    value={phoneInput}
+                    onChange={(e) => {
+                      setPhoneInput(formatNational(dial, e.target.value, country?.dial));
+                      setPhoneError(null);
+                    }}
+                    onBlur={() => setPhoneError(check.ok ? null : t("auth.invalid_phone"))}
+                    aria-invalid={!!phoneError}
+                    aria-describedby="phone-help"
+                  />
+                </div>
+                <p
+                  id="phone-help"
+                  className={`text-xs ${phoneError ? "text-destructive" : "text-primary-foreground/60"}`}
+                >
+                  {phoneError
+                    ? `${phoneError} (${digitsHint} ${t("auth.digits")})`
+                    : check.ok
+                      ? check.e164
+                      : `${t("auth.phone_hint")} · ${digitsHint} ${t("auth.digits")}`}
+                </p>
+              </div>
 
-                  <Field id="email-up" name="email" label={t("auth.email")} type="email" />
-                  <Field id="pass-up" name="password" label={t("auth.password")} type="password" />
-                  <Button
-                    className="press h-11 w-full gap-2 rounded-full shadow-lift"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="size-4 animate-spin" /> {t("auth.creating")}
-                      </>
-                    ) : (
-                      <>
-                        {t("auth.signup")} <ArrowRight className="size-4" />
-                      </>
-                    )}
-                  </Button>
-                </form>
-              </TabsContent>
-            </Tabs>
+              <Field id="email-up" name="email" label={t("auth.email")} type="email" />
+              <Field id="pass-up" name="password" label={t("auth.password")} type="password" />
+              <Button
+                className="press h-12 w-full gap-2 rounded-full bg-primary-foreground text-primary shadow-lift hover:bg-primary-foreground/90"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" /> {t("auth.creating")}
+                  </>
+                ) : (
+                  <>
+                    {t("auth.signup")} <ArrowRight className="size-4" />
+                  </>
+                )}
+              </Button>
+            </form>
+          </TabsContent>
+        </Tabs>
 
-            <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
-              <span className="h-px flex-1 bg-border" /> {t("auth.or")}{" "}
-              <span className="h-px flex-1 bg-border" />
-            </div>
-            <Button
-              variant="outline"
-              className="press h-11 w-full gap-2.5 rounded-full"
-              onClick={google}
-              type="button"
-            >
-              <GoogleIcon className="size-4" /> {t("auth.google")}
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="my-5 flex items-center gap-3 text-xs text-primary-foreground/60">
+          <span className="h-px flex-1 bg-white/15" /> {t("auth.or")}{" "}
+          <span className="h-px flex-1 bg-white/15" />
+        </div>
+        <Button
+          variant="outline"
+          className="press h-12 w-full gap-2.5 rounded-full border-white/20 bg-white/5 text-primary-foreground hover:bg-white/10 hover:text-primary-foreground"
+          onClick={google}
+          type="button"
+        >
+          <GoogleIcon className="size-4" /> {t("auth.google")}
+        </Button>
       </div>
 
       <Dialog
