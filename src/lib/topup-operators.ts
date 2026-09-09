@@ -30,7 +30,7 @@ export const TOPUP_COUNTRIES: TopupCountry[] = [
     label: "🇲🇽 México",
     dialCode: "+52",
     placeholder: "+52 55 1234 5678",
-    operators: ["Telcel", "AT&T", "Movistar", "Unefon", "Virgin Mobile"],
+    operators: ["Telcel", "AT&T", "Movistar", "Bait", "Unefon", "Virgin Mobile"],
   },
   {
     code: "US",
@@ -58,7 +58,7 @@ export const TOPUP_COUNTRIES: TopupCountry[] = [
     label: "🇧🇷 Brasil",
     dialCode: "+55",
     placeholder: "+55 11 91234 5678",
-    operators: ["Vivo", "Claro", "TIM", "Oi"],
+    operators: ["Vivo", "Claro", "TIM"],
   },
   {
     code: "CO",
