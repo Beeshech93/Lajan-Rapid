@@ -3,6 +3,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useRealtimeInvalidate } from "@/hooks/useRealtimeInvalidate";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +34,7 @@ type KycRow = {
 
 export function KycPanel() {
   const qc = useQueryClient();
+  useRealtimeInvalidate("kyc_submissions", ["admin-kyc"]);
   const { data } = useQuery({
     queryKey: ["admin-kyc"],
     queryFn: async () =>

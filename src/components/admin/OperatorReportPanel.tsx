@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Smartphone } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useRealtimeInvalidate } from "@/hooks/useRealtimeInvalidate";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -34,6 +35,7 @@ const STATUS_TONE: Record<string, string> = {
 };
 
 export function OperatorReportPanel() {
+  useRealtimeInvalidate("topups", ["admin-topups-by-operator"]);
   const { data } = useQuery({
     queryKey: ["admin-topups-by-operator"],
     queryFn: async () => {

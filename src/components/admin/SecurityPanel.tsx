@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useRealtimeInvalidate } from "@/hooks/useRealtimeInvalidate";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { shortDate } from "@/lib/remesa";
@@ -12,6 +13,7 @@ const SEVERITY_TONE: Record<string, string> = {
 };
 
 export function SecurityPanel() {
+  useRealtimeInvalidate("security_events", ["security_events"]);
   const { data: events } = useQuery({
     queryKey: ["security_events"],
     queryFn: async () => {

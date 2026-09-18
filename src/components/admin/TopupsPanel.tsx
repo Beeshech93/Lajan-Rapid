@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useRealtimeInvalidate } from "@/hooks/useRealtimeInvalidate";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -35,6 +36,7 @@ const TONE: Record<TopupStatus, string> = {
 
 export function TopupsPanel() {
   const qc = useQueryClient();
+  useRealtimeInvalidate("topups", ["admin-topups"]);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | TopupStatus>("all");
   const [busy, setBusy] = useState<string | null>(null);
