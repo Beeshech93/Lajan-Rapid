@@ -12,12 +12,26 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ComoEnviarDineroRouteImport } from './routes/como-enviar-dinero'
+import { Route as ContactoRouteImport } from './routes/contacto'
+import { Route as EnviarDineroAHaitiRouteImport } from './routes/enviar-dinero-a-haiti'
 import { Route as FaqRouteImport } from './routes/faq'
+import { Route as MoncashRouteImport } from './routes/moncash'
+import { Route as NatcashRouteImport } from './routes/natcash'
 import { Route as PrivacidadRouteImport } from './routes/privacidad'
 import { Route as RestablecerPasswordRouteImport } from './routes/restablecer-password'
+import { Route as SobreNosotrosRouteImport } from './routes/sobre-nosotros'
+import { Route as TarifasRouteImport } from './routes/tarifas'
 import { Route as TraderRouteImport } from './routes/trader'
 import { Route as UsaToHaitiRouteImport } from './routes/usa-to-haiti'
 import { Route as LangIndexRouteImport } from './routes/$lang/index'
+import { Route as LangComoEnviarDineroRouteImport } from './routes/$lang/como-enviar-dinero'
+import { Route as LangContactoRouteImport } from './routes/$lang/contacto'
+import { Route as LangEnviarDineroAHaitiRouteImport } from './routes/$lang/enviar-dinero-a-haiti'
+import { Route as LangMoncashRouteImport } from './routes/$lang/moncash'
+import { Route as LangNatcashRouteImport } from './routes/$lang/natcash'
+import { Route as LangSobreNosotrosRouteImport } from './routes/$lang/sobre-nosotros'
+import { Route as LangTarifasRouteImport } from './routes/$lang/tarifas'
 import { Route as LangTraderRouteImport } from './routes/$lang/trader'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAgenteRouteImport } from './routes/_authenticated/agente'
@@ -52,9 +66,34 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ComoEnviarDineroRoute = ComoEnviarDineroRouteImport.update({
+  id: '/como-enviar-dinero',
+  path: '/como-enviar-dinero',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactoRoute = ContactoRouteImport.update({
+  id: '/contacto',
+  path: '/contacto',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EnviarDineroAHaitiRoute = EnviarDineroAHaitiRouteImport.update({
+  id: '/enviar-dinero-a-haiti',
+  path: '/enviar-dinero-a-haiti',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FaqRoute = FaqRouteImport.update({
   id: '/faq',
   path: '/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MoncashRoute = MoncashRouteImport.update({
+  id: '/moncash',
+  path: '/moncash',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NatcashRoute = NatcashRouteImport.update({
+  id: '/natcash',
+  path: '/natcash',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacidadRoute = PrivacidadRouteImport.update({
@@ -65,6 +104,16 @@ const PrivacidadRoute = PrivacidadRouteImport.update({
 const RestablecerPasswordRoute = RestablecerPasswordRouteImport.update({
   id: '/restablecer-password',
   path: '/restablecer-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SobreNosotrosRoute = SobreNosotrosRouteImport.update({
+  id: '/sobre-nosotros',
+  path: '/sobre-nosotros',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TarifasRoute = TarifasRouteImport.update({
+  id: '/tarifas',
+  path: '/tarifas',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TraderRoute = TraderRouteImport.update({
@@ -80,6 +129,41 @@ const UsaToHaitiRoute = UsaToHaitiRouteImport.update({
 const LangIndexRoute = LangIndexRouteImport.update({
   id: '/$lang/',
   path: '/$lang/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LangComoEnviarDineroRoute = LangComoEnviarDineroRouteImport.update({
+  id: '/$lang/como-enviar-dinero',
+  path: '/$lang/como-enviar-dinero',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LangContactoRoute = LangContactoRouteImport.update({
+  id: '/$lang/contacto',
+  path: '/$lang/contacto',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LangEnviarDineroAHaitiRoute = LangEnviarDineroAHaitiRouteImport.update({
+  id: '/$lang/enviar-dinero-a-haiti',
+  path: '/$lang/enviar-dinero-a-haiti',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LangMoncashRoute = LangMoncashRouteImport.update({
+  id: '/$lang/moncash',
+  path: '/$lang/moncash',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LangNatcashRoute = LangNatcashRouteImport.update({
+  id: '/$lang/natcash',
+  path: '/$lang/natcash',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LangSobreNosotrosRoute = LangSobreNosotrosRouteImport.update({
+  id: '/$lang/sobre-nosotros',
+  path: '/$lang/sobre-nosotros',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LangTarifasRoute = LangTarifasRouteImport.update({
+  id: '/$lang/tarifas',
+  path: '/$lang/tarifas',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LangTraderRoute = LangTraderRouteImport.update({
@@ -184,11 +268,25 @@ const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/como-enviar-dinero': typeof ComoEnviarDineroRoute
+  '/contacto': typeof ContactoRoute
+  '/enviar-dinero-a-haiti': typeof EnviarDineroAHaitiRoute
   '/faq': typeof FaqRoute
+  '/moncash': typeof MoncashRoute
+  '/natcash': typeof NatcashRoute
   '/privacidad': typeof PrivacidadRoute
   '/restablecer-password': typeof RestablecerPasswordRoute
+  '/sobre-nosotros': typeof SobreNosotrosRoute
+  '/tarifas': typeof TarifasRoute
   '/trader': typeof TraderRoute
   '/usa-to-haiti': typeof UsaToHaitiRoute
+  '/$lang/como-enviar-dinero': typeof LangComoEnviarDineroRoute
+  '/$lang/contacto': typeof LangContactoRoute
+  '/$lang/enviar-dinero-a-haiti': typeof LangEnviarDineroAHaitiRoute
+  '/$lang/moncash': typeof LangMoncashRoute
+  '/$lang/natcash': typeof LangNatcashRoute
+  '/$lang/sobre-nosotros': typeof LangSobreNosotrosRoute
+  '/$lang/tarifas': typeof LangTarifasRoute
   '/$lang/trader': typeof LangTraderRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/agente': typeof AuthenticatedAgenteRoute
@@ -213,11 +311,25 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/como-enviar-dinero': typeof ComoEnviarDineroRoute
+  '/contacto': typeof ContactoRoute
+  '/enviar-dinero-a-haiti': typeof EnviarDineroAHaitiRoute
   '/faq': typeof FaqRoute
+  '/moncash': typeof MoncashRoute
+  '/natcash': typeof NatcashRoute
   '/privacidad': typeof PrivacidadRoute
   '/restablecer-password': typeof RestablecerPasswordRoute
+  '/sobre-nosotros': typeof SobreNosotrosRoute
+  '/tarifas': typeof TarifasRoute
   '/trader': typeof TraderRoute
   '/usa-to-haiti': typeof UsaToHaitiRoute
+  '/$lang/como-enviar-dinero': typeof LangComoEnviarDineroRoute
+  '/$lang/contacto': typeof LangContactoRoute
+  '/$lang/enviar-dinero-a-haiti': typeof LangEnviarDineroAHaitiRoute
+  '/$lang/moncash': typeof LangMoncashRoute
+  '/$lang/natcash': typeof LangNatcashRoute
+  '/$lang/sobre-nosotros': typeof LangSobreNosotrosRoute
+  '/$lang/tarifas': typeof LangTarifasRoute
   '/$lang/trader': typeof LangTraderRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/agente': typeof AuthenticatedAgenteRoute
@@ -244,11 +356,25 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/como-enviar-dinero': typeof ComoEnviarDineroRoute
+  '/contacto': typeof ContactoRoute
+  '/enviar-dinero-a-haiti': typeof EnviarDineroAHaitiRoute
   '/faq': typeof FaqRoute
+  '/moncash': typeof MoncashRoute
+  '/natcash': typeof NatcashRoute
   '/privacidad': typeof PrivacidadRoute
   '/restablecer-password': typeof RestablecerPasswordRoute
+  '/sobre-nosotros': typeof SobreNosotrosRoute
+  '/tarifas': typeof TarifasRoute
   '/trader': typeof TraderRoute
   '/usa-to-haiti': typeof UsaToHaitiRoute
+  '/$lang/como-enviar-dinero': typeof LangComoEnviarDineroRoute
+  '/$lang/contacto': typeof LangContactoRoute
+  '/$lang/enviar-dinero-a-haiti': typeof LangEnviarDineroAHaitiRoute
+  '/$lang/moncash': typeof LangMoncashRoute
+  '/$lang/natcash': typeof LangNatcashRoute
+  '/$lang/sobre-nosotros': typeof LangSobreNosotrosRoute
+  '/$lang/tarifas': typeof LangTarifasRoute
   '/$lang/trader': typeof LangTraderRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/agente': typeof AuthenticatedAgenteRoute
@@ -275,11 +401,25 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/como-enviar-dinero'
+    | '/contacto'
+    | '/enviar-dinero-a-haiti'
     | '/faq'
+    | '/moncash'
+    | '/natcash'
     | '/privacidad'
     | '/restablecer-password'
+    | '/sobre-nosotros'
+    | '/tarifas'
     | '/trader'
     | '/usa-to-haiti'
+    | '/$lang/como-enviar-dinero'
+    | '/$lang/contacto'
+    | '/$lang/enviar-dinero-a-haiti'
+    | '/$lang/moncash'
+    | '/$lang/natcash'
+    | '/$lang/sobre-nosotros'
+    | '/$lang/tarifas'
     | '/$lang/trader'
     | '/admin'
     | '/agente'
@@ -304,11 +444,25 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/como-enviar-dinero'
+    | '/contacto'
+    | '/enviar-dinero-a-haiti'
     | '/faq'
+    | '/moncash'
+    | '/natcash'
     | '/privacidad'
     | '/restablecer-password'
+    | '/sobre-nosotros'
+    | '/tarifas'
     | '/trader'
     | '/usa-to-haiti'
+    | '/$lang/como-enviar-dinero'
+    | '/$lang/contacto'
+    | '/$lang/enviar-dinero-a-haiti'
+    | '/$lang/moncash'
+    | '/$lang/natcash'
+    | '/$lang/sobre-nosotros'
+    | '/$lang/tarifas'
     | '/$lang/trader'
     | '/admin'
     | '/agente'
@@ -334,11 +488,25 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/como-enviar-dinero'
+    | '/contacto'
+    | '/enviar-dinero-a-haiti'
     | '/faq'
+    | '/moncash'
+    | '/natcash'
     | '/privacidad'
     | '/restablecer-password'
+    | '/sobre-nosotros'
+    | '/tarifas'
     | '/trader'
     | '/usa-to-haiti'
+    | '/$lang/como-enviar-dinero'
+    | '/$lang/contacto'
+    | '/$lang/enviar-dinero-a-haiti'
+    | '/$lang/moncash'
+    | '/$lang/natcash'
+    | '/$lang/sobre-nosotros'
+    | '/$lang/tarifas'
     | '/$lang/trader'
     | '/_authenticated/admin'
     | '/_authenticated/agente'
@@ -365,11 +533,25 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ComoEnviarDineroRoute: typeof ComoEnviarDineroRoute
+  ContactoRoute: typeof ContactoRoute
+  EnviarDineroAHaitiRoute: typeof EnviarDineroAHaitiRoute
   FaqRoute: typeof FaqRoute
+  MoncashRoute: typeof MoncashRoute
+  NatcashRoute: typeof NatcashRoute
   PrivacidadRoute: typeof PrivacidadRoute
   RestablecerPasswordRoute: typeof RestablecerPasswordRoute
+  SobreNosotrosRoute: typeof SobreNosotrosRoute
+  TarifasRoute: typeof TarifasRoute
   TraderRoute: typeof TraderRoute
   UsaToHaitiRoute: typeof UsaToHaitiRoute
+  LangComoEnviarDineroRoute: typeof LangComoEnviarDineroRoute
+  LangContactoRoute: typeof LangContactoRoute
+  LangEnviarDineroAHaitiRoute: typeof LangEnviarDineroAHaitiRoute
+  LangMoncashRoute: typeof LangMoncashRoute
+  LangNatcashRoute: typeof LangNatcashRoute
+  LangSobreNosotrosRoute: typeof LangSobreNosotrosRoute
+  LangTarifasRoute: typeof LangTarifasRoute
   LangTraderRoute: typeof LangTraderRoute
   LangIndexRoute: typeof LangIndexRoute
   ApiPublicAuthWelcomeRoute: typeof ApiPublicAuthWelcomeRoute
@@ -405,11 +587,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/como-enviar-dinero': {
+      id: '/como-enviar-dinero'
+      path: '/como-enviar-dinero'
+      fullPath: '/como-enviar-dinero'
+      preLoaderRoute: typeof ComoEnviarDineroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contacto': {
+      id: '/contacto'
+      path: '/contacto'
+      fullPath: '/contacto'
+      preLoaderRoute: typeof ContactoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/enviar-dinero-a-haiti': {
+      id: '/enviar-dinero-a-haiti'
+      path: '/enviar-dinero-a-haiti'
+      fullPath: '/enviar-dinero-a-haiti'
+      preLoaderRoute: typeof EnviarDineroAHaitiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/faq': {
       id: '/faq'
       path: '/faq'
       fullPath: '/faq'
       preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/moncash': {
+      id: '/moncash'
+      path: '/moncash'
+      fullPath: '/moncash'
+      preLoaderRoute: typeof MoncashRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/natcash': {
+      id: '/natcash'
+      path: '/natcash'
+      fullPath: '/natcash'
+      preLoaderRoute: typeof NatcashRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacidad': {
@@ -424,6 +641,20 @@ declare module '@tanstack/react-router' {
       path: '/restablecer-password'
       fullPath: '/restablecer-password'
       preLoaderRoute: typeof RestablecerPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sobre-nosotros': {
+      id: '/sobre-nosotros'
+      path: '/sobre-nosotros'
+      fullPath: '/sobre-nosotros'
+      preLoaderRoute: typeof SobreNosotrosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tarifas': {
+      id: '/tarifas'
+      path: '/tarifas'
+      fullPath: '/tarifas'
+      preLoaderRoute: typeof TarifasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/trader': {
@@ -445,6 +676,55 @@ declare module '@tanstack/react-router' {
       path: '/$lang'
       fullPath: '/$lang/'
       preLoaderRoute: typeof LangIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$lang/como-enviar-dinero': {
+      id: '/$lang/como-enviar-dinero'
+      path: '/$lang/como-enviar-dinero'
+      fullPath: '/$lang/como-enviar-dinero'
+      preLoaderRoute: typeof LangComoEnviarDineroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$lang/contacto': {
+      id: '/$lang/contacto'
+      path: '/$lang/contacto'
+      fullPath: '/$lang/contacto'
+      preLoaderRoute: typeof LangContactoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$lang/enviar-dinero-a-haiti': {
+      id: '/$lang/enviar-dinero-a-haiti'
+      path: '/$lang/enviar-dinero-a-haiti'
+      fullPath: '/$lang/enviar-dinero-a-haiti'
+      preLoaderRoute: typeof LangEnviarDineroAHaitiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$lang/moncash': {
+      id: '/$lang/moncash'
+      path: '/$lang/moncash'
+      fullPath: '/$lang/moncash'
+      preLoaderRoute: typeof LangMoncashRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$lang/natcash': {
+      id: '/$lang/natcash'
+      path: '/$lang/natcash'
+      fullPath: '/$lang/natcash'
+      preLoaderRoute: typeof LangNatcashRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$lang/sobre-nosotros': {
+      id: '/$lang/sobre-nosotros'
+      path: '/$lang/sobre-nosotros'
+      fullPath: '/$lang/sobre-nosotros'
+      preLoaderRoute: typeof LangSobreNosotrosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$lang/tarifas': {
+      id: '/$lang/tarifas'
+      path: '/$lang/tarifas'
+      fullPath: '/$lang/tarifas'
+      preLoaderRoute: typeof LangTarifasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/$lang/trader': {
@@ -616,11 +896,25 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ComoEnviarDineroRoute: ComoEnviarDineroRoute,
+  ContactoRoute: ContactoRoute,
+  EnviarDineroAHaitiRoute: EnviarDineroAHaitiRoute,
   FaqRoute: FaqRoute,
+  MoncashRoute: MoncashRoute,
+  NatcashRoute: NatcashRoute,
   PrivacidadRoute: PrivacidadRoute,
   RestablecerPasswordRoute: RestablecerPasswordRoute,
+  SobreNosotrosRoute: SobreNosotrosRoute,
+  TarifasRoute: TarifasRoute,
   TraderRoute: TraderRoute,
   UsaToHaitiRoute: UsaToHaitiRoute,
+  LangComoEnviarDineroRoute: LangComoEnviarDineroRoute,
+  LangContactoRoute: LangContactoRoute,
+  LangEnviarDineroAHaitiRoute: LangEnviarDineroAHaitiRoute,
+  LangMoncashRoute: LangMoncashRoute,
+  LangNatcashRoute: LangNatcashRoute,
+  LangSobreNosotrosRoute: LangSobreNosotrosRoute,
+  LangTarifasRoute: LangTarifasRoute,
   LangTraderRoute: LangTraderRoute,
   LangIndexRoute: LangIndexRoute,
   ApiPublicAuthWelcomeRoute: ApiPublicAuthWelcomeRoute,
