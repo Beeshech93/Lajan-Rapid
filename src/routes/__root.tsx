@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -138,8 +139,22 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: ReactNode }) {
+  // El atributo lang del <html> se calcula desde la URL (funciona igual en
+  // el servidor y en el cliente), para que Google/Bing vean el idioma real
+  // de cada página desde el primer HTML — antes quedaba fijo en "es" y solo
+  // se corregía después, del lado del cliente, lo cual los rastreadores no
+  // ven a tiempo.
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const htmlLang = pathname.startsWith("/es/")
+    ? "es"
+    : pathname.startsWith("/fr/")
+      ? "fr"
+      : pathname.startsWith("/ht/")
+        ? "ht"
+        : "en";
+
   return (
-    <html lang="es">
+    <html lang={htmlLang}>
       <head>
         <HeadContent />
       </head>
