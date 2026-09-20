@@ -15,8 +15,10 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as PrivacidadRouteImport } from './routes/privacidad'
 import { Route as RestablecerPasswordRouteImport } from './routes/restablecer-password'
+import { Route as TraderRouteImport } from './routes/trader'
 import { Route as UsaToHaitiRouteImport } from './routes/usa-to-haiti'
 import { Route as LangIndexRouteImport } from './routes/$lang/index'
+import { Route as LangTraderRouteImport } from './routes/$lang/trader'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAgenteRouteImport } from './routes/_authenticated/agente'
 import { Route as AuthenticatedCriptoRouteImport } from './routes/_authenticated/cripto'
@@ -65,6 +67,11 @@ const RestablecerPasswordRoute = RestablecerPasswordRouteImport.update({
   path: '/restablecer-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TraderRoute = TraderRouteImport.update({
+  id: '/trader',
+  path: '/trader',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UsaToHaitiRoute = UsaToHaitiRouteImport.update({
   id: '/usa-to-haiti',
   path: '/usa-to-haiti',
@@ -73,6 +80,11 @@ const UsaToHaitiRoute = UsaToHaitiRouteImport.update({
 const LangIndexRoute = LangIndexRouteImport.update({
   id: '/$lang/',
   path: '/$lang/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LangTraderRoute = LangTraderRouteImport.update({
+  id: '/$lang/trader',
+  path: '/$lang/trader',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
@@ -175,7 +187,9 @@ export interface FileRoutesByFullPath {
   '/faq': typeof FaqRoute
   '/privacidad': typeof PrivacidadRoute
   '/restablecer-password': typeof RestablecerPasswordRoute
+  '/trader': typeof TraderRoute
   '/usa-to-haiti': typeof UsaToHaitiRoute
+  '/$lang/trader': typeof LangTraderRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/agente': typeof AuthenticatedAgenteRoute
   '/cripto': typeof AuthenticatedCriptoRoute
@@ -202,7 +216,9 @@ export interface FileRoutesByTo {
   '/faq': typeof FaqRoute
   '/privacidad': typeof PrivacidadRoute
   '/restablecer-password': typeof RestablecerPasswordRoute
+  '/trader': typeof TraderRoute
   '/usa-to-haiti': typeof UsaToHaitiRoute
+  '/$lang/trader': typeof LangTraderRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/agente': typeof AuthenticatedAgenteRoute
   '/cripto': typeof AuthenticatedCriptoRoute
@@ -231,7 +247,9 @@ export interface FileRoutesById {
   '/faq': typeof FaqRoute
   '/privacidad': typeof PrivacidadRoute
   '/restablecer-password': typeof RestablecerPasswordRoute
+  '/trader': typeof TraderRoute
   '/usa-to-haiti': typeof UsaToHaitiRoute
+  '/$lang/trader': typeof LangTraderRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/agente': typeof AuthenticatedAgenteRoute
   '/_authenticated/cripto': typeof AuthenticatedCriptoRoute
@@ -260,7 +278,9 @@ export interface FileRouteTypes {
     | '/faq'
     | '/privacidad'
     | '/restablecer-password'
+    | '/trader'
     | '/usa-to-haiti'
+    | '/$lang/trader'
     | '/admin'
     | '/agente'
     | '/cripto'
@@ -287,7 +307,9 @@ export interface FileRouteTypes {
     | '/faq'
     | '/privacidad'
     | '/restablecer-password'
+    | '/trader'
     | '/usa-to-haiti'
+    | '/$lang/trader'
     | '/admin'
     | '/agente'
     | '/cripto'
@@ -315,7 +337,9 @@ export interface FileRouteTypes {
     | '/faq'
     | '/privacidad'
     | '/restablecer-password'
+    | '/trader'
     | '/usa-to-haiti'
+    | '/$lang/trader'
     | '/_authenticated/admin'
     | '/_authenticated/agente'
     | '/_authenticated/cripto'
@@ -344,7 +368,9 @@ export interface RootRouteChildren {
   FaqRoute: typeof FaqRoute
   PrivacidadRoute: typeof PrivacidadRoute
   RestablecerPasswordRoute: typeof RestablecerPasswordRoute
+  TraderRoute: typeof TraderRoute
   UsaToHaitiRoute: typeof UsaToHaitiRoute
+  LangTraderRoute: typeof LangTraderRoute
   LangIndexRoute: typeof LangIndexRoute
   ApiPublicAuthWelcomeRoute: typeof ApiPublicAuthWelcomeRoute
   ApiPublicBazikPayoutRoute: typeof ApiPublicBazikPayoutRoute
@@ -400,6 +426,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RestablecerPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/trader': {
+      id: '/trader'
+      path: '/trader'
+      fullPath: '/trader'
+      preLoaderRoute: typeof TraderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/usa-to-haiti': {
       id: '/usa-to-haiti'
       path: '/usa-to-haiti'
@@ -412,6 +445,13 @@ declare module '@tanstack/react-router' {
       path: '/$lang'
       fullPath: '/$lang/'
       preLoaderRoute: typeof LangIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$lang/trader': {
+      id: '/$lang/trader'
+      path: '/$lang/trader'
+      fullPath: '/$lang/trader'
+      preLoaderRoute: typeof LangTraderRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin': {
@@ -579,7 +619,9 @@ const rootRouteChildren: RootRouteChildren = {
   FaqRoute: FaqRoute,
   PrivacidadRoute: PrivacidadRoute,
   RestablecerPasswordRoute: RestablecerPasswordRoute,
+  TraderRoute: TraderRoute,
   UsaToHaitiRoute: UsaToHaitiRoute,
+  LangTraderRoute: LangTraderRoute,
   LangIndexRoute: LangIndexRoute,
   ApiPublicAuthWelcomeRoute: ApiPublicAuthWelcomeRoute,
   ApiPublicBazikPayoutRoute: ApiPublicBazikPayoutRoute,
