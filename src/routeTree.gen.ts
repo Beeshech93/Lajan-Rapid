@@ -16,6 +16,7 @@ import { Route as FaqRouteImport } from './routes/faq'
 import { Route as PrivacidadRouteImport } from './routes/privacidad'
 import { Route as RestablecerPasswordRouteImport } from './routes/restablecer-password'
 import { Route as UsaToHaitiRouteImport } from './routes/usa-to-haiti'
+import { Route as LangIndexRouteImport } from './routes/$lang/index'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAgenteRouteImport } from './routes/_authenticated/agente'
 import { Route as AuthenticatedCriptoRouteImport } from './routes/_authenticated/cripto'
@@ -67,6 +68,11 @@ const RestablecerPasswordRoute = RestablecerPasswordRouteImport.update({
 const UsaToHaitiRoute = UsaToHaitiRouteImport.update({
   id: '/usa-to-haiti',
   path: '/usa-to-haiti',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LangIndexRoute = LangIndexRouteImport.update({
+  id: '/$lang/',
+  path: '/$lang/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
@@ -179,6 +185,7 @@ export interface FileRoutesByFullPath {
   '/perfil': typeof AuthenticatedPerfilRoute
   '/recargas': typeof AuthenticatedRecargasRoute
   '/soporte': typeof AuthenticatedSoporteRoute
+  '/$lang/': typeof LangIndexRoute
   '/transferencia/$id': typeof AuthenticatedTransferenciaIdRoute
   '/api/public/auth/welcome': typeof ApiPublicAuthWelcomeRoute
   '/api/public/bazik/payout': typeof ApiPublicBazikPayoutRoute
@@ -205,6 +212,7 @@ export interface FileRoutesByTo {
   '/perfil': typeof AuthenticatedPerfilRoute
   '/recargas': typeof AuthenticatedRecargasRoute
   '/soporte': typeof AuthenticatedSoporteRoute
+  '/$lang': typeof LangIndexRoute
   '/transferencia/$id': typeof AuthenticatedTransferenciaIdRoute
   '/api/public/auth/welcome': typeof ApiPublicAuthWelcomeRoute
   '/api/public/bazik/payout': typeof ApiPublicBazikPayoutRoute
@@ -233,6 +241,7 @@ export interface FileRoutesById {
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
   '/_authenticated/recargas': typeof AuthenticatedRecargasRoute
   '/_authenticated/soporte': typeof AuthenticatedSoporteRoute
+  '/$lang/': typeof LangIndexRoute
   '/_authenticated/transferencia/$id': typeof AuthenticatedTransferenciaIdRoute
   '/api/public/auth/welcome': typeof ApiPublicAuthWelcomeRoute
   '/api/public/bazik/payout': typeof ApiPublicBazikPayoutRoute
@@ -261,6 +270,7 @@ export interface FileRouteTypes {
     | '/perfil'
     | '/recargas'
     | '/soporte'
+    | '/$lang/'
     | '/transferencia/$id'
     | '/api/public/auth/welcome'
     | '/api/public/bazik/payout'
@@ -287,6 +297,7 @@ export interface FileRouteTypes {
     | '/perfil'
     | '/recargas'
     | '/soporte'
+    | '/$lang'
     | '/transferencia/$id'
     | '/api/public/auth/welcome'
     | '/api/public/bazik/payout'
@@ -314,6 +325,7 @@ export interface FileRouteTypes {
     | '/_authenticated/perfil'
     | '/_authenticated/recargas'
     | '/_authenticated/soporte'
+    | '/$lang/'
     | '/_authenticated/transferencia/$id'
     | '/api/public/auth/welcome'
     | '/api/public/bazik/payout'
@@ -333,6 +345,7 @@ export interface RootRouteChildren {
   PrivacidadRoute: typeof PrivacidadRoute
   RestablecerPasswordRoute: typeof RestablecerPasswordRoute
   UsaToHaitiRoute: typeof UsaToHaitiRoute
+  LangIndexRoute: typeof LangIndexRoute
   ApiPublicAuthWelcomeRoute: typeof ApiPublicAuthWelcomeRoute
   ApiPublicBazikPayoutRoute: typeof ApiPublicBazikPayoutRoute
   ApiPublicDingconnectWebhookRoute: typeof ApiPublicDingconnectWebhookRoute
@@ -392,6 +405,13 @@ declare module '@tanstack/react-router' {
       path: '/usa-to-haiti'
       fullPath: '/usa-to-haiti'
       preLoaderRoute: typeof UsaToHaitiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$lang/': {
+      id: '/$lang/'
+      path: '/$lang'
+      fullPath: '/$lang/'
+      preLoaderRoute: typeof LangIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin': {
@@ -560,6 +580,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacidadRoute: PrivacidadRoute,
   RestablecerPasswordRoute: RestablecerPasswordRoute,
   UsaToHaitiRoute: UsaToHaitiRoute,
+  LangIndexRoute: LangIndexRoute,
   ApiPublicAuthWelcomeRoute: ApiPublicAuthWelcomeRoute,
   ApiPublicBazikPayoutRoute: ApiPublicBazikPayoutRoute,
   ApiPublicDingconnectWebhookRoute: ApiPublicDingconnectWebhookRoute,

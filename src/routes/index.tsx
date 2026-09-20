@@ -47,7 +47,14 @@ export const Route = createFileRoute("/")({
           "Lajan Rapid makes international money transfers to Haiti simple, fast and secure. Send money to Haiti from the USA, Canada, Mexico, Brazil, Chile and France.",
       },
     ],
-    links: [{ rel: "canonical", href: "https://lajanrapid.app/" }],
+    links: [
+      { rel: "canonical", href: "https://lajanrapid.app/" },
+      { rel: "alternate", hreflang: "en", href: "https://lajanrapid.app/" },
+      { rel: "alternate", hreflang: "es", href: "https://lajanrapid.app/es/" },
+      { rel: "alternate", hreflang: "fr", href: "https://lajanrapid.app/fr/" },
+      { rel: "alternate", hreflang: "ht", href: "https://lajanrapid.app/ht/" },
+      { rel: "alternate", hreflang: "x-default", href: "https://lajanrapid.app/" },
+    ],
     scripts: [
       {
         type: "application/ld+json",
@@ -103,7 +110,7 @@ export const Route = createFileRoute("/")({
   component: Landing,
 });
 
-function Landing() {
+export function Landing() {
   const { t } = useI18n();
   const [origin, setOrigin] = useState("MX");
   const [destination, setDestination] = useState("HT");
