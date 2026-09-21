@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { celebrateLogo } from "@/components/LogoAnimation";
 import { Smartphone, Send, Copy, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useCountries, useRate } from "@/hooks/useCorridors";
+import { useCountries, useTopupRate } from "@/hooks/useCorridors";
 import { useProfile } from "@/hooks/useProfile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -228,7 +228,7 @@ function Recargas() {
   )?.currency;
   const operatorCurrency = selected?.currency || destinationCurrency || "";
   const sameCurrency = !!payCurrency && !!operatorCurrency && payCurrency === operatorCurrency;
-  const { data: topupRate } = useRate(
+  const { data: topupRate } = useTopupRate(
     sameCurrency ? undefined : payCurrency || undefined,
     sameCurrency ? undefined : operatorCurrency || undefined,
   );

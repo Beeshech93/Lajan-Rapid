@@ -481,6 +481,39 @@ export type Database = {
         };
         Relationships: [];
       };
+      topup_rates: {
+        Row: {
+          created_at: string;
+          from_currency: string;
+          id: string;
+          is_active: boolean;
+          rate: number;
+          to_currency: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          from_currency: string;
+          id?: string;
+          is_active?: boolean;
+          rate: number;
+          to_currency: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          from_currency?: string;
+          id?: string;
+          is_active?: boolean;
+          rate?: number;
+          to_currency?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [];
+      };
       topups: {
         Row: {
           amount: number;

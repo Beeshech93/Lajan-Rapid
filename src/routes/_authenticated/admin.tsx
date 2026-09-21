@@ -26,6 +26,7 @@ import { StripePanel } from "@/components/admin/StripePanel";
 import { ResendPanel } from "@/components/admin/ResendPanel";
 import { SecurityPanel } from "@/components/admin/SecurityPanel";
 import { OperatorReportPanel } from "@/components/admin/OperatorReportPanel";
+import { TopupRatesPanel } from "@/components/admin/TopupRatesPanel";
 import { DingConnectPanel } from "@/components/admin/DingConnectPanel";
 import { AccountingPanel } from "@/components/admin/AccountingPanel";
 import { SupportPanel } from "@/components/admin/SupportPanel";
@@ -78,6 +79,7 @@ function Admin() {
           <TabsTrigger value="resend">Correo</TabsTrigger>
           <TabsTrigger value="security">Seguridad</TabsTrigger>
           <TabsTrigger value="operators">Operadores</TabsTrigger>
+          <TabsTrigger value="topup-rates">Tasas Ding</TabsTrigger>
           <TabsTrigger value="dingconnect">Recargas (Ding)</TabsTrigger>
           <TabsTrigger value="cripto">Cripto</TabsTrigger>
           <TabsTrigger value="bazik">Bazik API</TabsTrigger>
@@ -131,6 +133,9 @@ function Admin() {
         </TabsContent>
         <TabsContent value="operators" className="mt-4">
           <OperatorReportPanel />
+        </TabsContent>
+        <TabsContent value="topup-rates" className="mt-4">
+          <TopupRatesPanel />
         </TabsContent>
         <TabsContent value="dingconnect" className="mt-4">
           <DingConnectPanel />
@@ -471,8 +476,9 @@ function RatesPanel() {
         <CardHeader>
           <CardTitle className="text-base">Tarifas por corredor</CardTitle>
           <p className="text-xs text-muted-foreground">
-            Estas mismas tasas se usan para calcular cuánto recibe el destinatario en los envíos de
-            dinero y en las recargas de saldo móvil.
+            Estas tasas se usan para calcular cuánto recibe el destinatario en los envíos de dinero.
+            Las recargas de saldo móvil (DingConnect) usan su propia tasa, configurable en la
+            pestaña "Tasas Ding".
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
