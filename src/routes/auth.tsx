@@ -173,10 +173,10 @@ function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-brand px-5 py-10 text-primary-foreground">
+    <div className="min-h-screen bg-brand px-5 py-10 text-foreground">
       <div className="mx-auto flex w-full max-w-sm flex-col">
         <div className="mb-2 flex justify-end">
-          <LanguageSwitcher className="h-9 w-[150px] border-white/20 bg-white/10 text-xs text-primary-foreground" />
+          <LanguageSwitcher className="h-9 w-[150px] border-white/20 bg-white/10 text-xs text-foreground" />
         </div>
 
         <div className="mb-8 mt-6 text-center">
@@ -186,7 +186,7 @@ function AuthPage() {
           <h1 className="mt-5 font-display text-3xl font-bold leading-tight">
             {tab === "registro" ? t("auth.welcome") : t("auth.welcome")}
           </h1>
-          <p className="mx-auto mt-2 max-w-[280px] text-sm text-primary-foreground/70">
+          <p className="mx-auto mt-2 max-w-[280px] text-sm text-foreground/70">
             {t("auth.subtitle")}
           </p>
         </div>
@@ -195,13 +195,13 @@ function AuthPage() {
           <TabsList className="grid w-full grid-cols-2 rounded-full bg-white/10 p-1">
             <TabsTrigger
               value="ingreso"
-              className="press rounded-full text-primary-foreground/70 data-[state=active]:bg-primary-foreground data-[state=active]:text-primary"
+              className="press rounded-full text-foreground/70 data-[state=active]:bg-primary-foreground data-[state=active]:text-primary"
             >
               {t("auth.signin")}
             </TabsTrigger>
             <TabsTrigger
               value="registro"
-              className="press rounded-full text-primary-foreground/70 data-[state=active]:bg-primary-foreground data-[state=active]:text-primary"
+              className="press rounded-full text-foreground/70 data-[state=active]:bg-primary-foreground data-[state=active]:text-primary"
             >
               {t("auth.signup")}
             </TabsTrigger>
@@ -227,7 +227,7 @@ function AuthPage() {
               </Button>
               <button
                 type="button"
-                className="w-full text-center text-xs text-primary-foreground/70 underline underline-offset-2 hover:text-primary-foreground"
+                className="w-full text-center text-xs text-foreground/70 underline underline-offset-2 hover:text-foreground"
                 onClick={() => {
                   setShowForgot(true);
                   setResetSent(false);
@@ -289,7 +289,7 @@ function AuthPage() {
                 </div>
                 <p
                   id="phone-help"
-                  className={`text-xs ${phoneError ? "text-destructive" : "text-primary-foreground/60"}`}
+                  className={`text-xs ${phoneError ? "text-destructive" : "text-foreground/60"}`}
                 >
                   {phoneError
                     ? `${phoneError} (${digitsHint} ${t("auth.digits")})`
@@ -319,13 +319,13 @@ function AuthPage() {
           </TabsContent>
         </Tabs>
 
-        <div className="my-5 flex items-center gap-3 text-xs text-primary-foreground/60">
+        <div className="my-5 flex items-center gap-3 text-xs text-foreground/60">
           <span className="h-px flex-1 bg-white/15" /> {t("auth.or")}{" "}
           <span className="h-px flex-1 bg-white/15" />
         </div>
         <Button
           variant="outline"
-          className="press h-12 w-full gap-2.5 rounded-full border-white/20 bg-white/5 text-primary-foreground hover:bg-white/10 hover:text-primary-foreground"
+          className="press h-12 w-full gap-2.5 rounded-full border-white/20 bg-white/5 text-foreground hover:bg-white/10 hover:text-foreground"
           onClick={google}
           type="button"
         >

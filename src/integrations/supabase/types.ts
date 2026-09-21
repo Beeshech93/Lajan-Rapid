@@ -491,6 +491,8 @@ export type Database = {
           operator: string;
           origin_country: string;
           payment_method: string;
+          pay_amount: number | null;
+          pay_currency: string | null;
           phone: string;
           provider: string;
           provider_ref: string | null;
@@ -512,6 +514,8 @@ export type Database = {
           operator?: string;
           origin_country?: string;
           payment_method?: string;
+          pay_amount?: number | null;
+          pay_currency?: string | null;
           phone: string;
           provider?: string;
           provider_ref?: string | null;
@@ -533,6 +537,8 @@ export type Database = {
           operator?: string;
           origin_country?: string;
           payment_method?: string;
+          pay_amount?: number | null;
+          pay_currency?: string | null;
           phone?: string;
           provider?: string;
           provider_ref?: string | null;

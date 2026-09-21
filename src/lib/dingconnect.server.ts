@@ -361,6 +361,13 @@ export async function applyDingResult(opts: {
 
   if (next === "failed" && !topup.refunded && topup.wallet_id) {
     const walletId = topup.wallet_id;
+    // pay_amount/pay_currency es lo que realmente se descontó de la
+    // billetera (puede diferir de amount/currency, que desde la tasa
+    // manual de recargas representa la moneda del operador, no la de la
+    // billetera). Las recargas creadas antes de ese cambio no tienen
+    // pay_amount, así que se usa amount/currency como respaldo.
+    const refundAmount = topup.pay_amount ?? topup.amount;
+    const refundCurrency = topup.pay_currency ?? topup.currency;
     const { data: wallet } = await supabaseAdmin
       .from("wallets")
       .select("balance")
@@ -369,14 +376,14 @@ export async function applyDingResult(opts: {
     if (wallet) {
       await supabaseAdmin
         .from("wallets")
-        .update({ balance: Number(wallet.balance) + Number(topup.amount) })
+        .update({ balance: Number(wallet.balance) + Number(refundAmount) })
         .eq("id", walletId);
       await supabaseAdmin.from("wallet_transactions").insert({
         wallet_id: walletId,
         user_id: topup.user_id,
         kind: "topup_refund",
-        amount: Number(topup.amount),
-        currency: topup.currency,
+        amount: Number(refundAmount),
+        currency: refundCurrency,
         description: `Devolución de recarga ${topup.reference}`,
       });
       await supabaseAdmin.from("topups").update({ refunded: true }).eq("id", topup.id);
