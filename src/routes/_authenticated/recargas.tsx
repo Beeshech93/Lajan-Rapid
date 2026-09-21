@@ -210,6 +210,13 @@ function Recargas() {
     [products, country, operator],
   );
 
+  // Antes se elegía el plan a mano; ahora se toma automáticamente el primero
+  // disponible del operador (sigue siendo necesario para saber qué producto
+  // real enviarle a DingConnect — rango de monto, moneda, etc.).
+  useEffect(() => {
+    setSku(plans[0]?.skuCode ?? "");
+  }, [plans]);
+
   const selected = (products?.items ?? []).find((p) => p.skuCode === sku);
 
   // Tasa manual (configurada en /admin) de la moneda de pago a la moneda del
@@ -241,7 +248,6 @@ function Recargas() {
     mutationFn: async () => {
       if (profile?.kyc_status !== "approved") throw new Error(t("topup.err_kyc"));
       if (!operator) throw new Error(t("topup.err_operator"));
-      if (!sku && plans.length > 0) throw new Error(t("topup.err_plan"));
       if (!phone.trim()) throw new Error(t("topup.err_phone_empty"));
       if (!phoneCheck.ok || !phoneCheck.e164)
         throw new Error(phoneError ?? t("topup.err_phone_invalid"));
@@ -437,33 +443,6 @@ function Recargas() {
             {products && !products.ok && (
               <p className="text-xs text-muted-foreground">{t("topup.provider_fallback_note")}</p>
             )}
-          </div>
-
-          <div className="space-y-1.5">
-            <Label>{t("topup.plan")}</Label>
-            <Select value={sku} onValueChange={setSku} disabled={plans.length === 0}>
-              <SelectTrigger>
-                <SelectValue
-                  placeholder={
-                    !operator
-                      ? t("topup.choose_operator_first")
-                      : plans.length === 0
-                        ? t("topup.free_amount")
-                        : t("topup.choose_plan")
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {plans.map((p) => (
-                  <SelectItem key={p.skuCode} value={p.skuCode}>
-                    {p.planName ||
-                      (p.minValue != null
-                        ? `${p.minValue} – ${p.maxValue} ${p.currency}`
-                        : p.skuCode)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
 
           <div className="space-y-1.5">
