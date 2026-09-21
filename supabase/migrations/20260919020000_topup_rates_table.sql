@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS public.topup_rates (
   is_active boolean NOT NULL DEFAULT true,
   updated_by uuid,
   created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (from_currency, to_currency)
 );
 
 ALTER TABLE public.topup_rates ENABLE ROW LEVEL SECURITY;
