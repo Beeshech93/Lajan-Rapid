@@ -11,6 +11,7 @@ import { quote, money } from "@/lib/remesa";
 import { useRate } from "@/hooks/useCorridors";
 import { useI18n } from "@/lib/i18n";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { InstallAppCard } from "@/components/InstallAppCard";
 
 export function CorridorLanding({
   originCode,
@@ -186,6 +187,10 @@ export function CorridorLanding({
             desc={t("landing.stat_countries_desc")}
           />
         </dl>
+      </section>
+
+      <section id="install-app" className="mx-auto max-w-2xl px-5 pb-20">
+        <InstallAppCard />
       </section>
 
       <footer className="border-t py-8 text-center text-sm text-muted-foreground">
