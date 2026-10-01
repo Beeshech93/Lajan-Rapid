@@ -131,7 +131,7 @@ export const dingCreateTopupCheckout = createServerFn({ method: "POST" })
 
     const topup = row as unknown as { id: string; reference: string; currency: string };
     const email = context.claims?.email as string | undefined;
-    const base = process.env["PUBLIC_URL"] || "https://lajanrapid-app.lovable.app";
+    const base = process.env["PUBLIC_URL"] || "https://lajanrapid.app";
     const description = `Recarga ${data.phone} · ${data.operator ?? ""}`;
 
     const { data: profile } = await context.supabase
