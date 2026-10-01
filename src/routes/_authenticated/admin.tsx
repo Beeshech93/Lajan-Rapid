@@ -30,6 +30,7 @@ import { TopupRatesPanel } from "@/components/admin/TopupRatesPanel";
 import { DingConnectPanel } from "@/components/admin/DingConnectPanel";
 import { AccountingPanel } from "@/components/admin/AccountingPanel";
 import { SupportPanel } from "@/components/admin/SupportPanel";
+import { AdBannerPanel } from "@/components/admin/AdBannerPanel";
 import { KycPanel } from "@/components/admin/KycPanel";
 import { TopupsPanel } from "@/components/admin/TopupsPanel";
 import { adminCancelTransfer, adminSetTransferStatus } from "@/lib/transfers.functions";
@@ -74,6 +75,7 @@ function Admin() {
           <TabsTrigger value="resumen">Resumen</TabsTrigger>
           <TabsTrigger value="contabilidad">Contabilidad</TabsTrigger>
           <TabsTrigger value="soporte">Soporte</TabsTrigger>
+          <TabsTrigger value="banner">Banner</TabsTrigger>
           <TabsTrigger value="mercadopago">Mercado Pago</TabsTrigger>
           <TabsTrigger value="stripe">Stripe</TabsTrigger>
           <TabsTrigger value="resend">Correo</TabsTrigger>
@@ -97,6 +99,9 @@ function Admin() {
         </TabsContent>
         <TabsContent value="soporte" className="mt-4">
           <SupportPanel />
+        </TabsContent>
+        <TabsContent value="banner" className="mt-4">
+          <AdBannerPanel />
         </TabsContent>
         <TabsContent value="kyc" className="mt-4">
           <KycPanel />

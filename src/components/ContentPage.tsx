@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import logoAsset from "@/assets/lajan-rapid-logo.png";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { Button } from "@/components/ui/button";
+import { AdBanner } from "@/components/AdBanner";
 import { ArrowRight } from "lucide-react";
 
 export type ContentSection = { title: string; body: string; list?: string[] };
@@ -37,6 +38,10 @@ export function ContentPage({
             {cta} <ArrowRight className="size-4" />
           </Link>
         </Button>
+      </section>
+
+      <section className="mx-auto max-w-3xl px-5 pb-8">
+        <AdBanner />
       </section>
 
       <section className="mx-auto max-w-3xl space-y-8 px-5 pb-16">

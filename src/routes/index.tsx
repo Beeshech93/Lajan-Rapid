@@ -19,6 +19,7 @@ import { useCountries, useRate } from "@/hooks/useCorridors";
 import { useI18n } from "@/lib/i18n";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { InstallAppCard } from "@/components/InstallAppCard";
+import { AdBanner } from "@/components/AdBanner";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -302,6 +303,10 @@ export function Landing() {
             desc={t("landing.stat_countries_desc")}
           />
         </dl>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-5 pb-10">
+        <AdBanner />
       </section>
 
       <section id="install-app" className="mx-auto max-w-2xl px-5 pb-20">

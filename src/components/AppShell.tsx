@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { NotificationBell } from "@/components/NotificationBell";
+import { AdBanner } from "@/components/AdBanner";
 import { useI18n } from "@/lib/i18n";
 
 const baseNav = [
@@ -149,6 +150,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           className="flex-1 px-4 pt-5 md:px-8 md:pb-10"
           style={{ paddingBottom: "calc(5.75rem + env(safe-area-inset-bottom))" }}
         >
+          <AdBanner className="mb-5" />
           {children}
         </main>
 
