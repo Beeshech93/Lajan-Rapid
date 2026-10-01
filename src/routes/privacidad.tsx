@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, Shield } from "lucide-react";
 
-import logoAsset from "@/assets/lajan-rapid-logo.png.asset.json";
+import logoAsset from "@/assets/lajan-rapid-logo.png";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/privacidad")({
@@ -34,7 +34,7 @@ function PrivacyPage() {
         <div className="mx-auto flex max-w-3xl items-center justify-between px-5 py-4">
           <Link to="/" className="flex items-center gap-2.5">
             <span className="grid size-9 place-items-center overflow-hidden rounded-xl bg-logo-surface p-1 shadow-soft">
-              <img src={logoAsset.url} alt="Lajan Rapid" className="h-full w-full object-contain" />
+              <img src={logoAsset} alt="Lajan Rapid" className="h-full w-full object-contain" />
             </span>
             <span className="font-display text-lg font-semibold tracking-tight text-foreground">
               Lajan Rapid

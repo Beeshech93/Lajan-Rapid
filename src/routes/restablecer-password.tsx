@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import logoAsset from "@/assets/lajan-rapid-logo.png.asset.json";
+import logoAsset from "@/assets/lajan-rapid-logo.png";
 import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/restablecer-password")({
@@ -75,7 +75,7 @@ function ResetPasswordPage() {
       <div className="w-full max-w-md">
         <div className="mb-6 text-center text-foreground">
           <span className="mx-auto grid size-14 place-items-center overflow-hidden rounded-2xl bg-logo-surface p-1.5 shadow-soft">
-            <img src={logoAsset.url} alt="Lajan Rapid" className="h-full w-full object-contain" />
+            <img src={logoAsset} alt="Lajan Rapid" className="h-full w-full object-contain" />
           </span>
           <h1 className="mt-3 font-display text-2xl font-bold">Lajan Rapid</h1>
         </div>

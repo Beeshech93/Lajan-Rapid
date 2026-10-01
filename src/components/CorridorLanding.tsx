@@ -2,8 +2,8 @@ import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowRight, ShieldCheck, Timer, Wallet, TrendingUp } from "lucide-react";
 
-import logoAsset from "@/assets/lajan-rapid-logo.png.asset.json";
-import womanPhoneAsset from "@/assets/woman-phone-navy.png.asset.json";
+import logoAsset from "@/assets/lajan-rapid-logo.png";
+import womanPhoneAsset from "@/assets/woman-phone-navy.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -44,7 +44,7 @@ export function CorridorLanding({
         <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5">
           <Link to="/" className="flex items-center gap-2.5">
             <span className="grid size-9 place-items-center overflow-hidden rounded-xl bg-logo-surface p-1 shadow-soft">
-              <img src={logoAsset.url} alt="Lajan Rapid" className="h-full w-full object-contain" />
+              <img src={logoAsset} alt="Lajan Rapid" className="h-full w-full object-contain" />
             </span>
             <span className="font-display text-lg font-semibold tracking-tight">Lajan Rapid</span>
           </Link>
@@ -74,7 +74,7 @@ export function CorridorLanding({
           <div className="relative mx-auto flex w-full max-w-[280px] justify-center lg:max-w-none lg:justify-start">
             <div className="relative w-full overflow-hidden rounded-[2rem] border border-primary-foreground/10 shadow-lift shadow-black/20">
               <img
-                src={womanPhoneAsset.url}
+                src={womanPhoneAsset}
                 alt="Mujer sonriendo mientras usa Lajan Rapid en su teléfono"
                 className="aspect-[3/4] w-full object-cover"
               />

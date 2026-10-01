@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import logoAsset from "@/assets/lajan-rapid-logo.png.asset.json";
+import logoAsset from "@/assets/lajan-rapid-logo.png";
 
 const CELEBRATE_EVENT = "lajan:celebrate";
 
@@ -43,7 +43,7 @@ export function LogoIntro() {
     >
       <div className="flex flex-col items-center gap-4">
         <span className="logo-pop grid size-28 place-items-center overflow-hidden rounded-3xl bg-logo-surface p-3 shadow-lift">
-          <img src={logoAsset.url} alt="" className="h-full w-full object-contain" />
+          <img src={logoAsset} alt="" className="h-full w-full object-contain" />
         </span>
         <span className="logo-shine h-1 w-24 rounded-full bg-primary/70" />
       </div>
@@ -72,7 +72,7 @@ export function LogoCelebration() {
         <span className="logo-ring absolute size-32 rounded-full border-2 border-primary" />
         <span className="logo-ring logo-ring-delay absolute size-32 rounded-full border-2 border-primary" />
         <span className="logo-celebrate grid size-24 place-items-center overflow-hidden rounded-3xl bg-logo-surface p-3 shadow-lift">
-          <img src={logoAsset.url} alt="" className="h-full w-full object-contain" />
+          <img src={logoAsset} alt="" className="h-full w-full object-contain" />
         </span>
       </div>
     </div>

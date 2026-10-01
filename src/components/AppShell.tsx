@@ -12,7 +12,7 @@ import {
   Smartphone,
 } from "lucide-react";
 import type { ReactNode } from "react";
-import logoAsset from "@/assets/lajan-rapid-logo.png.asset.json";
+import logoAsset from "@/assets/lajan-rapid-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { cn } from "@/lib/utils";
@@ -86,7 +86,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="mb-8 flex items-center justify-between gap-2">
           <Link to="/dashboard" className="flex min-w-0 items-center gap-2">
             <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-xl bg-logo-surface p-1">
-              <img src={logoAsset.url} alt="Lajan Rapid" className="h-full w-full object-contain" />
+              <img src={logoAsset} alt="Lajan Rapid" className="h-full w-full object-contain" />
             </span>
             <span className="truncate font-display text-lg font-semibold">Lajan Rapid</span>
           </Link>
@@ -127,7 +127,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <header className="sticky top-0 z-30 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b bg-card/90 px-4 py-3 pt-[calc(0.75rem+env(safe-area-inset-top))] backdrop-blur-md md:hidden">
           <Link to="/dashboard" className="flex min-w-0 items-center gap-2">
             <span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-lg bg-logo-surface p-0.5">
-              <img src={logoAsset.url} alt="Lajan Rapid" className="h-full w-full object-contain" />
+              <img src={logoAsset} alt="Lajan Rapid" className="h-full w-full object-contain" />
             </span>
             <span className="truncate font-display font-semibold">Lajan Rapid</span>
           </Link>

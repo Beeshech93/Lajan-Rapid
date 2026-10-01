@@ -23,7 +23,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import logoAsset from "@/assets/lajan-rapid-logo.png.asset.json";
+import logoAsset from "@/assets/lajan-rapid-logo.png";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useI18n } from "@/lib/i18n";
 import { DIAL_COUNTRIES, expectedLengths, formatNational, validatePhone } from "@/lib/phone";
@@ -168,7 +168,7 @@ function AuthPage() {
 
         <div className="mb-8 mt-6 text-center">
           <span className="mx-auto grid size-16 place-items-center overflow-hidden rounded-2xl bg-logo-surface p-2 shadow-lift">
-            <img src={logoAsset.url} alt="Lajan Rapid" className="h-full w-full object-contain" />
+            <img src={logoAsset} alt="Lajan Rapid" className="h-full w-full object-contain" />
           </span>
           <h1 className="mt-5 font-display text-3xl font-bold leading-tight">
             {tab === "registro" ? t("auth.welcome") : t("auth.welcome")}

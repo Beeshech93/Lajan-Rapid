@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import logoAsset from "@/assets/lajan-rapid-logo.png.asset.json";
+import logoAsset from "@/assets/lajan-rapid-logo.png";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Bitcoin } from "lucide-react";
@@ -68,7 +68,7 @@ export function TraderPage({
       <header className="mx-auto flex max-w-3xl items-center justify-between px-5 py-5">
         <Link to="/" className="flex items-center gap-2.5">
           <span className="grid size-9 place-items-center overflow-hidden rounded-xl bg-logo-surface p-1 shadow-soft">
-            <img src={logoAsset.url} alt="Lajan Rapid" className="h-full w-full object-contain" />
+            <img src={logoAsset} alt="Lajan Rapid" className="h-full w-full object-contain" />
           </span>
           <span className="font-display text-lg font-semibold tracking-tight">Lajan Rapid</span>
         </Link>
