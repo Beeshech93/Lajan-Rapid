@@ -41,27 +41,29 @@ export function CorridorLanding({
   return (
     <div className="min-h-screen bg-background">
       <div className="bg-brand text-foreground">
-        <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5">
-          <Link to="/" className="flex items-center gap-2.5">
-            <span className="grid size-9 place-items-center overflow-hidden rounded-xl bg-logo-surface p-1 shadow-soft">
+        <header className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-5 sm:px-5">
+          <Link to="/" className="flex min-w-0 items-center gap-2 sm:gap-2.5">
+            <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-xl bg-logo-surface p-1 shadow-soft">
               <img src={logoAsset} alt="Lajan Rapid" className="h-full w-full object-contain" />
             </span>
-            <span className="font-display text-lg font-semibold tracking-tight">Lajan Rapid</span>
+            <span className="truncate font-display text-base font-semibold tracking-tight sm:text-lg">
+              Lajan Rapid
+            </span>
           </Link>
-          <div className="flex items-center gap-2">
-            <LanguageSwitcher className="h-9 w-[132px] border-foreground/20 bg-foreground/10 text-xs text-foreground" />
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+            <LanguageSwitcher className="h-9 w-[72px] shrink-0 border-foreground/20 bg-foreground/10 px-2 text-xs text-foreground sm:w-[132px] sm:px-3 [&_svg:last-child]:hidden sm:[&_svg:last-child]:inline-block [&_span]:truncate" />
             <Button
               asChild
               variant="ghost"
               size="sm"
-              className="text-foreground hover:bg-primary-foreground/10 hover:text-foreground"
+              className="px-2 text-[11px] text-foreground hover:bg-primary-foreground/10 hover:text-foreground sm:px-3 sm:text-xs"
             >
               <Link to="/auth">{t("auth.signin")}</Link>
             </Button>
             <Button
               asChild
               size="sm"
-              className="bg-primary-foreground text-primary hover:bg-primary-foreground/90"
+              className="px-2 text-[11px] bg-primary-foreground text-primary hover:bg-primary-foreground/90 sm:px-3 sm:text-xs"
             >
               <Link to="/auth" search={{ modo: "registro" }}>
                 {t("auth.signup")}
