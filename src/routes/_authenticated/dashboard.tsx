@@ -14,11 +14,13 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
-import { useCountries, useRate } from "@/hooks/useCorridors";
+import { useCountries, useRate, useTopupRate } from "@/hooks/useCorridors";
+import { TOPUP_COUNTRIES } from "@/lib/topup-operators";
 import { useWallets } from "@/hooks/useWallet";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -45,8 +47,11 @@ function Dashboard() {
   const { profile, user } = useProfile();
   const { t } = useI18n();
   const { data: countries } = useCountries();
+  const [rateTab, setRateTab] = useState("envios");
   const [origin, setOrigin] = useState("MX");
   const [destination, setDestination] = useState("HT");
+  const [topupOrigin, setTopupOrigin] = useState("MX");
+  const [topupDestination, setTopupDestination] = useState("HT");
   const [hideBalance, setHideBalance] = useState(false);
 
   const origins = (countries ?? []).filter((c) => c.is_origin);
@@ -55,6 +60,38 @@ function Dashboard() {
   const recvCur = destinations.find((c) => c.code === destination)?.currency ?? "";
 
   const { data: rate } = useRate(sendCur, recvCur);
+
+  const topupSendCur = origins.find((c) => c.code === topupOrigin)?.currency ?? "MXN";
+  const topupRecvCur =
+    destinations.find((c) => c.code === topupDestination)?.currency ||
+    (topupDestination === "HT"
+      ? "HTG"
+      : topupDestination === "DO"
+        ? "DOP"
+        : topupDestination === "CU"
+          ? "CUP"
+          : topupDestination === "US"
+            ? "USD"
+            : topupDestination === "JM"
+              ? "JMD"
+              : topupDestination === "BR"
+                ? "BRL"
+                : topupDestination === "CO"
+                  ? "COP"
+                  : "HTG");
+
+  const sameTopupCur = topupSendCur === topupRecvCur;
+  const { data: topupRateData } = useTopupRate(
+    sameTopupCur ? undefined : topupSendCur,
+    sameTopupCur ? undefined : topupRecvCur,
+  );
+  const { data: fallbackTopupRateData } = useRate(
+    sameTopupCur ? undefined : topupSendCur,
+    sameTopupCur ? undefined : topupRecvCur,
+  );
+  const effectiveTopupRate = sameTopupCur
+    ? 1
+    : (topupRateData?.rate ?? fallbackTopupRateData?.rate ?? 0);
 
   const { data: transfers } = useQuery({
     queryKey: ["my-transfers", user?.id],
@@ -199,44 +236,103 @@ function Dashboard() {
       {/* Rate card */}
       <Card className="card-elevated border-transparent">
         <CardContent className="p-5">
-          <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            <TrendingUp className="size-4 text-accent" /> {t("dash.rate_today")}
-          </p>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            <Select value={origin} onValueChange={setOrigin}>
-              <SelectTrigger>
-                <SelectValue placeholder={t("dash.from")} />
-              </SelectTrigger>
-              <SelectContent>
-                {origins.map((c) => (
-                  <SelectItem key={c.code} value={c.code}>
-                    {c.flag} {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={destination} onValueChange={setDestination}>
-              <SelectTrigger>
-                <SelectValue placeholder={t("dash.to")} />
-              </SelectTrigger>
-              <SelectContent>
-                {destinations.map((c) => (
-                  <SelectItem key={c.code} value={c.code}>
-                    {c.flag} {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <p className="mt-4 font-display text-2xl font-bold">
-            1 {sendCur || "—"} = {rate ? Number(rate.rate).toFixed(4) : "—"} {recvCur || "—"}
-          </p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t("dash.fee")}{" "}
-            {rate
-              ? `${Number(rate.fee_percent)}% + ${money(Number(rate.fee_fixed), sendCur)}`
-              : "—"}
-          </p>
+          <Tabs value={rateTab} onValueChange={setRateTab} className="w-full">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <TrendingUp className="size-4 text-accent" /> {t("dash.rate_today")}
+              </p>
+              <TabsList className="h-8 bg-secondary/80 p-0.5">
+                <TabsTrigger value="envios" className="gap-1.5 px-3 text-xs">
+                  <Send className="size-3.5" /> {t("nav.send")}
+                </TabsTrigger>
+                <TabsTrigger value="recargas" className="gap-1.5 px-3 text-xs">
+                  <Smartphone className="size-3.5" /> {t("nav.topups")}
+                </TabsTrigger>
+              </TabsList>
+            </div>
+
+            <TabsContent value="envios" className="mt-0 space-y-3">
+              <div className="grid gap-2 sm:grid-cols-2">
+                <Select value={origin} onValueChange={setOrigin}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("dash.from")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {origins.map((c) => (
+                      <SelectItem key={c.code} value={c.code}>
+                        {c.flag} {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={destination} onValueChange={setDestination}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("dash.to")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {destinations.map((c) => (
+                      <SelectItem key={c.code} value={c.code}>
+                        {c.flag} {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <p className="mt-4 font-display text-2xl font-bold">
+                1 {sendCur || "—"} = {rate ? Number(rate.rate).toFixed(4) : "—"} {recvCur || "—"}
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {t("dash.fee")}{" "}
+                {rate
+                  ? `${Number(rate.fee_percent)}% + ${money(Number(rate.fee_fixed), sendCur)}`
+                  : "—"}
+              </p>
+            </TabsContent>
+
+            <TabsContent value="recargas" className="mt-0 space-y-3">
+              <div className="grid gap-2 sm:grid-cols-2">
+                <Select value={topupOrigin} onValueChange={setTopupOrigin}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("topup.pay_country")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {origins.map((c) => (
+                      <SelectItem key={c.code} value={c.code}>
+                        {c.flag} {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={topupDestination} onValueChange={setTopupDestination}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("topup.number_country")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TOPUP_COUNTRIES.map((c) => (
+                      <SelectItem key={c.code} value={c.code}>
+                        {c.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <p className="mt-4 font-display text-2xl font-bold">
+                1 {topupSendCur || "—"} ={" "}
+                {effectiveTopupRate ? Number(effectiveTopupRate).toFixed(4) : "—"}{" "}
+                {topupRecvCur || "—"}
+              </p>
+              <div className="flex items-center justify-between">
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Recarga instantánea · Sin comisión fija
+                </p>
+                <Button asChild size="sm" variant="ghost" className="gap-1 text-accent">
+                  <Link to="/recargas">
+                    {t("topup.send_recharge")} <ArrowRight className="size-3.5" />
+                  </Link>
+                </Button>
+              </div>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 
