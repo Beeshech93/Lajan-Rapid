@@ -91,14 +91,16 @@ function ResetPasswordPage() {
         <div className="mb-6 text-center text-foreground">
           <Link
             to="/"
-            className="inline-block rounded-2xl transition-transform hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            aria-label="Ir al inicio"
+            className="group inline-flex flex-col items-center gap-2 rounded-2xl p-2 transition-transform hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label="Lajan Rapid - Ir a la página de inicio"
           >
-            <span className="mx-auto grid size-14 place-items-center overflow-hidden rounded-2xl bg-logo-surface p-1.5 shadow-soft">
+            <span className="grid size-14 place-items-center overflow-hidden rounded-2xl bg-logo-surface p-1.5 shadow-soft">
               <img src={logoAsset} alt="Lajan Rapid" className="h-full w-full object-contain" />
             </span>
+            <span className="mt-1 font-display text-2xl font-bold tracking-tight text-foreground transition-colors group-hover:text-foreground/90">
+              Lajan Rapid
+            </span>
           </Link>
-          <h1 className="mt-3 font-display text-2xl font-bold">Lajan Rapid</h1>
         </div>
 
         <Card className="shadow-lift">

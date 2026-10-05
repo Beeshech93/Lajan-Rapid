@@ -180,17 +180,20 @@ function AuthPage() {
         <div className="mb-8 mt-6 text-center">
           <Link
             to="/"
-            className="inline-block rounded-2xl transition-transform hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            aria-label="Ir al inicio"
+            className="group inline-flex flex-col items-center gap-2.5 rounded-2xl p-2 transition-transform hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label="Lajan Rapid - Ir a la página de inicio"
           >
-            <span className="mx-auto grid size-16 place-items-center overflow-hidden rounded-2xl bg-logo-surface p-2 shadow-lift">
+            <span className="grid size-16 place-items-center overflow-hidden rounded-2xl bg-logo-surface p-2 shadow-lift">
               <img src={logoAsset} alt="Lajan Rapid" className="h-full w-full object-contain" />
             </span>
+            <span className="font-display text-2xl font-bold tracking-tight text-foreground transition-colors group-hover:text-foreground/90">
+              Lajan Rapid
+            </span>
           </Link>
-          <h1 className="mt-5 font-display text-3xl font-bold leading-tight">
+          <h1 className="mt-3 font-display text-lg font-medium text-foreground/80">
             {tab === "registro" ? t("auth.welcome") : t("auth.welcome")}
           </h1>
-          <p className="mx-auto mt-2 max-w-[280px] text-sm text-foreground/70">
+          <p className="mx-auto mt-1 max-w-[280px] text-sm text-foreground/70">
             {t("auth.subtitle")}
           </p>
         </div>
