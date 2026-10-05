@@ -1,8 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Mail, MessageCircle, Phone } from "lucide-react";
+import { ArrowLeft, Mail, MessageCircle, Phone } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   Accordion,
   AccordionContent,
@@ -44,7 +45,14 @@ function Soporte() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
-      <h1 className="text-2xl font-bold">{t("support.title")}</h1>
+      <div className="flex items-center gap-2">
+        <Button asChild variant="ghost" size="icon" className="shrink-0" aria-label="Volver al inicio">
+          <Link to="/dashboard">
+            <ArrowLeft className="size-5" />
+          </Link>
+        </Button>
+        <h1 className="text-2xl font-bold">{t("support.title")}</h1>
+      </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
         {whatsapp && (

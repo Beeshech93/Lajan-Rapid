@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { celebrateLogo } from "@/components/LogoAnimation";
-import { Smartphone, Send, Copy, Check } from "lucide-react";
+import { Smartphone, Send, Copy, Check, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCountries, useTopupRate } from "@/hooks/useCorridors";
 import { useProfile } from "@/hooks/useProfile";
@@ -335,7 +335,14 @@ function Recargas() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-5">
-      <h1 className="text-2xl font-bold">{t("topup.title")}</h1>
+      <div className="flex items-center gap-2">
+        <Button asChild variant="ghost" size="icon" className="shrink-0" aria-label="Volver al inicio">
+          <Link to="/dashboard">
+            <ArrowLeft className="size-5" />
+          </Link>
+        </Button>
+        <h1 className="text-2xl font-bold">{t("topup.title")}</h1>
+      </div>
 
       {profile?.kyc_status !== "approved" && (
         <p className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">

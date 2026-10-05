@@ -1,7 +1,8 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
+import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeInvalidate } from "@/hooks/useRealtimeInvalidate";
@@ -69,7 +70,14 @@ export const Route = createFileRoute("/_authenticated/admin")({
 function Admin() {
   return (
     <div className="mx-auto max-w-6xl space-y-5">
-      <h1 className="text-2xl font-bold">Administración</h1>
+      <div className="flex items-center gap-2">
+        <Button asChild variant="ghost" size="icon" className="shrink-0" aria-label="Volver al inicio">
+          <Link to="/dashboard">
+            <ArrowLeft className="size-5" />
+          </Link>
+        </Button>
+        <h1 className="text-2xl font-bold">Administración</h1>
+      </div>
       <Tabs defaultValue="resumen">
         <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
           <TabsTrigger value="resumen">Resumen</TabsTrigger>

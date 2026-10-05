@@ -1,10 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { money, shortDate, STATUS_TONE, type TransferStatus } from "@/lib/remesa";
 import { useI18n } from "@/lib/i18n";
@@ -59,7 +61,14 @@ function Historial() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-4">
-      <h1 className="text-2xl font-bold">{t("history.title")}</h1>
+      <div className="flex items-center gap-2">
+        <Button asChild variant="ghost" size="icon" className="shrink-0" aria-label="Volver al inicio">
+          <Link to="/dashboard">
+            <ArrowLeft className="size-5" />
+          </Link>
+        </Button>
+        <h1 className="text-2xl font-bold">{t("history.title")}</h1>
+      </div>
       <Input
         placeholder={t("history.search_placeholder")}
         value={q}

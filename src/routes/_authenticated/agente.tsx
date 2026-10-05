@@ -1,9 +1,9 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
-import { XCircle } from "lucide-react";
+import { ArrowLeft, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import {
@@ -146,7 +146,14 @@ function Agente() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-5">
-      <h1 className="text-2xl font-bold">Panel de agente</h1>
+      <div className="flex items-center gap-2">
+        <Button asChild variant="ghost" size="icon" className="shrink-0" aria-label="Volver al inicio">
+          <Link to="/dashboard">
+            <ArrowLeft className="size-5" />
+          </Link>
+        </Button>
+        <h1 className="text-2xl font-bold">Panel de agente</h1>
+      </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
         <Stat label="Solicitudes por confirmar" value={String(pending.length)} />

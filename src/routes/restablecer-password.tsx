@@ -1,7 +1,8 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
+import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,10 +74,30 @@ function ResetPasswordPage() {
   return (
     <div className="grid min-h-screen place-items-center bg-brand px-4 py-10">
       <div className="w-full max-w-md">
+        <div className="mb-4 flex items-center justify-start">
+          <Button
+            asChild
+            variant="ghost"
+            size="icon"
+            className="text-foreground hover:bg-white/10"
+            aria-label="Volver al inicio"
+          >
+            <Link to="/">
+              <ArrowLeft className="size-5" />
+            </Link>
+          </Button>
+        </div>
+
         <div className="mb-6 text-center text-foreground">
-          <span className="mx-auto grid size-14 place-items-center overflow-hidden rounded-2xl bg-logo-surface p-1.5 shadow-soft">
-            <img src={logoAsset} alt="Lajan Rapid" className="h-full w-full object-contain" />
-          </span>
+          <Link
+            to="/"
+            className="inline-block rounded-2xl transition-transform hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label="Ir al inicio"
+          >
+            <span className="mx-auto grid size-14 place-items-center overflow-hidden rounded-2xl bg-logo-surface p-1.5 shadow-soft">
+              <img src={logoAsset} alt="Lajan Rapid" className="h-full w-full object-contain" />
+            </span>
+          </Link>
           <h1 className="mt-3 font-display text-2xl font-bold">Lajan Rapid</h1>
         </div>
 

@@ -1,8 +1,8 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Loader2, ArrowRight, Mail, Lock, User, Eye, EyeOff } from "lucide-react";
+import { Loader2, ArrowLeft, ArrowRight, Mail, Lock, User, Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -162,14 +162,31 @@ function AuthPage() {
   return (
     <div className="min-h-screen bg-brand px-5 py-10 text-foreground">
       <div className="mx-auto flex w-full max-w-sm flex-col">
-        <div className="mb-2 flex justify-end">
+        <div className="mb-2 flex items-center justify-between">
+          <Button
+            asChild
+            variant="ghost"
+            size="icon"
+            className="text-foreground hover:bg-white/10"
+            aria-label={t("nav.home") || "Volver al inicio"}
+          >
+            <Link to="/">
+              <ArrowLeft className="size-5" />
+            </Link>
+          </Button>
           <LanguageSwitcher className="h-9 w-[150px] border-white/20 bg-white/10 text-xs text-foreground" />
         </div>
 
         <div className="mb-8 mt-6 text-center">
-          <span className="mx-auto grid size-16 place-items-center overflow-hidden rounded-2xl bg-logo-surface p-2 shadow-lift">
-            <img src={logoAsset} alt="Lajan Rapid" className="h-full w-full object-contain" />
-          </span>
+          <Link
+            to="/"
+            className="inline-block rounded-2xl transition-transform hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label="Ir al inicio"
+          >
+            <span className="mx-auto grid size-16 place-items-center overflow-hidden rounded-2xl bg-logo-surface p-2 shadow-lift">
+              <img src={logoAsset} alt="Lajan Rapid" className="h-full w-full object-contain" />
+            </span>
+          </Link>
           <h1 className="mt-5 font-display text-3xl font-bold leading-tight">
             {tab === "registro" ? t("auth.welcome") : t("auth.welcome")}
           </h1>

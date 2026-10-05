@@ -1,7 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { Check, Circle, Copy, Landmark, Loader2, Store } from "lucide-react";
+import { ArrowLeft, Check, Circle, Copy, Landmark, Loader2, Store } from "lucide-react";
 import { toast } from "sonner";
 import { celebrateLogo } from "@/components/LogoAnimation";
 import { useServerFn } from "@tanstack/react-start";
@@ -152,13 +152,20 @@ function Detalle() {
   return (
     <div className="mx-auto max-w-3xl space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold">
-            {t2("detail.title")} {t.reference}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {t2("detail.created_on")} {shortDate(t.created_at)}
-          </p>
+        <div className="flex items-center gap-3">
+          <Button asChild variant="ghost" size="icon" className="shrink-0" aria-label="Volver al inicio">
+            <Link to="/dashboard">
+              <ArrowLeft className="size-5" />
+            </Link>
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold">
+              {t2("detail.title")} {t.reference}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {t2("detail.created_on")} {shortDate(t.created_at)}
+            </p>
+          </div>
         </div>
         <Badge className={STATUS_TONE[definiteStatus]} variant="secondary">
           {STATUS_LABEL_T[definiteStatus]}

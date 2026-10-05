@@ -2,6 +2,7 @@ import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
+import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { useCountries, useRate } from "@/hooks/useCorridors";
@@ -143,7 +144,14 @@ function Enviar() {
 
   return (
     <form onSubmit={submit} className="mx-auto max-w-3xl space-y-5">
-      <h1 className="text-2xl font-bold">{t("send.title")}</h1>
+      <div className="flex items-center gap-2">
+        <Button asChild variant="ghost" size="icon" className="shrink-0" aria-label="Volver al inicio">
+          <Link to="/dashboard">
+            <ArrowLeft className="size-5" />
+          </Link>
+        </Button>
+        <h1 className="text-2xl font-bold">{t("send.title")}</h1>
+      </div>
 
       {profile?.kyc_status !== "approved" && (
         <p className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">

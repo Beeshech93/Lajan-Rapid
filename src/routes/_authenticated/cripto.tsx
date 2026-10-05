@@ -1,8 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { celebrateLogo } from "@/components/LogoAnimation";
-import { ArrowDownToLine, ArrowUpFromLine, Copy, Coins } from "lucide-react";
+import { ArrowDownToLine, ArrowLeft, ArrowUpFromLine, Copy, Coins } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -168,11 +168,18 @@ function Cripto() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-5">
-      <div>
-        <h1 className="font-display text-2xl font-bold">Cripto</h1>
-        <p className="text-sm text-muted-foreground">
-          Recibe cripto, conviértelo en gourdes y retira por MonCash o NatCash.
-        </p>
+      <div className="flex items-center gap-2">
+        <Button asChild variant="ghost" size="icon" className="shrink-0" aria-label="Volver al inicio">
+          <Link to="/dashboard">
+            <ArrowLeft className="size-5" />
+          </Link>
+        </Button>
+        <div>
+          <h1 className="font-display text-2xl font-bold">Cripto</h1>
+          <p className="text-sm text-muted-foreground">
+            Recibe cripto, conviértelo en gourdes y retira por MonCash o NatCash.
+          </p>
+        </div>
       </div>
 
       <Card className="bg-brand text-primary-foreground">
