@@ -40,7 +40,11 @@ export function BazikPanel() {
   const saveCreds = useServerFn(bazikSaveCredentials);
   const queryClient = useQueryClient();
 
-  const { data: info } = useQuery({ queryKey: ["bazik_status"], queryFn: () => status() });
+  const { data: info, error: statusError, refetch } = useQuery({
+    queryKey: ["bazik_status"],
+    queryFn: () => status(),
+    retry: false,
+  });
 
   const [creds, setCreds] = useState<Record<CredKey, string>>(EMPTY);
   const setCred = (k: CredKey, v: string) => setCreds((p) => ({ ...p, [k]: v }));
@@ -77,7 +81,7 @@ export function BazikPanel() {
           <CardTitle className="flex items-center gap-2 text-base">
             <PlugZap className="size-4" /> Conexión con Bazik
             <Badge variant={info?.configured ? "secondary" : "destructive"}>
-              {info?.configured ? "Configurado" : "Sin configurar"}
+              {statusError ? "Sin datos" : info?.configured ? "Configurado" : "Sin configurar"}
             </Badge>
             {info?.configured ? (
               <Badge variant={info.authOk ? "default" : "destructive"}>
@@ -92,13 +96,21 @@ export function BazikPanel() {
               {info.baseUrl} · entorno: {info.environment}
             </p>
           ) : null}
-          {info?.authError ? <p className="text-xs text-destructive">{info.authError}</p> : null}
+          {statusError ? (
+            <p className="text-xs text-destructive">
+              No se pudo cargar el estado: tu sesión expiró. Cierra sesión y vuelve a entrar.{" "}
+              <button className="underline" onClick={() => void refetch()}>
+                Reintentar
+              </button>
+            </p>
+          ) : null}
+          {info?.authError ? (
+            <p className="text-xs text-destructive">
+              {info.authError} Revisa que el User ID y la Secret Key sean los actuales de tu cuenta Bazik.
+            </p>
+          ) : null}
           <p className="text-xs text-muted-foreground">
-            MonCash únicamente · máx. 75,000 HTG por transacción · límite 100 req/min.
-          </p>
-          <p className="text-xs text-amber-600">
-            El payout aún no está implementado: falta el spec de los endpoints de
-            transferencia/cotización de Bazik.
+            MonCash y NatCash · máx. 75,000 HTG por transacción · límite 100 req/min.
           </p>
           <Button
             variant="outline"
