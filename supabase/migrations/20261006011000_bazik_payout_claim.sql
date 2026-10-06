@@ -22,5 +22,5 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.claim_bazik_payout(UUID, public.transfer_status) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.claim_bazik_payout(UUID, public.transfer_status) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.claim_bazik_payout(UUID, public.transfer_status) TO service_role;

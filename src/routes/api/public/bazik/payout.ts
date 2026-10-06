@@ -5,7 +5,6 @@ export const Route = createFileRoute("/api/public/bazik/payout")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const url = new URL(request.url);
         const raw = await request.text();
 
         let body: Record<string, unknown> = {};
@@ -29,8 +28,7 @@ export const Route = createFileRoute("/api/public/bazik/payout")({
           return new Response("Webhook not configured", { status: 401 });
         }
         const provided = request.headers.get("x-bazik-signature");
-        const sharedSecret =
-          request.headers.get("x-webhook-secret") ?? url.searchParams.get("secret");
+        const sharedSecret = request.headers.get("x-webhook-secret");
         const validSignature = Boolean(provided && provided === secret);
         const validShared = Boolean(sharedSecret && sharedSecret === secret);
         if (!validSignature && !validShared) {
@@ -47,7 +45,7 @@ export const Route = createFileRoute("/api/public/bazik/payout")({
             : (JSON.parse(raw || "{}") as Record<string, unknown>);
         const nested = payload["data"] as Record<string, unknown> | undefined;
         const withdrawal = payload["withdrawal"] as Record<string, unknown> | undefined;
-        const reference = bazikExtractReference(payload) ?? url.searchParams.get("reference");
+        const reference = bazikExtractReference(payload);
         const state = String(
           payload["status"] ??
             payload["state"] ??
