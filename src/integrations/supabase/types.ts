@@ -639,6 +639,10 @@ export type Database = {
         Row: {
           agent_commission_send: number
           agent_id: string | null
+          bazik_error: string | null
+          bazik_provider: string | null
+          bazik_status: string | null
+          bazik_submitted_at: string | null
           amount_receive: number
           amount_send: number
           created_at: string
@@ -664,6 +668,14 @@ export type Database = {
         Insert: {
           agent_commission_send?: number
           agent_id?: string | null
+          bazik_error?: string | null
+          bazik_provider?: string | null
+          bazik_status?: string | null
+          bazik_submitted_at?: string | null
+          bazik_error?: string | null
+          bazik_provider?: string | null
+          bazik_status?: string | null
+          bazik_submitted_at?: string | null
           amount_receive?: number
           amount_send: number
           created_at?: string
