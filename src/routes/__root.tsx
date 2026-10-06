@@ -91,9 +91,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "Envía dinero de México a Haití en minutos. Tipo de cambio transparente, comisiones claras y seguimiento en tiempo real.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "Lajan Rapid" },
+      { property: "og:url", content: "https://lajanrapid.app/" },
       { name: "twitter:card", content: "summary_large_image" },
-      { property: "og:title", content: "Lajan Rapid — Envía dinero de México a Haití" },
-      { name: "twitter:title", content: "Lajan Rapid — Envía dinero de México a Haití" },
+      { property: "og:title", content: "Lajan Rapid — Envía dinero a Haití" },
+      { name: "twitter:title", content: "Lajan Rapid — Envía dinero a Haití" },
       {
         property: "og:description",
         content:
@@ -116,6 +118,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
     ],
     links: [
+      { rel: "canonical", href: "https://lajanrapid.app/" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
