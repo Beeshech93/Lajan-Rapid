@@ -67,10 +67,6 @@ export const requireSupabaseAuth = createMiddleware({ type: "function" }).server
       throw new Error("Unauthorized: No token provided");
     }
 
-    if (token.split(".").length !== 3) {
-      throw new Error("Unauthorized: Invalid token");
-    }
-
     const supabase = createClient<Database>(SUPABASE_URL!, SUPABASE_PUBLISHABLE_KEY!, {
       global: {
         fetch: createSupabaseFetch(SUPABASE_PUBLISHABLE_KEY!),
