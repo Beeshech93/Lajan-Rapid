@@ -317,16 +317,8 @@ export async function bazikPayout(input: BazikPayoutInput): Promise<BazikResult>
 
   const first = await bazikPost(creds.baseUrl, primaryPath, auth.token, body);
 
-  // Fallback defensivo: si Bazik responde 403 "endpoint_not_authorized" (el tipo
-  // de cuenta no está habilitado para este endpoint), reintenta contra las
-  // variantes alternas vistas anteriormente, por si el tipo de cuenta las requiere.
-  if (!first.ok && first.status === 403 && first.errorCode === "endpoint_not_authorized") {
-    const altPath = input.provider === "moncash" ? "/moncash/withdraw" : "/natcash/withdraw";
-    console.warn(`Bazik ${primaryPath}: cuenta no autorizada; reintentando con ${altPath}`);
-    const fallback = await bazikPost(creds.baseUrl, altPath, auth.token, body);
-    return toBazikResult(fallback, altPath);
-  }
-
+  // No hacemos fallback automático a otra ruta: si un payout de dinero
+  // devuelve un resultado incierto, reintentar podría duplicar el pago.
   return toBazikResult(first, primaryPath);
 }
 
@@ -351,7 +343,7 @@ async function bazikPost(
     });
   } catch (error) {
     console.error(`Bazik ${path} lanzó error de red:`, error);
-    return { ok: false, status: 0, text: "No se pudo contactar a Bazik." };
+    return { ok: false, status: 0, text: "No se pudo contactar a Bazik.", retryable: false };
   }
 
   const text = await response.text();
@@ -400,7 +392,7 @@ function humaniseBazikError(response: Extract<BazikRawResponse, { ok: false }>):
 function toBazikResult(response: BazikRawResponse, path: string): BazikResult {
   if (!response.ok) {
     console.error(`Bazik ${path}: ${response.errorCode ?? "error"} — ${response.text}`);
-    return { ok: false, error: humaniseBazikError(response) };
+    return { ok: false, error: humaniseBazikError(response), ...(response.retryable !== undefined ? { retryable: response.retryable } : {}) };
   }
 
   const { providerReference, status, fees, total } = normaliseBazikResult(response.parsed);
