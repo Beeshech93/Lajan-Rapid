@@ -1,12 +1,12 @@
--- Atomically claim a transfer before calling an external money provider.
--- This prevents two concurrent requests from submitting the same payout twice.
+-- Prevent concurrent duplicate provider submissions.
 CREATE OR REPLACE FUNCTION public.claim_bazik_payout(_transfer_id UUID, _from_status public.transfer_status)
 RETURNS BOOLEAN
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
-DECLARE changed BOOLEAN;
+DECLARE
+  affected INTEGER;
 BEGIN
   UPDATE public.transfers
      SET status = 'processing'::public.transfer_status,
@@ -17,8 +17,8 @@ BEGIN
      AND status = _from_status
      AND delivery_method IN ('moncash', 'natcash');
 
-  GET DIAGNOSTICS changed = ROW_COUNT > 0;
-  RETURN changed;
+  GET DIAGNOSTICS affected = ROW_COUNT;
+  RETURN affected > 0;
 END;
 $$;
 
