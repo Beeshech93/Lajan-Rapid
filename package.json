@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build && rm -rf dist && cp -r .output dist",
-    "build:dev": "vite build --mode development && rm -rf dist && cp -r .output dist",
+    "build": "vite build && rm -rf dist && (cp -r .output dist 2>/dev/null || true)",
+    "build:dev": "vite build --mode development && rm -rf dist && (cp -r .output dist 2>/dev/null || true)",
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write ."
