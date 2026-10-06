@@ -55,12 +55,20 @@ export async function loadStoredCreds(): Promise<Record<string, string>> {
 export async function saveStoredCred(name: string, value: string, userId: string) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   if (!value) {
-    await supabaseAdmin.from("integration_credentials").delete().eq("name", name);
+    const { error: delError } = await supabaseAdmin
+      .from("integration_credentials")
+      .delete()
+      .eq("name", name);
+    if (delError) throw new Error(`Error borrando credencial ${name}: ${delError.message}`);
     return;
   }
-  await supabaseAdmin
+  const { error: upsertError } = await supabaseAdmin
     .from("integration_credentials")
-    .upsert({ name, value, updated_at: new Date().toISOString(), updated_by: userId });
+    .upsert(
+      { name, value, updated_at: new Date().toISOString(), updated_by: userId },
+      { onConflict: "name" },
+    );
+  if (upsertError) throw new Error(`Error guardando credencial ${name}: ${upsertError.message}`);
 }
 
 function pick(stored: Record<string, string>, name: BazikCredName) {
