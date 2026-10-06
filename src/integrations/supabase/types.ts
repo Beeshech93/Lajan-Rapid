@@ -881,6 +881,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_bazik_payout: {
+        Args: { _from_status: Database["public"]["Enums"]["transfer_status"]; _transfer_id: string }
+        Returns: boolean
+      }
       admin_adjust_wallet: {
         Args: { _amount: number; _description?: string; _wallet_id: string }
         Returns: number
