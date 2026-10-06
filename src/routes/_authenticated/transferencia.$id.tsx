@@ -153,7 +153,13 @@ function Detalle() {
     <div className="mx-auto max-w-3xl space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <Button asChild variant="ghost" size="icon" className="shrink-0" aria-label="Volver al inicio">
+          <Button
+            asChild
+            variant="ghost"
+            size="icon"
+            className="shrink-0"
+            aria-label="Volver al inicio"
+          >
             <Link to="/dashboard">
               <ArrowLeft className="size-5" />
             </Link>

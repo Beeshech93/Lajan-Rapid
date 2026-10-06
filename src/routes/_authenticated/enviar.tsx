@@ -145,7 +145,13 @@ function Enviar() {
   return (
     <form onSubmit={submit} className="mx-auto max-w-3xl space-y-5">
       <div className="flex items-center gap-2">
-        <Button asChild variant="ghost" size="icon" className="shrink-0" aria-label="Volver al inicio">
+        <Button
+          asChild
+          variant="ghost"
+          size="icon"
+          className="shrink-0"
+          aria-label="Volver al inicio"
+        >
           <Link to="/dashboard">
             <ArrowLeft className="size-5" />
           </Link>

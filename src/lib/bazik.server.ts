@@ -401,7 +401,11 @@ function humaniseBazikError(response: Extract<BazikRawResponse, { ok: false }>):
 function toBazikResult(response: BazikRawResponse, path: string): BazikResult {
   if (!response.ok) {
     console.error(`Bazik ${path}: ${response.errorCode ?? "error"} — ${response.text}`);
-    return { ok: false, error: humaniseBazikError(response), ...(response.retryable !== undefined ? { retryable: response.retryable } : {}) };
+    return {
+      ok: false,
+      error: humaniseBazikError(response),
+      ...(response.retryable !== undefined ? { retryable: response.retryable } : {}),
+    };
   }
 
   const { providerReference, status, fees, total } = normaliseBazikResult(response.parsed);

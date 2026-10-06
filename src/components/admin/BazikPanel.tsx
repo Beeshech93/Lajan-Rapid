@@ -40,7 +40,11 @@ export function BazikPanel() {
   const saveCreds = useServerFn(bazikSaveCredentials);
   const queryClient = useQueryClient();
 
-  const { data: info, error: statusError, refetch } = useQuery({
+  const {
+    data: info,
+    error: statusError,
+    refetch,
+  } = useQuery({
     queryKey: ["bazik_status"],
     queryFn: () => status(),
     retry: false,
@@ -106,7 +110,8 @@ export function BazikPanel() {
           ) : null}
           {info?.authError ? (
             <p className="text-xs text-destructive">
-              {info.authError} Revisa que el User ID y la Secret Key sean los actuales de tu cuenta Bazik.
+              {info.authError} Revisa que el User ID y la Secret Key sean los actuales de tu cuenta
+              Bazik.
             </p>
           ) : null}
           <p className="text-xs text-muted-foreground">

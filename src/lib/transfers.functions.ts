@@ -182,20 +182,26 @@ export const finalizeTransferPayout = createServerFn({ method: "POST" })
     });
 
     if (!result.ok) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await supabaseAdmin.from("transfers").update({
-        bazik_status: result.retryable === false ? "unknown" : "failed",
-        bazik_error: result.error,
-        ...(result.retryable === false ? {} : { status: "paid" }),
-      } as any).eq("id", t.id);
+      await supabaseAdmin
+        .from("transfers")
+        .update({
+          bazik_status: result.retryable === false ? "unknown" : "failed",
+          bazik_error: result.error,
+          ...(result.retryable === false ? {} : { status: "paid" }),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any)
+        .eq("id", t.id);
       throw new Error(result.error);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await supabaseAdmin.from("transfers").update({
-      bazik_status: result.status ?? "pending",
-      ...(result.providerReference ? { bazik_transaction_id: result.providerReference } : {}),
-    } as any).eq("id", t.id);
+    await supabaseAdmin
+      .from("transfers")
+      .update({
+        bazik_status: result.status ?? "pending",
+        ...(result.providerReference ? { bazik_transaction_id: result.providerReference } : {}),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any)
+      .eq("id", t.id);
 
     return {
       ok: true,
@@ -257,20 +263,26 @@ export const adminConfirmTransfer = createServerFn({ method: "POST" })
       });
 
       if (!result.ok) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await supabaseAdmin.from("transfers").update({
-          bazik_status: result.retryable === false ? "unknown" : "failed",
-          bazik_error: result.error,
-          ...(result.retryable === false ? {} : { status: "awaiting_payment" }),
-        } as any).eq("id", t.id);
+        await supabaseAdmin
+          .from("transfers")
+          .update({
+            bazik_status: result.retryable === false ? "unknown" : "failed",
+            bazik_error: result.error,
+            ...(result.retryable === false ? {} : { status: "awaiting_payment" }),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } as any)
+          .eq("id", t.id);
         throw new Error(result.error);
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await supabaseAdmin.from("transfers").update({
-        bazik_status: result.status ?? "pending",
-        ...(result.providerReference ? { bazik_transaction_id: result.providerReference } : {}),
-      } as any).eq("id", t.id);
+      await supabaseAdmin
+        .from("transfers")
+        .update({
+          bazik_status: result.status ?? "pending",
+          ...(result.providerReference ? { bazik_transaction_id: result.providerReference } : {}),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any)
+        .eq("id", t.id);
 
       return {
         ok: true,
