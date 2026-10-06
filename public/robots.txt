@@ -1,3 +1,16 @@
+# Lajan Rapid — crawler access policy
+# Public pages are available for search engines and AI crawlers.
+
+User-agent: *
+Allow: /
+
+# Explicitly allow major search and AI crawlers.
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
 User-agent: OAI-SearchBot
 Allow: /
 
@@ -5,21 +18,6 @@ User-agent: GPTBot
 Allow: /
 
 User-agent: ChatGPT-User
-Allow: /
-
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
-
-User-agent: *
 Allow: /
 
 Sitemap: https://lajanrapid.app/sitemap.xml
