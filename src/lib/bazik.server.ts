@@ -243,7 +243,7 @@ export type BazikResult =
       total?: number;
       raw?: unknown;
     }
-  | { ok: false; configured?: boolean; error: string };
+  | { ok: false; configured?: boolean; error: string; retryable?: boolean };
 
 function normalisePhoneToWallet(phone: string): string {
   const digits = phone.replace(/\D/g, "");
@@ -331,7 +331,8 @@ export async function bazikPayout(input: BazikPayoutInput): Promise<BazikResult>
 }
 
 type BazikRawResponse =
-  { ok: true; parsed: unknown } | { ok: false; status: number; text: string; errorCode?: string };
+  | { ok: true; parsed: unknown }
+  | { ok: false; status: number; text: string; errorCode?: string; retryable?: boolean };
 
 async function bazikPost(
   baseUrl: string,

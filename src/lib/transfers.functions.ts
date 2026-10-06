@@ -182,18 +182,20 @@ export const finalizeTransferPayout = createServerFn({ method: "POST" })
     });
 
     if (!result.ok) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await supabaseAdmin.from("transfers").update({
         bazik_status: result.retryable === false ? "unknown" : "failed",
         bazik_error: result.error,
         ...(result.retryable === false ? {} : { status: "paid" }),
-      }).eq("id", t.id);
+      } as any).eq("id", t.id);
       throw new Error(result.error);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await supabaseAdmin.from("transfers").update({
       bazik_status: result.status ?? "pending",
       ...(result.providerReference ? { bazik_transaction_id: result.providerReference } : {}),
-    }).eq("id", t.id);
+    } as any).eq("id", t.id);
 
     return {
       ok: true,
@@ -255,18 +257,20 @@ export const adminConfirmTransfer = createServerFn({ method: "POST" })
       });
 
       if (!result.ok) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await supabaseAdmin.from("transfers").update({
           bazik_status: result.retryable === false ? "unknown" : "failed",
           bazik_error: result.error,
           ...(result.retryable === false ? {} : { status: "awaiting_payment" }),
-        }).eq("id", t.id);
+        } as any).eq("id", t.id);
         throw new Error(result.error);
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await supabaseAdmin.from("transfers").update({
         bazik_status: result.status ?? "pending",
         ...(result.providerReference ? { bazik_transaction_id: result.providerReference } : {}),
-      }).eq("id", t.id);
+      } as any).eq("id", t.id);
 
       return {
         ok: true,
