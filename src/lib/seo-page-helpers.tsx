@@ -5,7 +5,8 @@ import { ContentPage, type ContentSection } from "@/components/ContentPage";
 const BASE = "https://lajanrapid.app";
 
 export function hreflangLinks(path: string) {
-  const p = path ? `/${path}` : "";
+  const clean = path.replace(/^\/+|\/+$/g, "");
+  const p = clean ? `/${clean}` : "";
   return [
     { rel: "alternate", hreflang: "en", href: `${BASE}${p}` },
     { rel: "alternate", hreflang: "es", href: `${BASE}/es${p}/` },

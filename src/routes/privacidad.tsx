@@ -72,7 +72,7 @@ function PrivacyPage() {
         <article className="prose prose-invert max-w-none space-y-8 text-sm leading-relaxed text-text-secondary">
           <Section title="1. Introducción">
             <p>
-              Lajan Rapide ("Lajan Rapid", "nosotros", "nuestro" o "la Plataforma") respeta la
+              Lajan Rapid ("Lajan Rapid", "nosotros", "nuestro" o "la Plataforma") respeta la
               privacidad y protección de los datos personales de sus usuarios.
             </p>
             <p>
@@ -104,7 +104,7 @@ function PrivacyPage() {
           <Section title="2. Responsable del tratamiento">
             <List
               items={[
-                "Responsable: LAJAN RAPIDE",
+                "Responsable: LAJAN RAPID",
                 "Domicilio: CIUDAD DE MÉXICO",
                 "Correo de privacidad: privacy@lajanrapide.com",
                 "Correo de soporte: support@lajanrapide.com",
@@ -120,7 +120,7 @@ function PrivacyPage() {
 
           <Section title="3. Marco legal">
             <p>
-              Lajan Rapide aplicará las normas de protección de datos que correspondan a cada
+              Lajan Rapid aplicará las normas de protección de datos que correspondan a cada
               operación y jurisdicción.
             </p>
             <h3 className="font-display text-base font-semibold text-foreground">México</h3>
@@ -139,7 +139,7 @@ function PrivacyPage() {
             </p>
             <h3 className="font-display text-base font-semibold text-foreground">Haití</h3>
             <p>
-              Lajan Rapide aplicará las normas haitianas correspondientes al tratamiento de datos
+              Lajan Rapid aplicará las normas haitianas correspondientes al tratamiento de datos
               personales y privacidad. Las reglas publicadas en Haití establecen principios
               relacionados con pertinencia, necesidad, conservación, confidencialidad, acceso
               autorizado, seguridad y rectificación de datos personales.
@@ -276,7 +276,7 @@ function PrivacyPage() {
 
           <Section title="8. Información de localización">
             <p>
-              Lajan Rapide podrá solicitar información de ubicación cuando sea necesaria para
+              Lajan Rapid podrá solicitar información de ubicación cuando sea necesaria para
               determinadas funcionalidades.
             </p>
             <p>
@@ -388,7 +388,7 @@ function PrivacyPage() {
             />
             <p>
               Cuando la legislación aplicable otorgue derechos respecto de decisiones automatizadas,
-              Lajan Rapide implementará los mecanismos correspondientes.
+              Lajan Rapid implementará los mecanismos correspondientes.
             </p>
           </Section>
 
@@ -420,11 +420,11 @@ function PrivacyPage() {
 
           <Section title="14. Transferencias internacionales">
             <p>
-              Debido a la naturaleza internacional de Lajan Rapide, determinada información puede
+              Debido a la naturaleza internacional de Lajan Rapid, determinada información puede
               ser procesada o almacenada fuera del país de residencia del usuario.
             </p>
             <p>
-              Lajan Rapide adoptará las medidas contractuales, técnicas y organizativas requeridas
+              Lajan Rapid adoptará las medidas contractuales, técnicas y organizativas requeridas
               por la legislación aplicable para dichas transferencias. Cuando una transferencia
               requiera consentimiento o información específica, se proporcionará el mecanismo
               correspondiente.
@@ -452,7 +452,7 @@ function PrivacyPage() {
 
           <Section title="16. Seguridad">
             <p>
-              Lajan Rapide implementará medidas técnicas y organizativas razonables para proteger
+              Lajan Rapid implementará medidas técnicas y organizativas razonables para proteger
               los datos:
             </p>
             <List
@@ -478,7 +478,7 @@ function PrivacyPage() {
           </Section>
 
           <Section title="17. Contraseñas y códigos">
-            <p>Lajan Rapide no solicitará al usuario que comparta:</p>
+            <p>Lajan Rapid no solicitará al usuario que comparta:</p>
             <List
               items={[
                 "Contraseña",
@@ -554,7 +554,7 @@ function PrivacyPage() {
             </p>
             <p>
               La solicitud deberá incluir información suficiente para verificar la identidad del
-              solicitante y localizar los datos correspondientes. Lajan Rapide responderá conforme a
+              solicitante y localizar los datos correspondientes. Lajan Rapid responderá conforme a
               los plazos y procedimientos establecidos por la legislación aplicable.
             </p>
           </Section>
@@ -570,7 +570,7 @@ function PrivacyPage() {
               ]}
             />
             <p>
-              Lajan Rapide implementará procedimientos adecuados para gestionar dichas solicitudes
+              Lajan Rapid implementará procedimientos adecuados para gestionar dichas solicitudes
               de acuerdo con la legislación aplicable.
             </p>
           </Section>
@@ -582,7 +582,7 @@ function PrivacyPage() {
             <List
               items={[
                 "Correo: privacy@lajanrapide.com",
-                "Asunto recomendado: SOLICITUD DE PRIVACIDAD — LAJAN RAPIDE",
+                "Asunto recomendado: SOLICITUD DE PRIVACIDAD — LAJAN RAPID",
               ]}
             />
             <p>La solicitud deberá incluir:</p>
@@ -603,7 +603,7 @@ function PrivacyPage() {
 
           <Section title="24. Datos de menores">
             <p>
-              Lajan Rapide no está diseñada para que menores de edad utilicen servicios financieros
+              Lajan Rapid no está diseñada para que menores de edad utilicen servicios financieros
               sin cumplir los requisitos legales aplicables. Cuando la legislación exija
               consentimiento o autorización de un padre, madre o representante legal, se aplicarán
               los mecanismos correspondientes.
@@ -612,7 +612,7 @@ function PrivacyPage() {
 
           <Section title="25. Enlaces a terceros">
             <p>
-              La aplicación puede contener enlaces a servicios de terceros. Lajan Rapide no controla
+              La aplicación puede contener enlaces a servicios de terceros. Lajan Rapid no controla
               necesariamente las políticas de privacidad de esos terceros. El usuario debe consultar
               sus respectivas políticas antes de proporcionar información personal.
             </p>
@@ -668,7 +668,7 @@ function PrivacyPage() {
             <p>Para preguntas, solicitudes o reclamaciones relacionadas con privacidad:</p>
             <List
               items={[
-                "LAJAN RAPIDE — Privacy Department",
+                "LAJAN RAPID — Privacy Department",
                 "Correo: privacy@lajanrapide.com",
                 "Soporte: support@lajanrapide.com",
                 "Sitio web: lajanrapid.app",
@@ -677,7 +677,7 @@ function PrivacyPage() {
           </Section>
 
           <Section title="30. Aceptación y constancia">
-            <p>Cuando sea requerido, Lajan Rapide registrará:</p>
+            <p>Cuando sea requerido, Lajan Rapid registrará:</p>
             <List
               items={[
                 "Fecha y hora de aceptación",
@@ -697,13 +697,13 @@ function PrivacyPage() {
             <p>En términos sencillos:</p>
             <List
               items={[
-                "Lajan Rapide recopila información para poder identificarte, procesar tus operaciones, proteger tu cuenta, prevenir fraude y cumplir la legislación.",
+                "Lajan Rapid recopila información para poder identificarte, procesar tus operaciones, proteger tu cuenta, prevenir fraude y cumplir la legislación.",
                 "No venderemos datos personales como producto.",
                 "Compartiremos información únicamente cuando sea necesario para prestar servicios, proteger la Plataforma, cumplir obligaciones legales o realizar operaciones solicitadas.",
-                "Puedes contactar a Lajan Rapide para ejercer los derechos que correspondan sobre tus datos.",
+                "Puedes contactar a Lajan Rapid para ejercer los derechos que correspondan sobre tus datos.",
               ]}
             />
-            <p className="pt-4 font-display text-lg font-semibold text-foreground">LAJAN RAPIDE</p>
+            <p className="pt-4 font-display text-lg font-semibold text-foreground">LAJAN RAPID</p>
             <p className="text-muted-foreground">Tu dinero. Tu mundo.</p>
           </Section>
         </article>
