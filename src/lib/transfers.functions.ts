@@ -162,6 +162,15 @@ export const finalizeTransferPayout = createServerFn({ method: "POST" })
       throw new Error("Este método de entrega no se puede finalizar automáticamente");
     }
 
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: claimed, error: claimError } = await supabaseAdmin.rpc("claim_bazik_payout", {
+      _transfer_id: t.id,
+      _from_status: "paid",
+    });
+    if (claimError || !claimed) {
+      throw new Error("Este envío ya está siendo procesado o ya fue enviado a Bazik.");
+    }
+
     const { bazikPayout } = await import("@/lib/bazik.server");
     const result = await bazikPayout({
       provider: t.delivery_method,
@@ -173,11 +182,18 @@ export const finalizeTransferPayout = createServerFn({ method: "POST" })
     });
 
     if (!result.ok) {
+      await supabaseAdmin.from("transfers").update({
+        bazik_status: result.retryable === false ? "unknown" : "failed",
+        bazik_error: result.error,
+        ...(result.retryable === false ? {} : { status: "paid" }),
+      }).eq("id", t.id);
       throw new Error(result.error);
     }
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin.from("transfers").update({ status: "processing" }).eq("id", t.id);
+    await supabaseAdmin.from("transfers").update({
+      bazik_status: result.status ?? "pending",
+      ...(result.providerReference ? { bazik_transaction_id: result.providerReference } : {}),
+    }).eq("id", t.id);
 
     return {
       ok: true,
@@ -220,6 +236,14 @@ export const adminConfirmTransfer = createServerFn({ method: "POST" })
       (t.delivery_method === "moncash" || t.delivery_method === "natcash") &&
       t.status === "awaiting_payment"
     ) {
+      const { data: claimed, error: claimError } = await supabaseAdmin.rpc("claim_bazik_payout", {
+        _transfer_id: t.id,
+        _from_status: "awaiting_payment",
+      });
+      if (claimError || !claimed) {
+        throw new Error("Este envío ya está siendo procesado o ya fue enviado a Bazik.");
+      }
+
       const { bazikPayout } = await import("@/lib/bazik.server");
       const result = await bazikPayout({
         provider: t.delivery_method,
@@ -231,11 +255,18 @@ export const adminConfirmTransfer = createServerFn({ method: "POST" })
       });
 
       if (!result.ok) {
+        await supabaseAdmin.from("transfers").update({
+          bazik_status: result.retryable === false ? "unknown" : "failed",
+          bazik_error: result.error,
+          ...(result.retryable === false ? {} : { status: "awaiting_payment" }),
+        }).eq("id", t.id);
         throw new Error(result.error);
       }
 
-      // Marcar como processing (esperar callback del webhook)
-      await supabaseAdmin.from("transfers").update({ status: "processing" }).eq("id", t.id);
+      await supabaseAdmin.from("transfers").update({
+        bazik_status: result.status ?? "pending",
+        ...(result.providerReference ? { bazik_transaction_id: result.providerReference } : {}),
+      }).eq("id", t.id);
 
       return {
         ok: true,
