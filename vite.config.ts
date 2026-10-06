@@ -56,12 +56,7 @@ export default defineConfig({
     }),
     nitro({
       preset: NITRO_PRESET,
-      ...(ON_VERCEL
-        ? {}
-        : {
-            cloudflare: { nodeCompat: true, deployConfig: true },
-            output: { dir: "dist", serverDir: "dist/server", publicDir: "dist/client" },
-          }),
+      ...(ON_VERCEL ? {} : { cloudflare: { nodeCompat: true, deployConfig: true } }),
     }),
     viteReact(),
   ],
