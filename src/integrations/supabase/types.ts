@@ -672,10 +672,6 @@ export type Database = {
           bazik_provider?: string | null
           bazik_status?: string | null
           bazik_submitted_at?: string | null
-          bazik_error?: string | null
-          bazik_provider?: string | null
-          bazik_status?: string | null
-          bazik_submitted_at?: string | null
           amount_receive?: number
           amount_send: number
           created_at?: string
