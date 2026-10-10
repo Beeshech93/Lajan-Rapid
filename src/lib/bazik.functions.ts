@@ -37,10 +37,12 @@ export const bazikSaveCredentials = createServerFn({ method: "POST" })
   .inputValidator((input: BazikCredentialsInput) => parseBazikCredentialsInput(input))
   .handler(async ({ data, context }) => {
     await requireAdmin(context);
+    // Use supabaseAdmin to bypass RLS for writing credentials
     const { saveStoredCred } = await import("@/lib/bazik.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     for (const [name, value] of Object.entries(data)) {
       if (value === undefined) continue;
-      await saveStoredCred(name, value.trim(), context.userId, context.supabase);
+      await saveStoredCred(name, value.trim(), context.userId, supabaseAdmin);
     }
     return { ok: true };
   });

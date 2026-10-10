@@ -45,7 +45,8 @@ export const updateSupportConfig = createServerFn({ method: "POST" })
     });
     if (!isAdmin) throw new Error("No autorizado");
 
-    const sb = (context.supabase as any) ?? (await import("@/integrations/supabase/client.server")).supabaseAdmin;
+    // Always use supabaseAdmin to bypass RLS for writing credentials
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const rows = (Object.keys(KEYS) as (keyof SupportConfig)[])
       .filter((field) => typeof data[field] === "string")
       .map((field) => ({
@@ -56,7 +57,7 @@ export const updateSupportConfig = createServerFn({ method: "POST" })
       }));
 
     if (rows.length > 0) {
-      const { error } = await sb.from("integration_credentials").upsert(rows);
+      const { error } = await supabaseAdmin.from("integration_credentials").upsert(rows);
       if (error) throw new Error(error.message);
     }
 

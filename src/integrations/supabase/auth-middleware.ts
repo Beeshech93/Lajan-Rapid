@@ -82,7 +82,29 @@ export const requireSupabaseAuth = createMiddleware({ type: "function" }).server
       },
     });
 
-    const { data: userData, error: userError } = await supabase.auth.getUser(token);
+    // New sb_publishable_ keys require setSession before getUser()
+    // Legacy JWT anon keys support getUser(token) directly
+    let userData: Awaited<ReturnType<typeof supabase.auth.getUser>>["data"] | null = null;
+    let userError: { message: string } | null = null;
+
+    if (isNewSupabaseApiKey(SUPABASE_PUBLISHABLE_KEY!)) {
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: token,
+        refresh_token: "",
+      });
+      if (sessionError) {
+        console.error("[requireSupabaseAuth] Error seteando sesión:", sessionError.message);
+        throw new Error("Unauthorized: Invalid token");
+      }
+      const { data, error } = await supabase.auth.getUser();
+      userData = data;
+      userError = error;
+    } else {
+      const { data, error } = await supabase.auth.getUser(token);
+      userData = data;
+      userError = error;
+    }
+
     if (userError || !userData?.user) {
       console.error("[requireSupabaseAuth] Error validando token:", userError?.message ?? "Sin usuario");
       throw new Error("Unauthorized: Invalid token");

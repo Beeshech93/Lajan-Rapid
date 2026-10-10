@@ -30,10 +30,12 @@ export const mercadoPagoSaveCredentials = createServerFn({ method: "POST" })
       _role: "admin",
     });
     if (!isAdmin) throw new Error("No autorizado");
+    // Use supabaseAdmin to bypass RLS for writing credentials
     const { saveMpCred } = await import("@/lib/mercadopago.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     for (const [name, value] of Object.entries(data)) {
       if (value === undefined) continue;
-      await saveMpCred(name, value.trim(), context.userId, context.supabase);
+      await saveMpCred(name, value.trim(), context.userId, supabaseAdmin);
     }
     return { ok: true };
   });
