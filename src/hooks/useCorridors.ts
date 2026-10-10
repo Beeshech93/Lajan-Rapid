@@ -2,9 +2,29 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Country, RateConfig } from "@/lib/remesa";
 
+export const FALLBACK_COUNTRIES: Country[] = [
+  { code: "MX", name: "México", currency: "MXN", flag: "🇲🇽", is_origin: true, is_destination: false, is_active: true },
+  { code: "US", name: "Estados Unidos", currency: "USD", flag: "🇺🇸", is_origin: true, is_destination: false, is_active: true },
+  { code: "CA", name: "Canadá", currency: "CAD", flag: "🇨🇦", is_origin: true, is_destination: false, is_active: true },
+  { code: "CL", name: "Chile", currency: "CLP", flag: "🇨🇱", is_origin: true, is_destination: false, is_active: true },
+  { code: "BR", name: "Brasil", currency: "BRL", flag: "🇧🇷", is_origin: true, is_destination: false, is_active: true },
+  { code: "HT", name: "Haití", currency: "HTG", flag: "🇭🇹", is_origin: false, is_destination: true, is_active: true },
+  { code: "DO", name: "Rep. Dominicana", currency: "DOP", flag: "🇩🇴", is_origin: false, is_destination: true, is_active: true },
+  { code: "AR", name: "Argentina", currency: "ARS", flag: "🇦🇷", is_origin: true, is_destination: false, is_active: true },
+  { code: "CO", name: "Colombia", currency: "COP", flag: "🇨🇴", is_origin: true, is_destination: false, is_active: true },
+  { code: "PE", name: "Perú", currency: "PEN", flag: "🇵🇪", is_origin: true, is_destination: false, is_active: true },
+  { code: "CR", name: "Costa Rica", currency: "CRC", flag: "🇨🇷", is_origin: true, is_destination: false, is_active: true },
+  { code: "GT", name: "Guatemala", currency: "GTQ", flag: "🇬🇹", is_origin: true, is_destination: false, is_active: true },
+  { code: "ES", name: "España", currency: "EUR", flag: "🇪🇸", is_origin: true, is_destination: false, is_active: true },
+  { code: "FR", name: "Francia", currency: "EUR", flag: "🇫🇷", is_origin: true, is_destination: false, is_active: true },
+  { code: "GB", name: "Reino Unido", currency: "GBP", flag: "🇬🇧", is_origin: true, is_destination: false, is_active: true },
+  { code: "CH", name: "Suiza", currency: "CHF", flag: "🇨🇭", is_origin: true, is_destination: false, is_active: true },
+];
+
 export function useCountries() {
   return useQuery({
     queryKey: ["countries"],
+    initialData: FALLBACK_COUNTRIES,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       const { data } = await supabase
@@ -12,7 +32,8 @@ export function useCountries() {
         .select("*")
         .eq("is_active", true)
         .order("name");
-      return (data ?? []) as Country[];
+      if (data && data.length > 0) return data as Country[];
+      return FALLBACK_COUNTRIES;
     },
   });
 }
@@ -22,7 +43,7 @@ export function useCountries() {
  * Se usan SOLO si la consulta a exchange_rates retorna null
  * (la tabla aún no tiene datos, RLS bloquea, u otro problema).
  */
-const FALLBACK_RATES: Record<string, RateConfig> = {
+export const FALLBACK_RATES: Record<string, RateConfig> = {
   "MXN→HTG": { rate: 7.20,    fee_percent: 1.5, fee_fixed: 15,   agent_commission_percent: 0.8 },
   "MXN→DOP": { rate: 3.35,    fee_percent: 2.5, fee_fixed: 25,   agent_commission_percent: 1 },
   "USD→HTG": { rate: 131.00,  fee_percent: 2.5, fee_fixed: 1.5,  agent_commission_percent: 1 },
@@ -51,16 +72,21 @@ const FALLBACK_RATES: Record<string, RateConfig> = {
   "CHF→DOP": { rate: 71.00,   fee_percent: 2.5, fee_fixed: 1.5,  agent_commission_percent: 1 },
 };
 
-function fallbackRate(from: string, to: string): (RateConfig & { id: string }) | null {
+export function fallbackRate(from: string, to: string): (RateConfig & { id: string }) | null {
   const fb = FALLBACK_RATES[`${from}→${to}`];
   if (!fb) return null;
   return { ...fb, id: `fallback-${from}-${to}` };
 }
 
 export function useRate(fromCurrency?: string, toCurrency?: string) {
+  const from = fromCurrency || "MXN";
+  const to = toCurrency || "HTG";
+  const initial = fallbackRate(from, to) ?? undefined;
+
   return useQuery({
     queryKey: ["rate", fromCurrency, toCurrency],
     enabled: !!fromCurrency && !!toCurrency,
+    initialData: initial,
     queryFn: async () => {
       const { data } = await supabase
         .from("exchange_rates")

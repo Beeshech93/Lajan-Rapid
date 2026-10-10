@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
-import { useCountries, useRate } from "@/hooks/useCorridors";
+import { useCountries, useRate, fallbackRate } from "@/hooks/useCorridors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -80,9 +80,16 @@ function Enviar() {
   const deliveries = useMemo(() => deliveryMethods(destination), [destination]);
   const cities = useMemo(() => citiesFor(destination), [destination]);
 
-  const sendCur = originCountry?.currency ?? "";
-  const recvCur = destCountry?.currency ?? "";
-  const q = quote(Number(amount), cfg ?? ZERO_RATE);
+  const sendCur = originCountry?.currency ?? "MXN";
+  const recvCur = destCountry?.currency ?? "HTG";
+  const fbRate = fallbackRate(sendCur, recvCur) ?? {
+    rate: 7.20,
+    fee_percent: 1.5,
+    fee_fixed: 15,
+    agent_commission_percent: 0.8,
+  };
+  const effectiveCfg = cfg && Number(cfg.rate) > 0 ? cfg : fbRate;
+  const q = quote(Number(amount), effectiveCfg);
 
   const changeOrigin = (code: string) => {
     setOrigin(code);
@@ -97,7 +104,7 @@ function Enviar() {
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!cfg || !user) return;
+    if (!user) return;
     if (profile?.kyc_status !== "approved") {
       toast.error(t("send.kyc_none"));
       return;
@@ -127,7 +134,7 @@ function Enviar() {
         delivery_method: delivery,
         payment_method: payment,
         amount_send: parsed.data.amount,
-        rate: cfg.rate,
+        rate: effectiveCfg.rate,
         note: parsed.data.note || null,
         status: "awaiting_payment",
       })
@@ -178,7 +185,13 @@ function Enviar() {
               <Label>{t("send.from")}</Label>
               <Select value={origin} onValueChange={changeOrigin}>
                 <SelectTrigger>
-                  <SelectValue placeholder={t("send.from_placeholder")} />
+                  <SelectValue
+                    placeholder={
+                      originCountry
+                        ? `${originCountry.flag} ${originCountry.name} · ${originCountry.currency}`
+                        : "🇲🇽 México · MXN"
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {origins.map((c) => (
@@ -193,7 +206,13 @@ function Enviar() {
               <Label>{t("send.to")}</Label>
               <Select value={destination} onValueChange={changeDestination}>
                 <SelectTrigger>
-                  <SelectValue placeholder={t("send.to_placeholder")} />
+                  <SelectValue
+                    placeholder={
+                      destCountry
+                        ? `${destCountry.flag} ${destCountry.name} · ${destCountry.currency}`
+                        : "🇭🇹 Haití · HTG"
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {destinations.map((c) => (
@@ -219,16 +238,10 @@ function Enviar() {
             />
           </div>
 
-          {!cfg && sendCur && recvCur && (
-            <p className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">
-              {t("send.no_rate")}
-            </p>
-          )}
-
           <div className="space-y-1.5 rounded-xl bg-secondary p-4 text-sm">
             <Line
               label={t("send.rate")}
-              value={cfg ? `1 ${sendCur} = ${Number(cfg.rate).toFixed(4)} ${recvCur}` : "—"}
+              value={`1 ${sendCur} = ${Number(effectiveCfg.rate).toFixed(4)} ${recvCur}`}
             />
             <Line label={t("send.fee")} value={money(q.fee, sendCur)} />
             <Line label={t("send.total")} value={money(q.total, sendCur)} strong />

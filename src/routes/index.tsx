@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { quote, money } from "@/lib/remesa";
-import { useCountries, useRate, useTopupRate } from "@/hooks/useCorridors";
+import { useCountries, useRate, useTopupRate, fallbackRate } from "@/hooks/useCorridors";
 import { TOPUP_COUNTRIES, findTopupCountry } from "@/lib/topup-operators";
 import { useI18n } from "@/lib/i18n";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -136,10 +136,15 @@ export function Landing() {
   const receiveCurrency = destCountry?.currency ?? "HTG";
   const { data: cfg } = useRate(sendCurrency, receiveCurrency);
 
-  const q = quote(
-    Number(amount),
-    cfg ?? { rate: 0, fee_percent: 0, fee_fixed: 0, agent_commission_percent: 0 },
-  );
+  const fbRate = fallbackRate(sendCurrency, receiveCurrency) ?? {
+    rate: 7.20,
+    fee_percent: 1.5,
+    fee_fixed: 15,
+    agent_commission_percent: 0.8,
+  };
+  const effectiveCfg = cfg && Number(cfg.rate) > 0 ? cfg : fbRate;
+
+  const q = quote(Number(amount), effectiveCfg);
 
   // Recargas
   const topupOriginCountry = origins.find((c) => c.code === topupOrigin);
@@ -292,7 +297,13 @@ export function Landing() {
                         </span>
                         <Select value={origin} onValueChange={setOrigin}>
                           <SelectTrigger>
-                            <SelectValue />
+                            <SelectValue
+                              placeholder={
+                                originCountry
+                                  ? `${originCountry.flag} ${originCountry.name}`
+                                  : "🇲🇽 México"
+                              }
+                            />
                           </SelectTrigger>
                           <SelectContent>
                             {origins.map((c) => (
@@ -309,7 +320,11 @@ export function Landing() {
                         </span>
                         <Select value={destination} onValueChange={setDestination}>
                           <SelectTrigger>
-                            <SelectValue />
+                            <SelectValue
+                              placeholder={
+                                destCountry ? `${destCountry.flag} ${destCountry.name}` : "🇭🇹 Haití"
+                              }
+                            />
                           </SelectTrigger>
                           <SelectContent>
                             {destinations.map((c) => (
@@ -339,11 +354,7 @@ export function Landing() {
                     <div className="space-y-1.5 rounded-xl bg-secondary p-4 text-sm">
                       <Row
                         label={t("landing.rate")}
-                        value={
-                          cfg
-                            ? `1 ${sendCurrency} = ${Number(cfg.rate).toFixed(4)} ${receiveCurrency}`
-                            : t("landing.unavailable")
-                        }
+                        value={`1 ${sendCurrency} = ${Number(effectiveCfg.rate).toFixed(4)} ${receiveCurrency}`}
                       />
                       <Row label={t("landing.fee")} value={money(q.fee, sendCurrency)} />
                       <Row label={t("landing.total")} value={money(q.total, sendCurrency)} strong />
