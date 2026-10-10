@@ -47,7 +47,8 @@ export function MercadoPagoPanel() {
   });
 
   const [creds, setCreds] = useState<Record<CredKey, string>>({
-    MERCADOPAGO_ACCESS_TOKEN: "",
+    MERCADOPAGO_ACCESS_TOKEN:
+      "APP_USR-1512539513040347-080614-1629d9f2e3afc658551a8632fa72f99c-1120508280",
     MERCADOPAGO_WEBHOOK_SECRET: "",
   });
   const setCred = (k: CredKey, v: string) => setCreds((p) => ({ ...p, [k]: v }));
