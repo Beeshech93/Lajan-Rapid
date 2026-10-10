@@ -6,11 +6,8 @@ import { parseStripeCredentialsInput, type StripeCredentialsInput } from "@/lib/
 export const stripeStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: isAdmin } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
-    if (!isAdmin) throw new Error("No autorizado");
+    const { verifyIsAdmin } = await import("@/lib/admin.server");
+    if (!(await verifyIsAdmin(context))) throw new Error("No autorizado");
     const { stripeStatusInfo } = await import("@/lib/stripe.server");
     return stripeStatusInfo(context.supabase);
   });
@@ -20,11 +17,8 @@ export const stripeSaveCredentials = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: StripeCredentialsInput) => parseStripeCredentialsInput(input))
   .handler(async ({ data, context }) => {
-    const { data: isAdmin } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
-    if (!isAdmin) throw new Error("No autorizado");
+    const { verifyIsAdmin } = await import("@/lib/admin.server");
+    if (!(await verifyIsAdmin(context))) throw new Error("No autorizado");
     // Use supabaseAdmin to bypass RLS for writing credentials
     const { saveStripeCred } = await import("@/lib/stripe.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

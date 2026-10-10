@@ -2,15 +2,17 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { parseResendCredentialsInput, type ResendCredentialsInput } from "@/lib/resend.schemas";
 
+async function requireAdmin(context: { supabase: any; userId: string }) {
+  const { verifyIsAdmin } = await import("@/lib/admin.server");
+  const isAdmin = await verifyIsAdmin(context);
+  if (!isAdmin) throw new Error("No autorizado");
+}
+
 /** Estado de configuración de Resend (solo administradores). */
 export const resendStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: isAdmin } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
-    if (!isAdmin) throw new Error("No autorizado");
+    await requireAdmin(context);
     const { resendStatusInfo } = await import("@/lib/resend.server");
     return resendStatusInfo(context.supabase);
   });
@@ -20,11 +22,7 @@ export const resendSaveCredentials = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: ResendCredentialsInput) => parseResendCredentialsInput(input))
   .handler(async ({ data, context }) => {
-    const { data: isAdmin } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
-    if (!isAdmin) throw new Error("No autorizado");
+    await requireAdmin(context);
     // Use supabaseAdmin to bypass RLS for writing credentials
     const { saveResendCred } = await import("@/lib/resend.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -39,11 +37,7 @@ export const resendSaveCredentials = createServerFn({ method: "POST" })
 export const resendGenerateWebhookSecret = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: isAdmin } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
-    if (!isAdmin) throw new Error("No autorizado");
+    await requireAdmin(context);
     const { saveResendCred } = await import("@/lib/resend.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const secret = crypto.randomUUID().replace(/-/g, "");
@@ -55,11 +49,7 @@ export const resendGenerateWebhookSecret = createServerFn({ method: "POST" })
 export const resendSendTest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: isAdmin } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
-    if (!isAdmin) throw new Error("No autorizado");
+    await requireAdmin(context);
 
     const email = context.claims?.email as string | undefined;
     if (!email) throw new Error("Tu cuenta de administrador no tiene correo");

@@ -11,11 +11,8 @@ import {
 export const mercadoPagoStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: isAdmin } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
-    if (!isAdmin) throw new Error("No autorizado");
+    const { verifyIsAdmin } = await import("@/lib/admin.server");
+    if (!(await verifyIsAdmin(context))) throw new Error("No autorizado");
     const { mpStatusInfo } = await import("@/lib/mercadopago.server");
     return mpStatusInfo(context.supabase);
   });
@@ -25,11 +22,8 @@ export const mercadoPagoSaveCredentials = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: MpCredentialsInput) => parseMpCredentialsInput(input))
   .handler(async ({ data, context }) => {
-    const { data: isAdmin } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
-    if (!isAdmin) throw new Error("No autorizado");
+    const { verifyIsAdmin } = await import("@/lib/admin.server");
+    if (!(await verifyIsAdmin(context))) throw new Error("No autorizado");
     // Use supabaseAdmin to bypass RLS for writing credentials
     const { saveMpCred } = await import("@/lib/mercadopago.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

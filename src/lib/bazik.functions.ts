@@ -3,13 +3,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { parseBazikCredentialsInput, type BazikCredentialsInput } from "@/lib/bazik.schemas";
 
 async function requireAdmin(context: { supabase: unknown; userId: string }) {
-  const supabase = context.supabase as {
-    rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown }>;
-  };
-  const { data: isAdmin } = await supabase.rpc("has_role", {
-    _user_id: context.userId,
-    _role: "admin",
-  });
+  const { verifyIsAdmin } = await import("@/lib/admin.server");
+  const isAdmin = await verifyIsAdmin(context as any);
   if (!isAdmin) throw new Error("No autorizado");
 }
 

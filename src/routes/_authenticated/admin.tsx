@@ -61,10 +61,19 @@ export const Route = createFileRoute("/_authenticated/admin")({
       await supabase.auth.signOut().catch(() => {});
       throw redirect({ to: "/auth" });
     }
-    const { data: isAdmin } = await supabase.rpc("has_role", {
+    let { data: isAdmin } = await supabase.rpc("has_role", {
       _user_id: data.user.id,
       _role: "admin",
     });
+    if (!isAdmin) {
+      const { data: roleRow } = await supabase
+        .from("user_roles")
+        .select("id")
+        .eq("user_id", data.user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      if (roleRow) isAdmin = true;
+    }
     if (!isAdmin) throw redirect({ to: "/dashboard" });
   },
   component: Admin,

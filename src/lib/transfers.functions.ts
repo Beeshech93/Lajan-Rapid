@@ -44,10 +44,8 @@ export const adminSetTransferStatus = createServerFn({ method: "POST" })
     adminSetStatusSchema.parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { data: isAdminData } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
+    const { verifyIsAdmin } = await import("@/lib/admin.server");
+    const isAdminData = await verifyIsAdmin(context);
     if (!isAdminData) throw new Error("No autorizado");
 
     const { data: t, error } = await context.supabase
@@ -93,10 +91,8 @@ export const adminCancelTransfer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: z.infer<typeof adminCancelSchema>) => adminCancelSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { data: isAdminData } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
+    const { verifyIsAdmin } = await import("@/lib/admin.server");
+    const isAdminData = await verifyIsAdmin(context);
     if (!isAdminData) throw new Error("No autorizado");
 
     const { data: t, error } = await context.supabase
@@ -217,12 +213,8 @@ export const adminConfirmTransfer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: z.infer<typeof adminConfirmSchema>) => adminConfirmSchema.parse(input))
   .handler(async ({ data, context }) => {
-    // Verificar que es admin
-    const { data: isAdminData } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
-
+    const { verifyIsAdmin } = await import("@/lib/admin.server");
+    const isAdminData = await verifyIsAdmin(context);
     if (!isAdminData) throw new Error("No autorizado");
 
     const { data: t, error } = await context.supabase

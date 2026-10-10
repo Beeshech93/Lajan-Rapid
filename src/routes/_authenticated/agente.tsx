@@ -57,14 +57,26 @@ export const Route = createFileRoute("/_authenticated/agente")({
   beforeLoad: async () => {
     const { data } = await supabase.auth.getUser();
     if (!data.user) throw redirect({ to: "/auth" });
-    const { data: allowed } = await supabase.rpc("has_role", {
+    let { data: allowed } = await supabase.rpc("has_role", {
       _user_id: data.user.id,
       _role: "agent",
     });
-    const { data: isAdmin } = await supabase.rpc("has_role", {
+    let { data: isAdmin } = await supabase.rpc("has_role", {
       _user_id: data.user.id,
       _role: "admin",
     });
+    if (!allowed && !isAdmin) {
+      const { data: roleRow } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", data.user.id)
+        .in("role", ["admin", "agent"])
+        .maybeSingle();
+      if (roleRow) {
+        if (roleRow.role === "admin") isAdmin = true;
+        if (roleRow.role === "agent") allowed = true;
+      }
+    }
     if (!allowed && !isAdmin) throw redirect({ to: "/dashboard" });
   },
   component: Agente,

@@ -14,9 +14,8 @@ export const payCryptoWithdrawal = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(parseInput)
   .handler(async ({ data, context }) => {
-    const { data: isStaff } = await context.supabase.rpc("is_staff", {
-      _user_id: context.userId,
-    });
+    const { verifyIsStaff } = await import("@/lib/admin.server");
+    const isStaff = await verifyIsStaff(context);
     if (!isStaff) throw new Error("No autorizado");
 
     const { data: row, error } = await context.supabase

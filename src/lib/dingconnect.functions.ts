@@ -223,10 +223,8 @@ export const dingCreateTopupCheckout = createServerFn({ method: "POST" })
 export const dingStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: isAdmin } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
+    const { verifyIsAdmin } = await import("@/lib/admin.server");
+    const isAdmin = await verifyIsAdmin(context);
     if (!isAdmin) throw new Error("No autorizado");
     const { dingStatusInfo } = await import("@/lib/dingconnect.server");
     return dingStatusInfo(context.supabase);
@@ -237,10 +235,8 @@ export const dingSaveCredentials = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: DingCredentialsInput) => parseDingCredentialsInput(input))
   .handler(async ({ data, context }) => {
-    const { data: isAdmin } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
+    const { verifyIsAdmin } = await import("@/lib/admin.server");
+    const isAdmin = await verifyIsAdmin(context);
     if (!isAdmin) throw new Error("No autorizado");
     // Use supabaseAdmin to bypass RLS for writing credentials
     const { saveDingCred } = await import("@/lib/dingconnect.server");
