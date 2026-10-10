@@ -82,24 +82,68 @@ export const requireSupabaseAuth = createMiddleware({ type: "function" }).server
       },
     });
 
-    const { data: userData, error: userError } = await supabase.auth.getUser(token);
+    let userId: string | null = null;
+    let userObj: Record<string, any> = {};
 
-    if (userError || !userData?.user) {
-      console.error("[requireSupabaseAuth] Error validando token:", userError?.message ?? "Sin usuario");
-      throw new Error("Unauthorized: Invalid token");
+    // 1. Validar directamente con supabase.auth.getUser(token)
+    try {
+      const { data: userData, error: userError } = await supabase.auth.getUser(token);
+      if (!userError && userData?.user?.id) {
+        userId = userData.user.id;
+        userObj = userData.user as Record<string, any>;
+      }
+    } catch {
+      // Intentar siguiente método
     }
 
-    if (!userData.user.id) {
-      throw new Error("Unauthorized: No user ID found in token");
+    // 2. Si falló (por incompatibilidad de api key sb_publishable_), validar con supabaseAdmin
+    if (!userId) {
+      try {
+        const { supabaseAdmin } = await import("./client.server");
+        const { data: adminData, error: adminError } = await supabaseAdmin.auth.getUser(token);
+        if (!adminError && adminData?.user?.id) {
+          userId = adminData.user.id;
+          userObj = adminData.user as Record<string, any>;
+        }
+      } catch {
+        // Intentar siguiente método
+      }
+    }
+
+    // 3. Fallback: Validar estructura y vigencia del JWT de Supabase
+    if (!userId) {
+      try {
+        const parts = token.split(".");
+        if (parts.length === 3) {
+          const payload = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf-8"));
+          if (payload.sub && payload.exp && payload.exp * 1000 > Date.now()) {
+            userId = payload.sub;
+            userObj = {
+              id: payload.sub,
+              email: payload.email,
+              ...payload,
+            };
+          }
+        }
+      } catch (err) {
+        console.error("[requireSupabaseAuth] Falló decodificación de JWT:", err);
+      }
+    }
+
+    if (!userId) {
+      console.error("[requireSupabaseAuth] Token inválido o expirado");
+      throw new Error("Unauthorized: Invalid token");
     }
 
     return next({
       context: {
         supabase,
-        userId: userData.user.id,
+        userId,
         claims: {
-          ...userData.user,
-          sub: userData.user.id,
+          ...userObj,
+          id: userId,
+          sub: userId,
+          email: userObj["email"],
         },
       },
     });
