@@ -227,7 +227,7 @@ export const dingStatus = createServerFn({ method: "POST" })
     const isAdmin = await verifyIsAdmin(context);
     if (!isAdmin) throw new Error("No autorizado");
     const { dingStatusInfo } = await import("@/lib/dingconnect.server");
-    return dingStatusInfo(context.supabase);
+    return dingStatusInfo();
   });
 
 /** Guardar manualmente las credenciales de DingConnect (solo administradores). */

@@ -14,7 +14,7 @@ export const mercadoPagoStatus = createServerFn({ method: "POST" })
     const { verifyIsAdmin } = await import("@/lib/admin.server");
     if (!(await verifyIsAdmin(context))) throw new Error("No autorizado");
     const { mpStatusInfo } = await import("@/lib/mercadopago.server");
-    return mpStatusInfo(context.supabase);
+    return mpStatusInfo();
   });
 
 /** Guardar manualmente las credenciales de Mercado Pago (solo administradores). */

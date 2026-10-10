@@ -10,11 +10,19 @@ const STRIPE_API = "https://api.stripe.com/v1";
 
 export async function loadStripeCreds(client?: any): Promise<Record<string, string>> {
   try {
-    const sb = client ?? (await import("@/integrations/supabase/client.server")).supabaseAdmin;
-    const { data } = await sb
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const sb = client ?? supabaseAdmin;
+    let { data, error } = await sb
       .from("integration_credentials")
       .select("name, value")
       .in("name", [...STRIPE_CRED_NAMES]);
+    if ((error || !data || data.length === 0) && client) {
+      const fallback = await supabaseAdmin
+        .from("integration_credentials")
+        .select("name, value")
+        .in("name", [...STRIPE_CRED_NAMES]);
+      if (fallback.data && fallback.data.length > 0) data = fallback.data;
+    }
     const out: Record<string, string> = {};
     for (const row of data ?? []) if (row.value) out[row.name] = row.value;
     return out;

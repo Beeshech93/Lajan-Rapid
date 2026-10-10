@@ -14,7 +14,7 @@ export const bazikStatus = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     await requireAdmin(context);
     const { bazikStatusInfo } = await import("@/lib/bazik.server");
-    return bazikStatusInfo(context.supabase);
+    return bazikStatusInfo();
   });
 
 /** Prueba la autenticación contra Bazik forzando un nuevo token (solo administradores). */

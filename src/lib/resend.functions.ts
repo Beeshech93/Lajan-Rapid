@@ -14,7 +14,7 @@ export const resendStatus = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     await requireAdmin(context);
     const { resendStatusInfo } = await import("@/lib/resend.server");
-    return resendStatusInfo(context.supabase);
+    return resendStatusInfo();
   });
 
 /** Guarda manualmente las credenciales de Resend (solo administradores). */

@@ -9,7 +9,7 @@ export const stripeStatus = createServerFn({ method: "POST" })
     const { verifyIsAdmin } = await import("@/lib/admin.server");
     if (!(await verifyIsAdmin(context))) throw new Error("No autorizado");
     const { stripeStatusInfo } = await import("@/lib/stripe.server");
-    return stripeStatusInfo(context.supabase);
+    return stripeStatusInfo();
   });
 
 /** Guardar manualmente las credenciales de Stripe (solo administradores). */
