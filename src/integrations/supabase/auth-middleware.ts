@@ -10,6 +10,15 @@ function isNewSupabaseApiKey(value: string): boolean {
 
 function createSupabaseFetch(supabaseKey: string): typeof fetch {
   return (input, init) => {
+    const url =
+      typeof input === "string"
+        ? input
+        : typeof URL !== "undefined" && input instanceof URL
+          ? input.toString()
+          : typeof Request !== "undefined" && input instanceof Request
+            ? input.url
+            : String(input);
+
     const headers = new Headers(
       typeof Request !== "undefined" && input instanceof Request ? input.headers : undefined,
     );
@@ -26,16 +35,26 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
       headers.delete("Authorization");
     }
 
-    headers.set("apikey", supabaseKey);
-    return fetch(input, { ...init, headers });
+    if (!headers.has("apikey")) {
+      headers.set("apikey", supabaseKey);
+    }
+    return fetch(url, { ...init, headers });
   };
 }
 
 export const requireSupabaseAuth = createMiddleware({ type: "function" }).server(
   async ({ next }) => {
-    const SUPABASE_URL = process.env["SUPABASE_URL"] || process.env["VITE_SUPABASE_URL"];
+    const SUPABASE_URL =
+      process.env["SUPABASE_URL"] ||
+      (typeof import.meta !== "undefined" && import.meta.env?.["VITE_SUPABASE_URL"]) ||
+      process.env["VITE_SUPABASE_URL"] ||
+      "https://pkximkpyguxehbjyaigt.supabase.co";
+
     const SUPABASE_PUBLISHABLE_KEY =
-      process.env["SUPABASE_PUBLISHABLE_KEY"] || process.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
+      process.env["SUPABASE_PUBLISHABLE_KEY"] ||
+      (typeof import.meta !== "undefined" && import.meta.env?.["VITE_SUPABASE_PUBLISHABLE_KEY"]) ||
+      process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ||
+      "sb_publishable_Ltcc93naQBuVJG3H0U2oqQ_KPgfm5ru";
 
     if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
       const missing = [

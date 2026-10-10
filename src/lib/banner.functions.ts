@@ -76,10 +76,28 @@ export const updateBannerConfig = createServerFn({ method: "POST" })
     });
 
     if (rows.length > 0) {
-      const { error } = await supabaseAdmin
-        .from("integration_credentials")
-        .upsert(rows, { onConflict: "name" });
-      if (error) throw new Error(error.message);
+      let upsertError: any;
+      try {
+        const res = await context.supabase
+          .from("integration_credentials")
+          .upsert(rows, { onConflict: "name" });
+        upsertError = res.error;
+      } catch (e: any) {
+        upsertError = e;
+      }
+
+      if (upsertError) {
+        try {
+          const res = await supabaseAdmin
+            .from("integration_credentials")
+            .upsert(rows, { onConflict: "name" });
+          upsertError = res.error;
+        } catch (e: any) {
+          upsertError = e;
+        }
+      }
+
+      if (upsertError) throw new Error(upsertError.message || upsertError);
     }
 
     return { ok: true };

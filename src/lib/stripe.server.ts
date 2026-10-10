@@ -33,19 +33,58 @@ export async function loadStripeCreds(client?: any): Promise<Record<string, stri
 }
 
 export async function saveStripeCred(name: string, value: string, userId: string, client?: any) {
-  const sb = client ?? (await import("@/integrations/supabase/client.server")).supabaseAdmin;
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const primary = client ?? supabaseAdmin;
+
   if (!value) {
-    const { error: delError } = await sb.from("integration_credentials").delete().eq("name", name);
-    if (delError) throw new Error(`Error borrando credencial ${name}: ${delError.message}`);
+    let delError: any;
+    try {
+      const res = await primary.from("integration_credentials").delete().eq("name", name);
+      delError = res.error;
+    } catch (e: any) {
+      delError = e;
+    }
+    if (delError && primary !== supabaseAdmin) {
+      try {
+        const res = await supabaseAdmin.from("integration_credentials").delete().eq("name", name);
+        delError = res.error;
+      } catch (e: any) {
+        delError = e;
+      }
+    }
+    if (delError) throw new Error(`Error borrando credencial ${name}: ${delError.message || delError}`);
     return;
   }
-  const { error: upsertError } = await sb
-    .from("integration_credentials")
-    .upsert(
-      { name, value, updated_at: new Date().toISOString(), updated_by: userId },
-      { onConflict: "name" },
-    );
-  if (upsertError) throw new Error(`Error guardando credencial ${name}: ${upsertError.message}`);
+
+  const now = new Date().toISOString();
+  let upsertError: any;
+  try {
+    const res = await primary
+      .from("integration_credentials")
+      .upsert(
+        { name, value, updated_at: now, updated_by: userId },
+        { onConflict: "name" },
+      );
+    upsertError = res.error;
+  } catch (e: any) {
+    upsertError = e;
+  }
+
+  if (upsertError && primary !== supabaseAdmin) {
+    try {
+      const res = await supabaseAdmin
+        .from("integration_credentials")
+        .upsert(
+          { name, value, updated_at: now, updated_by: userId },
+          { onConflict: "name" },
+        );
+      upsertError = res.error;
+    } catch (e: any) {
+      upsertError = e;
+    }
+  }
+
+  if (upsertError) throw new Error(`Error guardando credencial ${name}: ${upsertError.message || upsertError}`);
 }
 
 function pick(stored: Record<string, string>, name: StripeCredName) {

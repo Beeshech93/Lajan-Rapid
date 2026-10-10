@@ -24,12 +24,10 @@ export const mercadoPagoSaveCredentials = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { verifyIsAdmin } = await import("@/lib/admin.server");
     if (!(await verifyIsAdmin(context))) throw new Error("No autorizado");
-    // Use supabaseAdmin to bypass RLS for writing credentials
     const { saveMpCred } = await import("@/lib/mercadopago.server");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     for (const [name, value] of Object.entries(data)) {
       if (value === undefined) continue;
-      await saveMpCred(name, value.trim(), context.userId, supabaseAdmin);
+      await saveMpCred(name, value.trim(), context.userId, context.supabase);
     }
     return { ok: true };
   });

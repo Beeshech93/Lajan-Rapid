@@ -23,12 +23,10 @@ export const resendSaveCredentials = createServerFn({ method: "POST" })
   .inputValidator((input: ResendCredentialsInput) => parseResendCredentialsInput(input))
   .handler(async ({ data, context }) => {
     await requireAdmin(context);
-    // Use supabaseAdmin to bypass RLS for writing credentials
     const { saveResendCred } = await import("@/lib/resend.server");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     for (const [name, value] of Object.entries(data)) {
       if (value === undefined) continue;
-      await saveResendCred(name, value.trim(), context.userId, supabaseAdmin);
+      await saveResendCred(name, value.trim(), context.userId, context.supabase);
     }
     return { ok: true };
   });

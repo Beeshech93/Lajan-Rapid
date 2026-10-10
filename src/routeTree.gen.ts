@@ -43,7 +43,6 @@ import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedRecargasRouteImport } from './routes/_authenticated/recargas'
 import { Route as AuthenticatedSoporteRouteImport } from './routes/_authenticated/soporte'
 import { Route as AuthenticatedTransferenciaIdRouteImport } from './routes/_authenticated/transferencia.$id'
-import { Route as ApiEmailAuthWebhookRouteImport } from './routes/api/email/auth/webhook'
 import { Route as ApiPublicAuthWelcomeRouteImport } from './routes/api/public/auth/welcome'
 import { Route as ApiPublicBazikPayoutRouteImport } from './routes/api/public/bazik/payout'
 import { Route as ApiPublicDingconnectWebhookRouteImport } from './routes/api/public/dingconnect/webhook'
@@ -223,11 +222,6 @@ const AuthenticatedTransferenciaIdRoute =
     path: '/transferencia/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const ApiEmailAuthWebhookRoute = ApiEmailAuthWebhookRouteImport.update({
-  id: '/api/email/auth/webhook',
-  path: '/api/email/auth/webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiPublicAuthWelcomeRoute = ApiPublicAuthWelcomeRouteImport.update({
   id: '/api/public/auth/welcome',
   path: '/api/public/auth/welcome',
@@ -305,7 +299,6 @@ export interface FileRoutesByFullPath {
   '/soporte': typeof AuthenticatedSoporteRoute
   '/$lang/': typeof LangIndexRoute
   '/transferencia/$id': typeof AuthenticatedTransferenciaIdRoute
-  '/api/email/auth/webhook': typeof ApiEmailAuthWebhookRoute
   '/api/public/auth/welcome': typeof ApiPublicAuthWelcomeRoute
   '/api/public/bazik/payout': typeof ApiPublicBazikPayoutRoute
   '/api/public/dingconnect/webhook': typeof ApiPublicDingconnectWebhookRoute
@@ -349,7 +342,6 @@ export interface FileRoutesByTo {
   '/soporte': typeof AuthenticatedSoporteRoute
   '/$lang': typeof LangIndexRoute
   '/transferencia/$id': typeof AuthenticatedTransferenciaIdRoute
-  '/api/email/auth/webhook': typeof ApiEmailAuthWebhookRoute
   '/api/public/auth/welcome': typeof ApiPublicAuthWelcomeRoute
   '/api/public/bazik/payout': typeof ApiPublicBazikPayoutRoute
   '/api/public/dingconnect/webhook': typeof ApiPublicDingconnectWebhookRoute
@@ -395,7 +387,6 @@ export interface FileRoutesById {
   '/_authenticated/soporte': typeof AuthenticatedSoporteRoute
   '/$lang/': typeof LangIndexRoute
   '/_authenticated/transferencia/$id': typeof AuthenticatedTransferenciaIdRoute
-  '/api/email/auth/webhook': typeof ApiEmailAuthWebhookRoute
   '/api/public/auth/welcome': typeof ApiPublicAuthWelcomeRoute
   '/api/public/bazik/payout': typeof ApiPublicBazikPayoutRoute
   '/api/public/dingconnect/webhook': typeof ApiPublicDingconnectWebhookRoute
@@ -441,7 +432,6 @@ export interface FileRouteTypes {
     | '/soporte'
     | '/$lang/'
     | '/transferencia/$id'
-    | '/api/email/auth/webhook'
     | '/api/public/auth/welcome'
     | '/api/public/bazik/payout'
     | '/api/public/dingconnect/webhook'
@@ -485,7 +475,6 @@ export interface FileRouteTypes {
     | '/soporte'
     | '/$lang'
     | '/transferencia/$id'
-    | '/api/email/auth/webhook'
     | '/api/public/auth/welcome'
     | '/api/public/bazik/payout'
     | '/api/public/dingconnect/webhook'
@@ -530,7 +519,6 @@ export interface FileRouteTypes {
     | '/_authenticated/soporte'
     | '/$lang/'
     | '/_authenticated/transferencia/$id'
-    | '/api/email/auth/webhook'
     | '/api/public/auth/welcome'
     | '/api/public/bazik/payout'
     | '/api/public/dingconnect/webhook'
@@ -566,7 +554,6 @@ export interface RootRouteChildren {
   LangTarifasRoute: typeof LangTarifasRoute
   LangTraderRoute: typeof LangTraderRoute
   LangIndexRoute: typeof LangIndexRoute
-  ApiEmailAuthWebhookRoute: typeof ApiEmailAuthWebhookRoute
   ApiPublicAuthWelcomeRoute: typeof ApiPublicAuthWelcomeRoute
   ApiPublicBazikPayoutRoute: typeof ApiPublicBazikPayoutRoute
   ApiPublicDingconnectWebhookRoute: typeof ApiPublicDingconnectWebhookRoute
@@ -817,13 +804,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTransferenciaIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/email/auth/webhook': {
-      id: '/api/email/auth/webhook'
-      path: '/api/email/auth/webhook'
-      fullPath: '/api/email/auth/webhook'
-      preLoaderRoute: typeof ApiEmailAuthWebhookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/auth/welcome': {
       id: '/api/public/auth/welcome'
       path: '/api/public/auth/welcome'
@@ -937,7 +917,6 @@ const rootRouteChildren: RootRouteChildren = {
   LangTarifasRoute: LangTarifasRoute,
   LangTraderRoute: LangTraderRoute,
   LangIndexRoute: LangIndexRoute,
-  ApiEmailAuthWebhookRoute: ApiEmailAuthWebhookRoute,
   ApiPublicAuthWelcomeRoute: ApiPublicAuthWelcomeRoute,
   ApiPublicBazikPayoutRoute: ApiPublicBazikPayoutRoute,
   ApiPublicDingconnectWebhookRoute: ApiPublicDingconnectWebhookRoute,

@@ -238,12 +238,10 @@ export const dingSaveCredentials = createServerFn({ method: "POST" })
     const { verifyIsAdmin } = await import("@/lib/admin.server");
     const isAdmin = await verifyIsAdmin(context);
     if (!isAdmin) throw new Error("No autorizado");
-    // Use supabaseAdmin to bypass RLS for writing credentials
     const { saveDingCred } = await import("@/lib/dingconnect.server");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     for (const [name, value] of Object.entries(data)) {
       if (value === undefined) continue;
-      await saveDingCred(name, value.trim(), context.userId, supabaseAdmin);
+      await saveDingCred(name, value.trim(), context.userId, context.supabase);
     }
     return { ok: true };
   });
