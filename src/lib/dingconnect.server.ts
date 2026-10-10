@@ -31,12 +31,17 @@ export async function loadDingCreds(client?: any): Promise<Record<string, string
 export async function saveDingCred(name: string, value: string, userId: string, client?: any) {
   const sb = client ?? (await import("@/integrations/supabase/client.server")).supabaseAdmin;
   if (!value) {
-    await sb.from("integration_credentials").delete().eq("name", name);
+    const { error: delError } = await sb.from("integration_credentials").delete().eq("name", name);
+    if (delError) throw new Error(`Error borrando credencial ${name}: ${delError.message}`);
     return;
   }
-  await sb
+  const { error: upsertError } = await sb
     .from("integration_credentials")
-    .upsert({ name, value, updated_at: new Date().toISOString(), updated_by: userId });
+    .upsert(
+      { name, value, updated_at: new Date().toISOString(), updated_by: userId },
+      { onConflict: "name" },
+    );
+  if (upsertError) throw new Error(`Error guardando credencial ${name}: ${upsertError.message}`);
 }
 
 function pick(stored: Record<string, string>, name: DingCredName) {
