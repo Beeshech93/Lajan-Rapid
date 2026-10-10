@@ -36,10 +36,10 @@ type Creds = {
   environment: "sandbox" | "production";
 };
 
-export async function loadStoredCreds(): Promise<Record<string, string>> {
+export async function loadStoredCreds(client?: any): Promise<Record<string, string>> {
   try {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data } = await supabaseAdmin
+    const sb = client ?? (await import("@/integrations/supabase/client.server")).supabaseAdmin;
+    const { data } = await sb
       .from("integration_credentials")
       .select("name, value")
       .in("name", [...BAZIK_CRED_NAMES]);
@@ -52,17 +52,17 @@ export async function loadStoredCreds(): Promise<Record<string, string>> {
   }
 }
 
-export async function saveStoredCred(name: string, value: string, userId: string) {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+export async function saveStoredCred(name: string, value: string, userId: string, client?: any) {
+  const sb = client ?? (await import("@/integrations/supabase/client.server")).supabaseAdmin;
   if (!value) {
-    const { error: delError } = await supabaseAdmin
+    const { error: delError } = await sb
       .from("integration_credentials")
       .delete()
       .eq("name", name);
     if (delError) throw new Error(`Error borrando credencial ${name}: ${delError.message}`);
     return;
   }
-  const { error: upsertError } = await supabaseAdmin
+  const { error: upsertError } = await sb
     .from("integration_credentials")
     .upsert(
       { name, value, updated_at: new Date().toISOString(), updated_by: userId },
@@ -189,8 +189,8 @@ export async function bazikAuthenticate(forceRefresh = false): Promise<BazikAuth
 
 // --- Estado de configuración (para el panel de admin) ---------------------
 
-export async function bazikStatusInfo() {
-  const stored = await loadStoredCreds();
+export async function bazikStatusInfo(client?: any) {
+  const stored = await loadStoredCreds(client);
   const creds = credsFor(stored);
   const auth = await bazikAuthenticate();
 

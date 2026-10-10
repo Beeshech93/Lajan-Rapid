@@ -17,7 +17,7 @@ export const mercadoPagoStatus = createServerFn({ method: "POST" })
     });
     if (!isAdmin) throw new Error("No autorizado");
     const { mpStatusInfo } = await import("@/lib/mercadopago.server");
-    return mpStatusInfo();
+    return mpStatusInfo(context.supabase);
   });
 
 /** Guardar manualmente las credenciales de Mercado Pago (solo administradores). */
@@ -33,7 +33,7 @@ export const mercadoPagoSaveCredentials = createServerFn({ method: "POST" })
     const { saveMpCred } = await import("@/lib/mercadopago.server");
     for (const [name, value] of Object.entries(data)) {
       if (value === undefined) continue;
-      await saveMpCred(name, value.trim(), context.userId);
+      await saveMpCred(name, value.trim(), context.userId, context.supabase);
     }
     return { ok: true };
   });

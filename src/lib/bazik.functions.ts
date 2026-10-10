@@ -19,7 +19,7 @@ export const bazikStatus = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     await requireAdmin(context);
     const { bazikStatusInfo } = await import("@/lib/bazik.server");
-    return bazikStatusInfo();
+    return bazikStatusInfo(context.supabase);
   });
 
 /** Prueba la autenticación contra Bazik forzando un nuevo token (solo administradores). */
@@ -40,7 +40,7 @@ export const bazikSaveCredentials = createServerFn({ method: "POST" })
     const { saveStoredCred } = await import("@/lib/bazik.server");
     for (const [name, value] of Object.entries(data)) {
       if (value === undefined) continue;
-      await saveStoredCred(name, value.trim(), context.userId);
+      await saveStoredCred(name, value.trim(), context.userId, context.supabase);
     }
     return { ok: true };
   });

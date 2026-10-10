@@ -12,7 +12,7 @@ export const resendStatus = createServerFn({ method: "POST" })
     });
     if (!isAdmin) throw new Error("No autorizado");
     const { resendStatusInfo } = await import("@/lib/resend.server");
-    return resendStatusInfo();
+    return resendStatusInfo(context.supabase);
   });
 
 /** Guarda manualmente las credenciales de Resend (solo administradores). */
@@ -28,7 +28,7 @@ export const resendSaveCredentials = createServerFn({ method: "POST" })
     const { saveResendCred } = await import("@/lib/resend.server");
     for (const [name, value] of Object.entries(data)) {
       if (value === undefined) continue;
-      await saveResendCred(name, value.trim(), context.userId);
+      await saveResendCred(name, value.trim(), context.userId, context.supabase);
     }
     return { ok: true };
   });
@@ -44,7 +44,7 @@ export const resendGenerateWebhookSecret = createServerFn({ method: "POST" })
     if (!isAdmin) throw new Error("No autorizado");
     const { saveResendCred } = await import("@/lib/resend.server");
     const secret = crypto.randomUUID().replace(/-/g, "");
-    await saveResendCred("WELCOME_EMAIL_WEBHOOK_SECRET", secret, context.userId);
+    await saveResendCred("WELCOME_EMAIL_WEBHOOK_SECRET", secret, context.userId, context.supabase);
     return { ok: true, secret };
   });
 

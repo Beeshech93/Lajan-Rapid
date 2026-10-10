@@ -8,10 +8,10 @@ export type StripeCredName = (typeof STRIPE_CRED_NAMES)[number];
 
 const STRIPE_API = "https://api.stripe.com/v1";
 
-export async function loadStripeCreds(): Promise<Record<string, string>> {
+export async function loadStripeCreds(client?: any): Promise<Record<string, string>> {
   try {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data } = await supabaseAdmin
+    const sb = client ?? (await import("@/integrations/supabase/client.server")).supabaseAdmin;
+    const { data } = await sb
       .from("integration_credentials")
       .select("name, value")
       .in("name", [...STRIPE_CRED_NAMES]);
@@ -24,13 +24,13 @@ export async function loadStripeCreds(): Promise<Record<string, string>> {
   }
 }
 
-export async function saveStripeCred(name: string, value: string, userId: string) {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+export async function saveStripeCred(name: string, value: string, userId: string, client?: any) {
+  const sb = client ?? (await import("@/integrations/supabase/client.server")).supabaseAdmin;
   if (!value) {
-    await supabaseAdmin.from("integration_credentials").delete().eq("name", name);
+    await sb.from("integration_credentials").delete().eq("name", name);
     return;
   }
-  await supabaseAdmin
+  await sb
     .from("integration_credentials")
     .upsert({ name, value, updated_at: new Date().toISOString(), updated_by: userId });
 }
@@ -39,8 +39,8 @@ function pick(stored: Record<string, string>, name: StripeCredName) {
   return process.env[name] ?? stored[name];
 }
 
-export async function stripeStatusInfo() {
-  const stored = await loadStripeCreds();
+export async function stripeStatusInfo(client?: any) {
+  const stored = await loadStripeCreds(client);
   return {
     hasSecretKey: Boolean(pick(stored, "STRIPE_SECRET_KEY")),
     hasWebhookSecret: Boolean(pick(stored, "STRIPE_WEBHOOK_SECRET")),

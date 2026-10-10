@@ -8,10 +8,10 @@ export type MpCredName = (typeof MP_CRED_NAMES)[number];
 
 const MP_API = "https://api.mercadopago.com";
 
-export async function loadMpCreds(): Promise<Record<string, string>> {
+export async function loadMpCreds(client?: any): Promise<Record<string, string>> {
   try {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data } = await supabaseAdmin
+    const sb = client ?? (await import("@/integrations/supabase/client.server")).supabaseAdmin;
+    const { data } = await sb
       .from("integration_credentials")
       .select("name, value")
       .in("name", [...MP_CRED_NAMES]);
@@ -24,13 +24,13 @@ export async function loadMpCreds(): Promise<Record<string, string>> {
   }
 }
 
-export async function saveMpCred(name: string, value: string, userId: string) {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+export async function saveMpCred(name: string, value: string, userId: string, client?: any) {
+  const sb = client ?? (await import("@/integrations/supabase/client.server")).supabaseAdmin;
   if (!value) {
-    await supabaseAdmin.from("integration_credentials").delete().eq("name", name);
+    await sb.from("integration_credentials").delete().eq("name", name);
     return;
   }
-  await supabaseAdmin
+  await sb
     .from("integration_credentials")
     .upsert({ name, value, updated_at: new Date().toISOString(), updated_by: userId });
 }
@@ -39,8 +39,8 @@ function pick(stored: Record<string, string>, name: MpCredName) {
   return process.env[name] ?? stored[name];
 }
 
-export async function mpStatusInfo() {
-  const stored = await loadMpCreds();
+export async function mpStatusInfo(client?: any) {
+  const stored = await loadMpCreds(client);
   return {
     hasAccessToken: Boolean(pick(stored, "MERCADOPAGO_ACCESS_TOKEN")),
     hasWebhookSecret: Boolean(pick(stored, "MERCADOPAGO_WEBHOOK_SECRET")),

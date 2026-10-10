@@ -78,7 +78,8 @@ export const updateBannerConfig = createServerFn({ method: "POST" })
     });
 
     if (rows.length > 0) {
-      const { error } = await supabaseAdmin.from("integration_credentials").upsert(rows);
+      const sb = (context.supabase as any) ?? (await import("@/integrations/supabase/client.server")).supabaseAdmin;
+      const { error } = await sb.from("integration_credentials").upsert(rows);
       if (error) throw new Error(error.message);
     }
 

@@ -13,10 +13,10 @@ export type ResendCredName = (typeof RESEND_CRED_NAMES)[number];
 
 const RESEND_API = "https://api.resend.com";
 
-export async function loadResendCreds(): Promise<Record<string, string>> {
+export async function loadResendCreds(client?: any): Promise<Record<string, string>> {
   try {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data } = await supabaseAdmin
+    const sb = client ?? (await import("@/integrations/supabase/client.server")).supabaseAdmin;
+    const { data } = await sb
       .from("integration_credentials")
       .select("name, value")
       .in("name", [...RESEND_CRED_NAMES]);
@@ -29,13 +29,13 @@ export async function loadResendCreds(): Promise<Record<string, string>> {
   }
 }
 
-export async function saveResendCred(name: string, value: string, userId: string) {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+export async function saveResendCred(name: string, value: string, userId: string, client?: any) {
+  const sb = client ?? (await import("@/integrations/supabase/client.server")).supabaseAdmin;
   if (!value) {
-    await supabaseAdmin.from("integration_credentials").delete().eq("name", name);
+    await sb.from("integration_credentials").delete().eq("name", name);
     return;
   }
-  await supabaseAdmin
+  await sb
     .from("integration_credentials")
     .upsert({ name, value, updated_at: new Date().toISOString(), updated_by: userId });
 }
@@ -44,8 +44,8 @@ function pick(stored: Record<string, string>, name: ResendCredName) {
   return process.env[name] ?? stored[name];
 }
 
-export async function resendStatusInfo() {
-  const stored = await loadResendCreds();
+export async function resendStatusInfo(client?: any) {
+  const stored = await loadResendCreds(client);
   return {
     hasApiKey: Boolean(pick(stored, "RESEND_API_KEY")),
     hasFromEmail: Boolean(pick(stored, "RESEND_FROM_EMAIL")),

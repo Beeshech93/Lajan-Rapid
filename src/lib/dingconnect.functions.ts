@@ -229,7 +229,7 @@ export const dingStatus = createServerFn({ method: "POST" })
     });
     if (!isAdmin) throw new Error("No autorizado");
     const { dingStatusInfo } = await import("@/lib/dingconnect.server");
-    return dingStatusInfo();
+    return dingStatusInfo(context.supabase);
   });
 
 /** Guardar manualmente las credenciales de DingConnect (solo administradores). */
@@ -245,7 +245,7 @@ export const dingSaveCredentials = createServerFn({ method: "POST" })
     const { saveDingCred } = await import("@/lib/dingconnect.server");
     for (const [name, value] of Object.entries(data)) {
       if (value === undefined) continue;
-      await saveDingCred(name, value.trim(), context.userId);
+      await saveDingCred(name, value.trim(), context.userId, context.supabase);
     }
     return { ok: true };
   });

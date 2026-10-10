@@ -45,7 +45,7 @@ export const updateSupportConfig = createServerFn({ method: "POST" })
     });
     if (!isAdmin) throw new Error("No autorizado");
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const sb = (context.supabase as any) ?? (await import("@/integrations/supabase/client.server")).supabaseAdmin;
     const rows = (Object.keys(KEYS) as (keyof SupportConfig)[])
       .filter((field) => typeof data[field] === "string")
       .map((field) => ({
@@ -56,7 +56,7 @@ export const updateSupportConfig = createServerFn({ method: "POST" })
       }));
 
     if (rows.length > 0) {
-      const { error } = await supabaseAdmin.from("integration_credentials").upsert(rows);
+      const { error } = await sb.from("integration_credentials").upsert(rows);
       if (error) throw new Error(error.message);
     }
 

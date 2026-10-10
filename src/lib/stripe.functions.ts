@@ -12,7 +12,7 @@ export const stripeStatus = createServerFn({ method: "POST" })
     });
     if (!isAdmin) throw new Error("No autorizado");
     const { stripeStatusInfo } = await import("@/lib/stripe.server");
-    return stripeStatusInfo();
+    return stripeStatusInfo(context.supabase);
   });
 
 /** Guardar manualmente las credenciales de Stripe (solo administradores). */
@@ -28,7 +28,7 @@ export const stripeSaveCredentials = createServerFn({ method: "POST" })
     const { saveStripeCred } = await import("@/lib/stripe.server");
     for (const [name, value] of Object.entries(data)) {
       if (value === undefined) continue;
-      await saveStripeCred(name, value.trim(), context.userId);
+      await saveStripeCred(name, value.trim(), context.userId, context.supabase);
     }
     return { ok: true };
   });
