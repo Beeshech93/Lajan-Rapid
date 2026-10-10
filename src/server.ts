@@ -2,7 +2,6 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
-import { EXTERNAL_FRONTEND_ORIGINS } from "./lib/remote-api";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -45,41 +44,12 @@ function isH3SwallowedErrorBody(body: string): boolean {
   }
 }
 
-function corsOrigin(request: Request): string | null {
-  const origin = request.headers.get("origin");
-  if (!origin || !EXTERNAL_FRONTEND_ORIGINS.includes(origin)) return null;
-  if (!new URL(request.url).pathname.startsWith("/_serverFn")) return null;
-  return origin;
-}
-
-function withCors(response: Response, origin: string): Response {
-  const res = new Response(response.body, response);
-  res.headers.set("Access-Control-Allow-Origin", origin);
-  res.headers.append("Vary", "Origin");
-  return res;
-}
-
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
-    const allowOrigin = corsOrigin(request);
-    if (allowOrigin && request.method === "OPTIONS") {
-      return new Response(null, {
-        status: 204,
-        headers: {
-          "Access-Control-Allow-Origin": allowOrigin,
-          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-          "Access-Control-Allow-Headers":
-            request.headers.get("access-control-request-headers") ?? "*",
-          "Access-Control-Max-Age": "86400",
-          Vary: "Origin",
-        },
-      });
-    }
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      const normalized = await normalizeCatastrophicSsrResponse(response);
-      return allowOrigin ? withCors(normalized, allowOrigin) : normalized;
+      return await normalizeCatastrophicSsrResponse(response);
     } catch (error) {
       console.error(error);
       return new Response(renderErrorPage(), {
