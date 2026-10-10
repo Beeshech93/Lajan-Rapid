@@ -102,7 +102,8 @@ export function BazikPanel() {
           ) : null}
           {statusError ? (
             <p className="text-xs text-destructive">
-              No se pudo cargar el estado: {statusError instanceof Error ? statusError.message : "Error de conexión"}.{" "}
+              No se pudo cargar el estado:{" "}
+              {statusError instanceof Error ? statusError.message : "Error de conexión"}.{" "}
               <button className="underline" onClick={() => void refetch()}>
                 Reintentar
               </button>

@@ -1,4 +1,2 @@
-[install]
-saveTextLockfile = true
-# 24h supply-chain guard: skip package versions published less than a day ago.
-minimumReleaseAge = 86400
+[install.scopes]
+"@lovable" = { token = "$LOVABLE_REGISTRY_TOKEN", url = "https://registry.lovable.dev" }

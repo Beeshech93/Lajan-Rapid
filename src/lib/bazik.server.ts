@@ -55,10 +55,7 @@ export async function loadStoredCreds(client?: any): Promise<Record<string, stri
 export async function saveStoredCred(name: string, value: string, userId: string, client?: any) {
   const sb = client ?? (await import("@/integrations/supabase/client.server")).supabaseAdmin;
   if (!value) {
-    const { error: delError } = await sb
-      .from("integration_credentials")
-      .delete()
-      .eq("name", name);
+    const { error: delError } = await sb.from("integration_credentials").delete().eq("name", name);
     if (delError) throw new Error(`Error borrando credencial ${name}: ${delError.message}`);
     return;
   }

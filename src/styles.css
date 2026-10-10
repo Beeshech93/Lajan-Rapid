@@ -17,7 +17,6 @@
   --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Sora", ui-sans-serif, system-ui, sans-serif;
 
-
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -80,29 +79,29 @@
   --radius: 1.25rem;
 
   /* ---- Design System: variables globales (Navy + Verde + Blanco) ---- */
-  --primary: oklch(0.72 0.19 155);            /* verde vibrante */
-  --primary-dark: oklch(0.55 0.16 155);       /* verde profundo */
-  --primary-light: oklch(0.28 0.06 155);      /* tinte verde suave sobre navy */
+  --primary: oklch(0.72 0.19 155); /* verde vibrante */
+  --primary-dark: oklch(0.55 0.16 155); /* verde profundo */
+  --primary-light: oklch(0.28 0.06 155); /* tinte verde suave sobre navy */
 
-  --background: oklch(0.17 0.045 262);        /* azul marino profundo */
-  --surface: oklch(0.21 0.05 262);            /* cards, formularios, sheets */
+  --background: oklch(0.17 0.045 262); /* azul marino profundo */
+  --surface: oklch(0.21 0.05 262); /* cards, formularios, sheets */
   --surface-secondary: oklch(0.27 0.055 262); /* listas, chips, fills */
-  --surface-elevated: oklch(0.24 0.055 262);  /* modales y popovers sobre cards */
-  --logo-surface: oklch(0.99 0 0);             /* fondo claro para el logo */
+  --surface-elevated: oklch(0.24 0.055 262); /* modales y popovers sobre cards */
+  --logo-surface: oklch(0.99 0 0); /* fondo claro para el logo */
 
-  --text-primary: oklch(0.97 0.005 260);      /* blanco: títulos, montos */
-  --text-secondary: oklch(0.82 0.02 260);     /* descripciones */
-  --text-muted: oklch(0.70 0.025 260);        /* fechas, info secundaria */
+  --text-primary: oklch(0.97 0.005 260); /* blanco: títulos, montos */
+  --text-secondary: oklch(0.82 0.02 260); /* descripciones */
+  --text-muted: oklch(0.7 0.025 260); /* fechas, info secundaria */
 
-  --success: oklch(0.77 0.18 150);            /* verde éxito */
-  --warning: oklch(0.79 0.16 65);             /* naranja */
-  --error: oklch(0.68 0.20 25);               /* rojo de error */
+  --success: oklch(0.77 0.18 150); /* verde éxito */
+  --warning: oklch(0.79 0.16 65); /* naranja */
+  --error: oklch(0.68 0.2 25); /* rojo de error */
 
-  --border: oklch(0.97 0.01 220 / 14%);       /* borde frío sutil, coherente con navy */
+  --border: oklch(0.97 0.01 220 / 14%); /* borde frío sutil, coherente con navy */
   --border-strong: oklch(0.97 0.01 220 / 24%); /* inputs enfocados, separadores clave */
 
-  --card-gradient-start: oklch(0.72 0.19 155);  /* verde */
-  --card-gradient-end: oklch(0.60 0.15 220);    /* azul verdoso */
+  --card-gradient-start: oklch(0.72 0.19 155); /* verde */
+  --card-gradient-end: oklch(0.6 0.15 220); /* azul verdoso */
 
   /* ---- Mapeo a tokens de componentes (shadcn) ---- */
   --foreground: var(--text-primary);
@@ -148,21 +147,19 @@
 
   --gradient-brand: linear-gradient(
     140deg,
-    oklch(0.30 0.09 255),
+    oklch(0.3 0.09 255),
     oklch(0.45 0.14 200) 46%,
-    oklch(0.60 0.18 165) 76%,
+    oklch(0.6 0.18 165) 76%,
     var(--card-gradient-start)
   );
-  --gradient-mint: linear-gradient(120deg, oklch(0.60 0.18 165), oklch(0.80 0.19 145));
-  --shadow-soft: 0 1px 2px oklch(0.10 0.03 262 / 0.35), 0 10px 30px -18px oklch(0.10 0.03 262 / 0.55);
-  --shadow-lift: 0 2px 8px oklch(0.10 0.03 262 / 0.40), 0 32px 64px -28px oklch(0.72 0.19 155 / 0.30);
+  --gradient-mint: linear-gradient(120deg, oklch(0.6 0.18 165), oklch(0.8 0.19 145));
+  --shadow-soft: 0 1px 2px oklch(0.1 0.03 262 / 0.35), 0 10px 30px -18px oklch(0.1 0.03 262 / 0.55);
+  --shadow-lift: 0 2px 8px oklch(0.1 0.03 262 / 0.4), 0 32px 64px -28px oklch(0.72 0.19 155 / 0.3);
 }
 
 .dark {
   /* El tema base ya es azul marino: el modo oscuro hereda los mismos tokens. */
 }
-
-
 
 @layer base {
   * {
@@ -235,27 +232,65 @@
 
 /* ---- Animaciones del logo (entrada a la app y fin de transacción) ---- */
 @keyframes logo-pop {
-  0% { opacity: 0; transform: scale(0.6) translateY(14px); }
-  55% { opacity: 1; transform: scale(1.08) translateY(0); }
-  100% { opacity: 1; transform: scale(1); }
+  0% {
+    opacity: 0;
+    transform: scale(0.6) translateY(14px);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(1.08) translateY(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 @keyframes logo-veil-out {
-  to { opacity: 0; visibility: hidden; }
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
 }
 @keyframes logo-shine {
-  0% { transform: scaleX(0); opacity: 0; }
-  60% { transform: scaleX(1); opacity: 1; }
-  100% { transform: scaleX(1); opacity: 0.3; }
+  0% {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  60% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleX(1);
+    opacity: 0.3;
+  }
 }
 @keyframes logo-celebrate {
-  0% { opacity: 0; transform: scale(0.7) rotate(-6deg); }
-  40% { opacity: 1; transform: scale(1.12) rotate(3deg); }
-  70% { transform: scale(0.98) rotate(0deg); }
-  100% { opacity: 0; transform: scale(1.04); }
+  0% {
+    opacity: 0;
+    transform: scale(0.7) rotate(-6deg);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.12) rotate(3deg);
+  }
+  70% {
+    transform: scale(0.98) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.04);
+  }
 }
 @keyframes logo-ring {
-  0% { opacity: 0.7; transform: scale(0.6); }
-  100% { opacity: 0; transform: scale(1.6); }
+  0% {
+    opacity: 0.7;
+    transform: scale(0.6);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.6);
+  }
 }
 
 @utility logo-pop {
@@ -279,5 +314,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .logo-pop, .logo-celebrate, .logo-ring, .logo-shine { animation-duration: 1ms; }
+  .logo-pop,
+  .logo-celebrate,
+  .logo-ring,
+  .logo-shine {
+    animation-duration: 1ms;
+  }
 }
