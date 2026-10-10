@@ -114,9 +114,17 @@ function extractToken(payload: unknown): { token: string | null; expiresAt: numb
     (data["jwt"] as string | undefined) ??
     null;
 
+  const rawExpiresAt =
+    (data["expires_at"] as number | undefined) ?? (data["expiresAt"] as number | undefined) ?? null;
   const expiresIn =
     (data["expires_in"] as number | undefined) ?? (data["expiresIn"] as number | undefined) ?? null;
-  const expiresAt = typeof expiresIn === "number" ? Date.now() + expiresIn * 1000 : null;
+
+  let expiresAt: number | null = null;
+  if (typeof rawExpiresAt === "number") {
+    expiresAt = rawExpiresAt > 1e11 ? rawExpiresAt : rawExpiresAt * 1000;
+  } else if (typeof expiresIn === "number") {
+    expiresAt = Date.now() + expiresIn * 1000;
+  }
 
   return { token, expiresAt };
 }
