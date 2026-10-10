@@ -43,13 +43,13 @@ import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedRecargasRouteImport } from './routes/_authenticated/recargas'
 import { Route as AuthenticatedSoporteRouteImport } from './routes/_authenticated/soporte'
 import { Route as AuthenticatedTransferenciaIdRouteImport } from './routes/_authenticated/transferencia.$id'
+import { Route as ApiEmailAuthWebhookRouteImport } from './routes/api/email/auth/webhook'
 import { Route as ApiPublicAuthWelcomeRouteImport } from './routes/api/public/auth/welcome'
 import { Route as ApiPublicBazikPayoutRouteImport } from './routes/api/public/bazik/payout'
 import { Route as ApiPublicDingconnectWebhookRouteImport } from './routes/api/public/dingconnect/webhook'
 import { Route as ApiPublicMercadopagoWebhookRouteImport } from './routes/api/public/mercadopago/webhook'
 import { Route as ApiPublicSecurityAlertRouteImport } from './routes/api/public/security/alert'
 import { Route as ApiPublicStripeWebhookRouteImport } from './routes/api/public/stripe/webhook'
-import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -221,6 +221,11 @@ const AuthenticatedTransferenciaIdRoute =
     path: '/transferencia/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiEmailAuthWebhookRoute = ApiEmailAuthWebhookRouteImport.update({
+  id: '/api/email/auth/webhook',
+  path: '/api/email/auth/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicAuthWelcomeRoute = ApiPublicAuthWelcomeRouteImport.update({
   id: '/api/public/auth/welcome',
   path: '/api/public/auth/welcome',
@@ -251,11 +256,6 @@ const ApiPublicSecurityAlertRoute = ApiPublicSecurityAlertRouteImport.update({
 const ApiPublicStripeWebhookRoute = ApiPublicStripeWebhookRouteImport.update({
   id: '/api/public/stripe/webhook',
   path: '/api/public/stripe/webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
-  id: '/lovable/email/auth/webhook',
-  path: '/lovable/email/auth/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -293,13 +293,13 @@ export interface FileRoutesByFullPath {
   '/soporte': typeof AuthenticatedSoporteRoute
   '/$lang/': typeof LangIndexRoute
   '/transferencia/$id': typeof AuthenticatedTransferenciaIdRoute
+  '/api/email/auth/webhook': typeof ApiEmailAuthWebhookRoute
   '/api/public/auth/welcome': typeof ApiPublicAuthWelcomeRoute
   '/api/public/bazik/payout': typeof ApiPublicBazikPayoutRoute
   '/api/public/dingconnect/webhook': typeof ApiPublicDingconnectWebhookRoute
   '/api/public/mercadopago/webhook': typeof ApiPublicMercadopagoWebhookRoute
   '/api/public/security/alert': typeof ApiPublicSecurityAlertRoute
   '/api/public/stripe/webhook': typeof ApiPublicStripeWebhookRoute
-  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -335,13 +335,13 @@ export interface FileRoutesByTo {
   '/soporte': typeof AuthenticatedSoporteRoute
   '/$lang': typeof LangIndexRoute
   '/transferencia/$id': typeof AuthenticatedTransferenciaIdRoute
+  '/api/email/auth/webhook': typeof ApiEmailAuthWebhookRoute
   '/api/public/auth/welcome': typeof ApiPublicAuthWelcomeRoute
   '/api/public/bazik/payout': typeof ApiPublicBazikPayoutRoute
   '/api/public/dingconnect/webhook': typeof ApiPublicDingconnectWebhookRoute
   '/api/public/mercadopago/webhook': typeof ApiPublicMercadopagoWebhookRoute
   '/api/public/security/alert': typeof ApiPublicSecurityAlertRoute
   '/api/public/stripe/webhook': typeof ApiPublicStripeWebhookRoute
-  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -379,13 +379,13 @@ export interface FileRoutesById {
   '/_authenticated/soporte': typeof AuthenticatedSoporteRoute
   '/$lang/': typeof LangIndexRoute
   '/_authenticated/transferencia/$id': typeof AuthenticatedTransferenciaIdRoute
+  '/api/email/auth/webhook': typeof ApiEmailAuthWebhookRoute
   '/api/public/auth/welcome': typeof ApiPublicAuthWelcomeRoute
   '/api/public/bazik/payout': typeof ApiPublicBazikPayoutRoute
   '/api/public/dingconnect/webhook': typeof ApiPublicDingconnectWebhookRoute
   '/api/public/mercadopago/webhook': typeof ApiPublicMercadopagoWebhookRoute
   '/api/public/security/alert': typeof ApiPublicSecurityAlertRoute
   '/api/public/stripe/webhook': typeof ApiPublicStripeWebhookRoute
-  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -423,13 +423,13 @@ export interface FileRouteTypes {
     | '/soporte'
     | '/$lang/'
     | '/transferencia/$id'
+    | '/api/email/auth/webhook'
     | '/api/public/auth/welcome'
     | '/api/public/bazik/payout'
     | '/api/public/dingconnect/webhook'
     | '/api/public/mercadopago/webhook'
     | '/api/public/security/alert'
     | '/api/public/stripe/webhook'
-    | '/lovable/email/auth/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -465,13 +465,13 @@ export interface FileRouteTypes {
     | '/soporte'
     | '/$lang'
     | '/transferencia/$id'
+    | '/api/email/auth/webhook'
     | '/api/public/auth/welcome'
     | '/api/public/bazik/payout'
     | '/api/public/dingconnect/webhook'
     | '/api/public/mercadopago/webhook'
     | '/api/public/security/alert'
     | '/api/public/stripe/webhook'
-    | '/lovable/email/auth/webhook'
   id:
     | '__root__'
     | '/'
@@ -508,13 +508,13 @@ export interface FileRouteTypes {
     | '/_authenticated/soporte'
     | '/$lang/'
     | '/_authenticated/transferencia/$id'
+    | '/api/email/auth/webhook'
     | '/api/public/auth/welcome'
     | '/api/public/bazik/payout'
     | '/api/public/dingconnect/webhook'
     | '/api/public/mercadopago/webhook'
     | '/api/public/security/alert'
     | '/api/public/stripe/webhook'
-    | '/lovable/email/auth/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -542,13 +542,13 @@ export interface RootRouteChildren {
   LangTarifasRoute: typeof LangTarifasRoute
   LangTraderRoute: typeof LangTraderRoute
   LangIndexRoute: typeof LangIndexRoute
+  ApiEmailAuthWebhookRoute: typeof ApiEmailAuthWebhookRoute
   ApiPublicAuthWelcomeRoute: typeof ApiPublicAuthWelcomeRoute
   ApiPublicBazikPayoutRoute: typeof ApiPublicBazikPayoutRoute
   ApiPublicDingconnectWebhookRoute: typeof ApiPublicDingconnectWebhookRoute
   ApiPublicMercadopagoWebhookRoute: typeof ApiPublicMercadopagoWebhookRoute
   ApiPublicSecurityAlertRoute: typeof ApiPublicSecurityAlertRoute
   ApiPublicStripeWebhookRoute: typeof ApiPublicStripeWebhookRoute
-  LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -791,6 +791,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTransferenciaIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/email/auth/webhook': {
+      id: '/api/email/auth/webhook'
+      path: '/api/email/auth/webhook'
+      fullPath: '/api/email/auth/webhook'
+      preLoaderRoute: typeof ApiEmailAuthWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/auth/welcome': {
       id: '/api/public/auth/welcome'
       path: '/api/public/auth/welcome'
@@ -831,13 +838,6 @@ declare module '@tanstack/react-router' {
       path: '/api/public/stripe/webhook'
       fullPath: '/api/public/stripe/webhook'
       preLoaderRoute: typeof ApiPublicStripeWebhookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lovable/email/auth/webhook': {
-      id: '/lovable/email/auth/webhook'
-      path: '/lovable/email/auth/webhook'
-      fullPath: '/lovable/email/auth/webhook'
-      preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -897,13 +897,13 @@ const rootRouteChildren: RootRouteChildren = {
   LangTarifasRoute: LangTarifasRoute,
   LangTraderRoute: LangTraderRoute,
   LangIndexRoute: LangIndexRoute,
+  ApiEmailAuthWebhookRoute: ApiEmailAuthWebhookRoute,
   ApiPublicAuthWelcomeRoute: ApiPublicAuthWelcomeRoute,
   ApiPublicBazikPayoutRoute: ApiPublicBazikPayoutRoute,
   ApiPublicDingconnectWebhookRoute: ApiPublicDingconnectWebhookRoute,
   ApiPublicMercadopagoWebhookRoute: ApiPublicMercadopagoWebhookRoute,
   ApiPublicSecurityAlertRoute: ApiPublicSecurityAlertRoute,
   ApiPublicStripeWebhookRoute: ApiPublicStripeWebhookRoute,
-  LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

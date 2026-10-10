@@ -9,14 +9,20 @@ CREATE OR REPLACE FUNCTION public.notify_user_confirmed()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, net AS $$
 DECLARE
   _secret text;
+  _base_url text;
 BEGIN
   IF OLD.email_confirmed_at IS NULL AND NEW.email_confirmed_at IS NOT NULL THEN
     SELECT value INTO _secret FROM public.integration_credentials
      WHERE name = 'WELCOME_EMAIL_WEBHOOK_SECRET';
 
+    SELECT COALESCE(
+      (SELECT value FROM public.integration_credentials WHERE name = 'APP_URL'),
+      'https://lajanrapid.app'
+    ) INTO _base_url;
+
     IF _secret IS NOT NULL THEN
       PERFORM net.http_post(
-        url := 'https://lajanrapid-app.lovable.app/api/public/auth/welcome',
+        url := rtrim(_base_url, '/') || '/api/public/auth/welcome',
         headers := jsonb_build_object('Content-Type', 'application/json', 'x-webhook-secret', _secret),
         body := jsonb_build_object(
           'email', NEW.email,

@@ -25,14 +25,21 @@ CREATE OR REPLACE FUNCTION public.protect_kyc_status()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, net AS $$
 DECLARE
   _secret text;
+  _base_url text;
 BEGIN
   IF NEW.kyc_status IS DISTINCT FROM OLD.kyc_status AND NOT public.is_staff(auth.uid()) THEN
     IF NEW.kyc_status IS DISTINCT FROM 'pending' THEN
       SELECT value INTO _secret FROM public.integration_credentials
        WHERE name = 'WELCOME_EMAIL_WEBHOOK_SECRET';
+
+      SELECT COALESCE(
+        (SELECT value FROM public.integration_credentials WHERE name = 'APP_URL'),
+        'https://lajanrapid.app'
+      ) INTO _base_url;
+
       IF _secret IS NOT NULL THEN
         PERFORM net.http_post(
-          url := 'https://lajanrapid-app.lovable.app/api/public/security/alert',
+          url := rtrim(_base_url, '/') || '/api/public/security/alert',
           headers := jsonb_build_object('Content-Type', 'application/json', 'x-webhook-secret', _secret),
           body := jsonb_build_object(
             'event_type', 'kyc_self_approve_attempt',

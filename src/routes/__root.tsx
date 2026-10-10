@@ -106,13 +106,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       {
         property: "og:image",
-        content:
-          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/12a98643-608e-4133-90a8-d9091cc3da8a/id-preview-9e63a84a--b7a9baa3-804a-465d-b798-284cc8ac44da.lovable.app-1785963363792.png",
+        content: "https://lajanrapid.app/og-image.png",
       },
       {
         name: "twitter:image",
-        content:
-          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/12a98643-608e-4133-90a8-d9091cc3da8a/id-preview-9e63a84a--b7a9baa3-804a-465d-b798-284cc8ac44da.lovable.app-1785963363792.png",
+        content: "https://lajanrapid.app/og-image.png",
       },
     ],
     links: [

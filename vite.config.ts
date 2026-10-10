@@ -5,12 +5,9 @@ import viteReact from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import tsConfigPaths from "vite-tsconfig-paths";
 
-// Config propia (sin el envoltorio @lovable.dev/vite-tanstack-config), para
-// que el proyecto compile y despliegue de forma independiente.
-// El preset de salida se detecta solo: Vercel define process.env.VERCEL en
-// sus builds; en cualquier otro entorno (incluido Lovable) se genera el
-// formato Cloudflare Workers, que es el que la plataforma de Lovable sabe
-// desplegar. Así este archivo no hay que tocarlo según dónde se publique.
+// Preset de salida detectado automáticamente:
+// - Vercel define process.env.VERCEL en sus builds → preset vercel
+// - Otros entornos → cloudflare-module
 const ON_VERCEL = Boolean(process.env["VERCEL"]);
 const NITRO_PRESET = ON_VERCEL ? "vercel" : "cloudflare-module";
 

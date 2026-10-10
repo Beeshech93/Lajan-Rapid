@@ -9,11 +9,10 @@ import { RecoveryEmail } from "@/lib/email-templates/recovery";
 import { EmailChangeEmail } from "@/lib/email-templates/email-change";
 import { ReauthenticationEmail } from "@/lib/email-templates/reauthentication";
 
-// Reemplaza el handler de Lovable (@lovable.dev/email-js): este endpoint es el
-// "Send Email" Auth Hook que Supabase llama directamente (configurado en
-// Supabase Dashboard → Authentication → Hooks), firmado con SEND_EMAIL_HOOK_SECRET
-// (formato Standard Webhooks: "v1,whsec_..."), y el envío real va por Resend
-// usando las credenciales ya guardadas en el panel de administración.
+// Endpoint "Send Email" Auth Hook de Supabase.
+// Configurado en: Supabase Dashboard → Authentication → Hooks → Send Email
+// Firmado con SEND_EMAIL_HOOK_SECRET (formato Standard Webhooks: "v1,whsec_...")
+// El envío real va por Resend usando las credenciales del panel de administración.
 
 const SITE_NAME = "Lajan Rapid";
 const ROOT_DOMAIN = "lajanrapid.app";
@@ -137,7 +136,7 @@ async function buildEmail(payload: SupabaseAuthHookPayload): Promise<{
   }
 }
 
-export const Route = createFileRoute("/lovable/email/auth/webhook")({
+export const Route = createFileRoute("/api/email/auth/webhook")({
   server: {
     handlers: {
       POST: async ({ request }) => {
