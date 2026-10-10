@@ -499,6 +499,10 @@ function RatesPanel() {
       toast.error("Valores inválidos");
       return;
     }
+    if (values.rate <= 0) {
+      toast.error("El tipo de cambio debe ser un número mayor a 0 (ej. 7.20)");
+      return;
+    }
     setSaving(true);
     const { error } = rate
       ? await supabase.from("exchange_rates").update(values).eq("id", rate.id)
@@ -561,19 +565,47 @@ function RatesPanel() {
           </div>
 
           <form onSubmit={save} className="grid gap-4 sm:grid-cols-2" key={`${from}-${to}`}>
-            <Field name="rate" label={`${to} por 1 ${from}`} value={rate?.rate} step="0.0001" />
-            <Field name="fee_percent" label="Comisión (%)" value={rate?.fee_percent} step="0.01" />
+            <Field
+              name="rate"
+              label={`Tipo de cambio (${to} por 1 ${from})`}
+              value={
+                rate && Number(rate.rate) > 0
+                  ? Number(rate.rate)
+                  : from === "MXN" && to === "HTG"
+                    ? 7.2
+                    : undefined
+              }
+              step="0.0001"
+              placeholder="Ej. 7.20"
+              helperText={`Cuánto ${to} recibe el destinatario por cada 1 ${from}`}
+            />
+            <Field
+              name="fee_percent"
+              label="Comisión porcentual (%)"
+              value={rate?.fee_percent}
+              step="0.01"
+              placeholder="Ej. 1.5"
+              helperText="% cobrado sobre el monto enviado"
+            />
             <Field
               name="fee_fixed"
               label={`Comisión fija (${from})`}
-              value={rate?.fee_fixed}
+              value={
+                rate && Number(rate.rate) === 0 && Number(rate.fee_fixed) === 7.2
+                  ? 15
+                  : rate?.fee_fixed
+              }
               step="0.01"
+              placeholder="Ej. 15.00"
+              helperText={`Cargo fijo por transacción en ${from}`}
             />
             <Field
               name="agent_commission_percent"
               label="Comisión del agente (%)"
               value={rate?.agent_commission_percent}
               step="0.01"
+              placeholder="Ej. 0.8"
+              helperText="% que gana el agente que procese la entrega"
             />
             <Button type="submit" disabled={saving} className="sm:col-span-2">
               {saving ? "Guardando…" : rate ? "Actualizar tarifas" : "Crear corredor"}
@@ -617,16 +649,30 @@ function Field({
   label,
   value,
   step,
+  placeholder,
+  helperText,
 }: {
   name: string;
   label: string;
   value: number | undefined;
   step: string;
+  placeholder?: string;
+  helperText?: string;
 }) {
   return (
     <div className="space-y-1.5">
       <Label htmlFor={name}>{label}</Label>
-      <Input id={name} name={name} type="number" step={step} min="0" defaultValue={value ?? 0} />
+      <Input
+        id={name}
+        name={name}
+        type="number"
+        step={step}
+        min={name === "rate" ? "0.0001" : "0"}
+        defaultValue={value !== undefined ? value : ""}
+        placeholder={placeholder ?? "0.00"}
+        required={name === "rate"}
+      />
+      {helperText && <p className="text-[11px] text-muted-foreground">{helperText}</p>}
     </div>
   );
 }

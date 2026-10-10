@@ -23,7 +23,7 @@ export function useCountries() {
  * (la tabla aún no tiene datos, RLS bloquea, u otro problema).
  */
 const FALLBACK_RATES: Record<string, RateConfig> = {
-  "MXN→HTG": { rate: 7.08,    fee_percent: 2.5, fee_fixed: 25,   agent_commission_percent: 1 },
+  "MXN→HTG": { rate: 7.20,    fee_percent: 1.5, fee_fixed: 15,   agent_commission_percent: 0.8 },
   "MXN→DOP": { rate: 3.35,    fee_percent: 2.5, fee_fixed: 25,   agent_commission_percent: 1 },
   "USD→HTG": { rate: 131.00,  fee_percent: 2.5, fee_fixed: 1.5,  agent_commission_percent: 1 },
   "USD→DOP": { rate: 62.00,   fee_percent: 2.5, fee_fixed: 1.5,  agent_commission_percent: 1 },
@@ -71,9 +71,48 @@ export function useRate(fromCurrency?: string, toCurrency?: string) {
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      if (data) return data as RateConfig & { id: string };
-      // Si la DB no tiene datos, usar tasa de fallback
-      return fallbackRate(fromCurrency!, toCurrency!);
+
+      const fb = fallbackRate(fromCurrency!, toCurrency!);
+
+      // Si la base de datos tiene una tasa válida mayor a 0, usarla
+      if (data && Number(data.rate) > 0) {
+        return data as RateConfig & { id: string };
+      }
+
+      // Si la DB no tiene datos o tiene rate <= 0 (accidentalmente guardado como 0),
+      // recurrir a la tasa fallback garantizada
+      if (fb) {
+        // Si el usuario en la DB tenía el tipo de cambio ingresado en fee_fixed por confusión (ej. 7.2):
+        const isRateConfusedWithFee =
+          data &&
+          Number(data.rate) === 0 &&
+          Number(data.fee_fixed) > 0 &&
+          Number(data.fee_fixed) <= 10 &&
+          fromCurrency === "MXN";
+
+        const effectiveRate = isRateConfusedWithFee ? Number(data.fee_fixed) : fb.rate;
+        const effectiveFeeFixed = isRateConfusedWithFee
+          ? fb.fee_fixed
+          : data && Number(data.fee_fixed) >= 0
+            ? Number(data.fee_fixed)
+            : fb.fee_fixed;
+        const effectiveFeePercent =
+          data && Number(data.fee_percent) > 0
+            ? Number(data.fee_percent)
+            : fb.fee_percent;
+
+        return {
+          ...fb,
+          id: data?.id || fb.id,
+          rate: effectiveRate,
+          fee_percent: effectiveFeePercent,
+          fee_fixed: effectiveFeeFixed,
+          agent_commission_percent:
+            data?.agent_commission_percent ?? fb.agent_commission_percent,
+        };
+      }
+
+      return data ? (data as RateConfig & { id: string }) : null;
     },
   });
 }
