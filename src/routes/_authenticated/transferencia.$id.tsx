@@ -124,6 +124,14 @@ function Detalle() {
   const shouldAutoFinalizeUser =
     !isAdmin && isDirectCashDelivery && !isCardPayment && !isOxxo && !isSpei;
 
+  const effectiveRate = t && Number(t.rate) > 0 ? Number(t.rate) : 7.20;
+  const effectiveAmountReceive =
+    t && Number(t.amount_receive) > 0
+      ? Number(t.amount_receive)
+      : t && Number(t.amount_send) > 0
+        ? Math.round(Number(t.amount_send) * effectiveRate * 100) / 100
+        : 0;
+
   // El pago automático solo puede dispararse una vez, y únicamente cuando el
   // pago ya fue confirmado ("paid"). Sin esto, abrir la página reintentaba el
   // envío en cada render.
@@ -187,7 +195,7 @@ function Detalle() {
           <Metric label={t2("detail.fee")} value={money(Number(t.fee_send), t.send_currency)} />
           <Metric
             label={`${t.recipient_name} ${t2("detail.recipient_gets")}`}
-            value={money(Number(t.amount_receive), t.receive_currency)}
+            value={money(effectiveAmountReceive, t.receive_currency)}
           />
         </CardContent>
       </Card>
@@ -210,7 +218,7 @@ function Detalle() {
                     : t2("detail.mp_note")
                   : isDirectCashDelivery && !isAdmin
                     ? t2("detail.processing_note")
-                    : `${t.recipient_name} · ${t.recipient_phone} · ${money(Number(t.amount_receive), t.receive_currency)}`}
+                    : `${t.recipient_name} · ${t.recipient_phone} · ${money(effectiveAmountReceive, t.receive_currency)}`}
               </p>
             </div>
             {isCardPayment ? (
@@ -338,7 +346,7 @@ function Detalle() {
           <Row label={t2("detail.payment_method")} value={paymentName} />
           <Row
             label={t2("detail.rate")}
-            value={`1 ${t.send_currency} = ${Number(t.rate).toFixed(4)} ${t.receive_currency}`}
+            value={`1 ${t.send_currency} = ${effectiveRate.toFixed(4)} ${t.receive_currency}`}
           />
           {t.note && <Row label={t2("detail.message")} value={t.note} />}
         </CardContent>

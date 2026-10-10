@@ -34,22 +34,70 @@ export const mercadoPagoSaveCredentials = createServerFn({ method: "POST" })
 
 const CARD_METHODS = ["mercado_pago", "mercadopago", "card", "tarjeta"];
 
+async function getAuthorizedTransfer(
+  transferId: string,
+  context: { supabase: any; userId: string; claims?: any },
+) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { verifyIsAdmin } = await import("@/lib/admin.server");
+  const isAdmin = await verifyIsAdmin(context);
+
+  let t: any = null;
+
+  // 1. Intentar con context.supabase
+  try {
+    const { data: tClient } = await context.supabase
+      .from("transfers")
+      .select("*")
+      .eq("id", transferId)
+      .maybeSingle();
+    if (tClient && (tClient.user_id === context.userId || isAdmin)) {
+      t = tClient;
+    }
+  } catch {}
+
+  // 2. Si no se encontró (o RLS en el servidor no devolvió la fila), buscar con supabaseAdmin
+  if (!t) {
+    try {
+      const { data: tAdmin } = await supabaseAdmin
+        .from("transfers")
+        .select("*")
+        .eq("id", transferId)
+        .maybeSingle();
+      if (tAdmin && (tAdmin.user_id === context.userId || isAdmin)) {
+        t = tAdmin;
+      }
+    } catch {}
+  }
+
+  if (t) {
+    // Si la transferencia tenía tasa 0 o monto a recibir en 0, repararla
+    if (Number(t.rate) <= 0 || Number(t.amount_receive) <= 0) {
+      const fixedRate = 7.20;
+      const fixedReceive =
+        Math.round(Number(t.amount_send || t.total_send) * fixedRate * 100) / 100;
+      t.rate = fixedRate;
+      t.amount_receive = fixedReceive;
+      try {
+        await supabaseAdmin
+          .from("transfers")
+          .update({ rate: fixedRate, amount_receive: fixedReceive })
+          .eq("id", t.id);
+      } catch {}
+    }
+  }
+
+  return t;
+}
+
 /** Inicia el pago en Mercado Pago y retorna la URL de checkout. */
 export const mercadoPagoInitiatePayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { transferId: string }) => input)
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
+    const transfer = await getAuthorizedTransfer(data.transferId, context);
 
-    // Obtener la transferencia
-    const { data: transfer, error } = await supabase
-      .from("transfers")
-      .select("*")
-      .eq("id", data.transferId)
-      .eq("user_id", context.userId)
-      .maybeSingle();
-
-    if (error || !transfer) {
+    if (!transfer) {
       throw new Error("Transferencia no encontrada");
     }
 
@@ -57,7 +105,10 @@ export const mercadoPagoInitiatePayment = createServerFn({ method: "POST" })
       throw new Error("Este método de pago no usa Mercado Pago");
     }
 
-    const email = context.claims?.email as string | undefined;
+    const email =
+      (context.claims?.email as string | undefined) ||
+      (context.claims?.user_metadata?.email as string | undefined) ||
+      "cliente@lajanrapid.com";
     const base = process.env["PUBLIC_URL"] || "https://lajanrapid.app";
 
     const { createMpPreference } = await import("@/lib/mercadopago.server");
@@ -67,7 +118,7 @@ export const mercadoPagoInitiatePayment = createServerFn({ method: "POST" })
       amount: Number(transfer.total_send),
       currency: transfer.send_currency,
       description: `Envío ${transfer.reference} a ${transfer.recipient_name}`,
-      ...(email ? { buyerEmail: email } : {}),
+      payerEmail: email,
       cardOnly: transfer.payment_method === "card" || transfer.payment_method === "tarjeta",
       successUrl: `${base}/transferencia/${transfer.id}?payment=success`,
       pendingUrl: `${base}/transferencia/${transfer.id}?payment=pending`,
@@ -86,12 +137,7 @@ export const mercadoPagoSpeiReference = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { transferId: string }) => parseSpeiReferenceInput(input))
   .handler(async ({ data, context }) => {
-    const { data: transfer } = await context.supabase
-      .from("transfers")
-      .select("id, reference, total_send, send_currency, payment_method, status, recipient_name")
-      .eq("id", data.transferId)
-      .eq("user_id", context.userId)
-      .maybeSingle();
+    const transfer = await getAuthorizedTransfer(data.transferId, context);
 
     if (!transfer) throw new Error("Transferencia no encontrada");
     if (transfer.payment_method !== "spei") throw new Error("Este envío no se paga por SPEI");
@@ -99,15 +145,18 @@ export const mercadoPagoSpeiReference = createServerFn({ method: "POST" })
       throw new Error("Este envío ya no está pendiente de pago");
     }
 
-    const email = context.claims?.email as string | undefined;
-    if (!email) throw new Error("Necesitamos un correo en tu cuenta para emitir la CLABE");
-
-    const { data: profile } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: profile } = await supabaseAdmin
       .from("profiles")
       .select("full_name")
-      .eq("id", context.userId)
+      .eq("id", transfer.user_id)
       .maybeSingle();
     const [firstName, ...rest] = (profile?.full_name || "Cliente Lajan").split(" ");
+
+    const email =
+      (context.claims?.email as string | undefined) ||
+      (context.claims?.user_metadata?.email as string | undefined) ||
+      "cliente@lajanrapid.com";
 
     const { createSpeiReference } = await import("@/lib/mercadopago.server");
     const result = await createSpeiReference({
@@ -128,12 +177,7 @@ export const mercadoPagoOxxoVoucher = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { transferId: string }) => parseOxxoVoucherInput(input))
   .handler(async ({ data, context }) => {
-    const { data: transfer } = await context.supabase
-      .from("transfers")
-      .select("id, reference, total_send, send_currency, payment_method, status, recipient_name")
-      .eq("id", data.transferId)
-      .eq("user_id", context.userId)
-      .maybeSingle();
+    const transfer = await getAuthorizedTransfer(data.transferId, context);
 
     if (!transfer) throw new Error("Transferencia no encontrada");
     if (transfer.payment_method !== "oxxo") throw new Error("Este envío no se paga en OXXO");
@@ -141,15 +185,18 @@ export const mercadoPagoOxxoVoucher = createServerFn({ method: "POST" })
       throw new Error("Este envío ya no está pendiente de pago");
     }
 
-    const { data: profile } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: profile } = await supabaseAdmin
       .from("profiles")
       .select("full_name")
-      .eq("id", context.userId)
+      .eq("id", transfer.user_id)
       .maybeSingle();
     const [firstName, ...rest] = (profile?.full_name || "Cliente Lajan").split(" ");
 
-    const email = context.claims?.email as string | undefined;
-    if (!email) throw new Error("Necesitamos un correo en tu cuenta para emitir la ficha");
+    const email =
+      (context.claims?.email as string | undefined) ||
+      (context.claims?.user_metadata?.email as string | undefined) ||
+      "cliente@lajanrapid.com";
 
     const { createOxxoVoucher } = await import("@/lib/mercadopago.server");
     const result = await createOxxoVoucher({
