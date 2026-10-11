@@ -70,23 +70,6 @@ async function getAuthorizedTransfer(
     } catch {}
   }
 
-  if (t) {
-    // Si la transferencia tenía tasa 0 o monto a recibir en 0, repararla
-    if (Number(t.rate) <= 0 || Number(t.amount_receive) <= 0) {
-      const fixedRate = 7.20;
-      const fixedReceive =
-        Math.round(Number(t.amount_send || t.total_send) * fixedRate * 100) / 100;
-      t.rate = fixedRate;
-      t.amount_receive = fixedReceive;
-      try {
-        await supabaseAdmin
-          .from("transfers")
-          .update({ rate: fixedRate, amount_receive: fixedReceive })
-          .eq("id", t.id);
-      } catch {}
-    }
-  }
-
   return t;
 }
 
@@ -107,7 +90,6 @@ export const mercadoPagoInitiatePayment = createServerFn({ method: "POST" })
 
     const email =
       (context.claims?.email as string | undefined) ||
-      (context.claims?.user_metadata?.email as string | undefined) ||
       "cliente@lajanrapid.com";
     const base = process.env["PUBLIC_URL"] || "https://lajanrapid.app";
 
@@ -118,7 +100,7 @@ export const mercadoPagoInitiatePayment = createServerFn({ method: "POST" })
       amount: Number(transfer.total_send),
       currency: transfer.send_currency,
       description: `Envío ${transfer.reference} a ${transfer.recipient_name}`,
-      payerEmail: email,
+      buyerEmail: email,
       cardOnly: transfer.payment_method === "card" || transfer.payment_method === "tarjeta",
       successUrl: `${base}/transferencia/${transfer.id}?payment=success`,
       pendingUrl: `${base}/transferencia/${transfer.id}?payment=pending`,
@@ -155,7 +137,6 @@ export const mercadoPagoSpeiReference = createServerFn({ method: "POST" })
 
     const email =
       (context.claims?.email as string | undefined) ||
-      (context.claims?.user_metadata?.email as string | undefined) ||
       "cliente@lajanrapid.com";
 
     const { createSpeiReference } = await import("@/lib/mercadopago.server");
@@ -195,7 +176,6 @@ export const mercadoPagoOxxoVoucher = createServerFn({ method: "POST" })
 
     const email =
       (context.claims?.email as string | undefined) ||
-      (context.claims?.user_metadata?.email as string | undefined) ||
       "cliente@lajanrapid.com";
 
     const { createOxxoVoucher } = await import("@/lib/mercadopago.server");
