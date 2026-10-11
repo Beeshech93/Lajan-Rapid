@@ -641,6 +641,11 @@ export type Database = {
           agent_id: string | null
           amount_receive: number
           amount_send: number
+          bazik_error: string | null
+          bazik_provider: string | null
+          bazik_status: string | null
+          bazik_submitted_at: string | null
+          bazik_transaction_id: string | null
           created_at: string
           delivery_method: string
           destination_country: string
@@ -666,6 +671,11 @@ export type Database = {
           agent_id?: string | null
           amount_receive?: number
           amount_send: number
+          bazik_error?: string | null
+          bazik_provider?: string | null
+          bazik_status?: string | null
+          bazik_submitted_at?: string | null
+          bazik_transaction_id?: string | null
           created_at?: string
           delivery_method?: string
           destination_country?: string
@@ -691,6 +701,11 @@ export type Database = {
           agent_id?: string | null
           amount_receive?: number
           amount_send?: number
+          bazik_error?: string | null
+          bazik_provider?: string | null
+          bazik_status?: string | null
+          bazik_submitted_at?: string | null
+          bazik_transaction_id?: string | null
           created_at?: string
           delivery_method?: string
           destination_country?: string
@@ -912,6 +927,13 @@ export type Database = {
       card_purchase: {
         Args: { _amount: number; _card_id: string; _merchant: string }
         Returns: string
+      }
+      claim_bazik_payout: {
+        Args: {
+          _from_status: Database["public"]["Enums"]["transfer_status"]
+          _transfer_id: string
+        }
+        Returns: boolean
       }
       convert_wallet: {
         Args: { _amount: number; _from_wallet: string; _to_currency: string }
