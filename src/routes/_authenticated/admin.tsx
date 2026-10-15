@@ -34,6 +34,7 @@ import { SupportPanel } from "@/components/admin/SupportPanel";
 import { AdBannerPanel } from "@/components/admin/AdBannerPanel";
 import { KycPanel } from "@/components/admin/KycPanel";
 import { TopupsPanel } from "@/components/admin/TopupsPanel";
+import { MigrationAnalysisPanel } from "@/components/admin/MigrationAnalysisPanel";
 import { adminCancelTransfer, adminSetTransferStatus } from "@/lib/transfers.functions";
 import {
   money,
@@ -130,9 +131,13 @@ function Admin() {
           <TabsTrigger value="recargas">Recargas</TabsTrigger>
           <TabsTrigger value="usuarios">Usuarios</TabsTrigger>
           <TabsTrigger value="tarifas">Tarifas</TabsTrigger>
+          <TabsTrigger value="migracion">Migración IA</TabsTrigger>
         </TabsList>
         <TabsContent value="resumen" className="mt-4">
           <Resumen />
+        </TabsContent>
+        <TabsContent value="migracion" className="mt-4">
+          <MigrationAnalysisPanel />
         </TabsContent>
         <TabsContent value="contabilidad" className="mt-4">
           <AccountingPanel />
