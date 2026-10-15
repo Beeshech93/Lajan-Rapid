@@ -17,13 +17,13 @@ export function AdBanner({ className }: { className?: string }) {
 
   const content =
     data.type === "image" ? (
-      <img src={data.image_url} alt="" className="block h-auto w-full object-cover" />
+      <img src={data.image_url} alt="" className="block h-16 w-full object-cover sm:h-20" />
     ) : (
-      <p className="px-4 py-3 text-center text-sm font-medium text-foreground">{data.text}</p>
+      <p className="px-3 py-1.5 text-center text-xs font-medium text-foreground">{data.text}</p>
     );
 
   const wrapperClassName = cn(
-    "block w-full overflow-hidden rounded-2xl border border-border bg-secondary/40 transition-opacity hover:opacity-90",
+    "block w-full overflow-hidden rounded-xl border border-border bg-secondary/40 transition-opacity hover:opacity-90",
     className,
   );
 
