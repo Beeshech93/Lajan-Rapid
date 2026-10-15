@@ -163,7 +163,15 @@ function Perfil() {
       qc.invalidateQueries({ queryKey: ["kyc", user?.id] });
       void reload();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("profile.err_kyc_send"));
+      // Log the full Supabase/PostgREST error so the failing KYC step can be diagnosed.
+      console.error("[KYC] No se pudo enviar la verificación:", err);
+      const detail =
+        err && typeof err === "object" && "message" in err && typeof err.message === "string"
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : t("profile.err_kyc_send");
+      toast.error(detail);
     } finally {
       setSavingKyc(false);
     }
