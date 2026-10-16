@@ -52,7 +52,7 @@ export const resendSendTest = createServerFn({ method: "POST" })
     const email = context.claims?.email as string | undefined;
     if (!email) throw new Error("Tu cuenta de administrador no tiene correo");
 
-    const { resendSendBulkEmails } = await import("@/lib/resend.server");
+    const { resendSendEmail } = await import("@/lib/resend.server");
     const { render } = await import("@react-email/render");
     const { AccountReadyEmail } = await import("@/lib/email-templates/account-ready");
     const base = process.env["PUBLIC_URL"] || "https://lajanrapid.app";
@@ -81,7 +81,7 @@ export const resendSendAnnouncement = createServerFn({ method: "POST" })
     await requireAdmin(context);
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { resendSendEmail } = await import("@/lib/resend.server");
+    const { resendSendBulkEmails } = await import("@/lib/resend.server");
 
     const escapeHtml = (value: string) =>
       value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
