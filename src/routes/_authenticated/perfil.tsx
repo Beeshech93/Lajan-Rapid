@@ -87,6 +87,10 @@ function Perfil() {
 
   const saveProfile = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (profile?.kyc_status === "approved") {
+      toast.error("Tu perfil está bloqueado porque tu identidad ya fue verificada.");
+      return;
+    }
     const form = new FormData(e.currentTarget);
     const parsed = profileSchema.safeParse({
       full_name: String(form.get("full_name") ?? ""),
@@ -216,20 +220,24 @@ function Perfil() {
                 name="full_name"
                 defaultValue={profile?.full_name ?? ""}
                 maxLength={100}
+                disabled={profile?.kyc_status === "approved"}
               />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="phone">{t("profile.phone")}</Label>
-              <Input id="phone" name="phone" defaultValue={profile?.phone ?? ""} maxLength={25} />
+              <Input id="phone" name="phone" defaultValue={profile?.phone ?? ""} maxLength={25} disabled={profile?.kyc_status === "approved"} />
             </div>
             <div className="space-y-1.5 sm:col-span-2">
               <Label>{t("profile.email")}</Label>
               <Input value={user?.email ?? ""} disabled />
             </div>
-            <Button type="submit" disabled={savingProfile} className="sm:col-span-2">
+            <Button type="submit" disabled={savingProfile || profile?.kyc_status === "approved"} className="sm:col-span-2">
               {savingProfile ? t("profile.saving") : t("profile.save_changes")}
             </Button>
           </form>
+          {profile?.kyc_status === "approved" && (
+            <p className="mt-3 text-sm text-muted-foreground">Tu identidad fue aprobada; los datos personales están bloqueados. Contacta al soporte si necesitas corregirlos.</p>
+          )}
         </CardContent>
       </Card>
 
