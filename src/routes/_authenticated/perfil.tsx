@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { Volume2 } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { ArrowLeft, Check, Circle, X } from "lucide-react";
@@ -20,6 +21,8 @@ import {
 } from "@/components/ui/select";
 import { KYC_TONE, type KycStatus } from "@/lib/remesa";
 import { useI18n } from "@/lib/i18n";
+import { Switch } from "@/components/ui/switch";
+import { isNotificationSoundEnabled, playNotificationDing, setNotificationSoundEnabled } from "@/lib/notification-sound";
 
 export const Route = createFileRoute("/_authenticated/perfil")({
   head: () => ({
@@ -38,6 +41,7 @@ function Perfil() {
   const { t } = useI18n();
   const qc = useQueryClient();
   const [savingProfile, setSavingProfile] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(isNotificationSoundEnabled);
   const [savingKyc, setSavingKyc] = useState(false);
   const [docType, setDocType] = useState("ine");
   const [frontFile, setFrontFile] = useState<File | null>(null);
@@ -239,6 +243,29 @@ function Perfil() {
             <p className="mt-3 text-sm text-muted-foreground">Tu identidad fue aprobada; los datos personales están bloqueados. Contacta al soporte si necesitas corregirlos.</p>
           )}
         </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex-row items-center gap-3 space-y-0">
+          <span className="grid size-10 place-items-center rounded-xl bg-accent/10 text-accent">
+            <Volume2 className="size-5" aria-hidden="true" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <CardTitle className="text-base">Sonido de notificaciones</CardTitle>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Reproduce un ding digital suave cuando llegue una notificación nueva dentro de la app.
+            </p>
+          </div>
+          <Switch
+            checked={soundEnabled}
+            onCheckedChange={(enabled) => {
+              setSoundEnabled(enabled);
+              setNotificationSoundEnabled(enabled);
+              if (enabled) playNotificationDing();
+            }}
+            aria-label="Activar sonido de notificaciones"
+          />
+        </CardHeader>
       </Card>
 
       <Card>
