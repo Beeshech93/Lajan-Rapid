@@ -15,7 +15,6 @@ export const resendStatus = createServerFn({ method: "POST" })
     await requireAdmin(context);
     const { resendStatusInfo } = await import("@/lib/resend.server");
     return resendStatusInfo();
-    const { resendSendBulkEmails } = await import("@/lib/resend.server");
   });
 
 /** Guarda manualmente las credenciales de Resend (solo administradores). */
@@ -28,7 +27,6 @@ export const resendSaveCredentials = createServerFn({ method: "POST" })
     for (const [name, value] of Object.entries(data)) {
       if (value === undefined) continue;
       await saveResendCred(name, value.trim(), context.userId, context.supabase);
-      const { resendSendEmail } = await import("@/lib/resend.server");
     }
     return { ok: true };
   });
