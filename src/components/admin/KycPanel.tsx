@@ -48,22 +48,54 @@ export function KycPanel() {
   const [rejectReason, setRejectReason] = useState("");
 
   const viewDocuments = async (row: KycRow) => {
-    const urls: { front?: string; back?: string } = {};
-    if (row.document_photo_path) {
-      const { data: signed } = await supabase.storage
-        .from("kyc-documents")
-        .createSignedUrl(row.document_photo_path, 300);
-      if (signed?.signedUrl) urls.front = signed.signedUrl;
-    }
-    if (row.document_back_path) {
-      const { data: signed } = await supabase.storage
-        .from("kyc-documents")
-        .createSignedUrl(row.document_back_path, 300);
-      if (signed?.signedUrl) urls.back = signed.signedUrl;
-    }
-    if (!urls.front && !urls.back) {
-      toast.error("Esta solicitud no tiene fotos adjuntas");
+    const frontPath = row.document_photo_path?.trim() || null;
+    const backPath = row.document_back_path?.trim() || null;
+
+    if (!frontPath && !backPath) {
+      toast.error(
+        "Esta solicitud no tiene rutas de fotos guardadas. El cliente debe volver a enviar los documentos.",
+      );
+      console.error("[KYC] La solicitud no contiene rutas de documentos:", row.id);
       return;
+    }
+
+    const urls: { front?: string; back?: string } = {};
+    const failures: string[] = [];
+
+    if (frontPath) {
+      const { data: signed, error } = await supabase.storage
+        .from("kyc-documents")
+        .createSignedUrl(frontPath, 300);
+      if (error) {
+        console.error("[KYC] Error al generar enlace del frente:", error);
+        failures.push(`frente: ${error.message}`);
+      } else if (signed?.signedUrl) {
+        urls.front = signed.signedUrl;
+      }
+    }
+
+    if (backPath) {
+      const { data: signed, error } = await supabase.storage
+        .from("kyc-documents")
+        .createSignedUrl(backPath, 300);
+      if (error) {
+        console.error("[KYC] Error al generar enlace del reverso:", error);
+        failures.push(`reverso: ${error.message}`);
+      } else if (signed?.signedUrl) {
+        urls.back = signed.signedUrl;
+      }
+    }
+
+    if (!urls.front && !urls.back) {
+      toast.error(
+        failures.length
+          ? `No se pudieron abrir los documentos. Revisa permisos de Storage: ${failures.join(" · ")}`
+          : "No se encontraron archivos en Storage para las rutas guardadas.",
+      );
+      return;
+    }
+    if (failures.length) {
+      toast.warning(`No se pudo abrir un lado del documento: ${failures.join(" · ")}`);
     }
     setViewer(urls);
   };
