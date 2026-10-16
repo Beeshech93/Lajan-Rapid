@@ -61,3 +61,70 @@ export const resendSendTest = createServerFn({ method: "POST" })
     );
     return resendSendEmail({ to: email, subject: "Prueba: correo de bienvenida", html });
   });
+
+
+/** Envía un anuncio a todos los usuarios con correo confirmado, uno por uno para no revelar destinatarios. */
+export const resendSendAnnouncement = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { subject: string; message: string }) => {
+    const subject = typeof input?.subject === "string" ? input.subject.trim() : "";
+    const message = typeof input?.message === "string" ? input.message.trim() : "";
+    if (subject.length < 3 || subject.length > 150) {
+      throw new Error("El asunto debe tener entre 3 y 150 caracteres.");
+    }
+    if (message.length < 2 || message.length > 5000) {
+      throw new Error("El mensaje debe tener entre 2 y 5000 caracteres.");
+    }
+    return { subject, message };
+  })
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { resendSendEmail } = await import("@/lib/resend.server");
+
+    const escapeHtml = (value: string) =>
+      value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    const html = `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#222;max-width:640px;margin:0 auto">
+      <h2 style="margin-bottom:20px">Lajan Rapid</h2>
+      <div style="white-space:pre-wrap">${escapeHtml(data.message)}</div>
+      <hr style="margin-top:32px;border:0;border-top:1px solid #ddd"/>
+      <p style="font-size:12px;color:#666">Mensaje enviado por Lajan Rapid.</p>
+    </div>`;
+
+    let page = 1;
+    const perPage = 1000;
+    const emails: string[] = [];
+    while (true) {
+      const { data: result, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
+      if (error) throw new Error("No se pudieron consultar los usuarios: " + error.message);
+      for (const user of result.users) {
+        if (user.email && user.email_confirmed_at) emails.push(user.email);
+      }
+      if (result.users.length < perPage || emails.length >= 5000) break;
+      page += 1;
+    }
+
+    if (emails.length === 0) {
+      return { ok: true, total: 0, sent: 0, failed: 0, message: "No hay usuarios con correo confirmado." };
+    }
+
+    let sent = 0;
+    let failed = 0;
+    for (const email of emails) {
+      const result = await resendSendEmail({ to: email, subject: data.subject, html });
+      if (result.ok) sent += 1;
+      else failed += 1;
+    }
+
+    return {
+      ok: failed === 0,
+      total: emails.length,
+      sent,
+      failed,
+      message: failed === 0
+        ? `Correo enviado a ${sent} usuarios.`
+        : `Envío terminado: ${sent} enviados y ${failed} fallidos.`,
+    };
+  });
