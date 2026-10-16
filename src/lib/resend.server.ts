@@ -164,3 +164,70 @@ export async function resendSendEmail(opts: {
     return { ok: false, error: "No se pudo contactar a Resend para enviar el correo." };
   }
 }
+
+
+export type ResendBulkEmail = { to: string; subject: string; html: string };
+export type ResendBulkResult = { sent: number; failed: number };
+
+/**
+ * Envía correos individuales en lotes de hasta 100. Cada mensaje tiene un solo
+ * destinatario, por lo que las direcciones no se comparten entre usuarios.
+ */
+export async function resendSendBulkEmails(
+  emails: ResendBulkEmail[],
+): Promise<ResendBulkResult> {
+  if (emails.length === 0) return { sent: 0, failed: 0 };
+
+  const stored = await loadResendCreds();
+  const apiKey = pick(stored, "RESEND_API_KEY");
+  const from = pick(stored, "RESEND_FROM_EMAIL");
+  if (!apiKey || !from) {
+    throw new Error(
+      "Falta la conexión de Resend: configura la API Key y el correo remitente en Administración → Correo.",
+    );
+  }
+
+  let sent = 0;
+  let failed = 0;
+  for (let i = 0; i < emails.length; i += 100) {
+    const batch = emails.slice(i, i + 100);
+    try {
+      const response = await fetch(`${RESEND_API}/emails/batch`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(
+          batch.map((email) => ({
+            from,
+            to: [email.to],
+            subject: email.subject,
+            html: email.html,
+          })),
+        ),
+      });
+      const text = await response.text();
+      let parsed: { data?: unknown[]; message?: string } = {};
+      try {
+        parsed = JSON.parse(text) as typeof parsed;
+      } catch {
+        // Respuesta no-JSON: se registra abajo sin exponer credenciales.
+      }
+
+      if (!response.ok) {
+        console.error(`Resend /emails/batch falló [${response.status}]: ${text.slice(0, 500)}`);
+        failed += batch.length;
+        continue;
+      }
+
+      const accepted = Array.isArray(parsed.data) ? parsed.data.length : 0;
+      sent += Math.min(accepted, batch.length);
+      failed += batch.length - Math.min(accepted, batch.length);
+    } catch (error) {
+      console.error("Resend batch lanzó un error:", error);
+      failed += batch.length;
+    }
+  }
+  return { sent, failed };
+}
