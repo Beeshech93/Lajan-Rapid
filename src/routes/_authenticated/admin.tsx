@@ -25,6 +25,7 @@ import { CryptoPanel } from "@/components/admin/CryptoPanel";
 import { MercadoPagoPanel } from "@/components/admin/MercadoPagoPanel";
 import { StripePanel } from "@/components/admin/StripePanel";
 import { ResendPanel } from "@/components/admin/ResendPanel";
+import { BulkEmailPanel } from "@/components/admin/BulkEmailPanel";
 import { SecurityPanel } from "@/components/admin/SecurityPanel";
 import { OperatorReportPanel } from "@/components/admin/OperatorReportPanel";
 import { TopupRatesPanel } from "@/components/admin/TopupRatesPanel";
@@ -120,6 +121,7 @@ function Admin() {
           <TabsTrigger value="mercadopago">Mercado Pago</TabsTrigger>
           <TabsTrigger value="stripe">Stripe</TabsTrigger>
           <TabsTrigger value="resend">Correo</TabsTrigger>
+          <TabsTrigger value="bulk-email">Correo masivo</TabsTrigger>
           <TabsTrigger value="security">Seguridad</TabsTrigger>
           <TabsTrigger value="operators">Operadores</TabsTrigger>
           <TabsTrigger value="topup-rates">Tasas Ding</TabsTrigger>
@@ -177,6 +179,9 @@ function Admin() {
         </TabsContent>
         <TabsContent value="resend" className="mt-4">
           <ResendPanel />
+        </TabsContent>
+        <TabsContent value="bulk-email" className="mt-4">
+          <BulkEmailPanel />
         </TabsContent>
         <TabsContent value="security" className="mt-4">
           <SecurityPanel />
