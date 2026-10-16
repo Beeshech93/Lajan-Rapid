@@ -1,4 +1,5 @@
 const STORAGE_KEY = "lajanrapid:notification-sound-enabled";
+let audioContext: AudioContext | null = null;
 
 export function isNotificationSoundEnabled(): boolean {
   if (typeof window === "undefined") return false;
@@ -27,30 +28,34 @@ export function playNotificationDing(): void {
       (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!AudioContextConstructor) return;
 
-    const context = new AudioContextConstructor();
+    audioContext ??= new AudioContextConstructor();
+    const context = audioContext;
+    const play = () => {
+      if (context.state !== "running") return;
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      const now = context.currentTime;
+
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(1046.5, now);
+      oscillator.frequency.exponentialRampToValueAtTime(1318.5, now + 0.045);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.12, now + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+
+      oscillator.connect(gain);
+      gain.connect(context.destination);
+      oscillator.start(now);
+      oscillator.stop(now + 0.23);
+    };
+
     if (context.state === "suspended") {
-      void context.close();
+      // Browsers require a user gesture before audio can start. The settings switch
+      // previews the sound in that gesture and resumes this shared context.
+      void context.resume().then(play).catch(() => {});
       return;
     }
-
-    const oscillator = context.createOscillator();
-    const gain = context.createGain();
-    const now = context.currentTime;
-
-    oscillator.type = "sine";
-    oscillator.frequency.setValueAtTime(1046.5, now);
-    oscillator.frequency.exponentialRampToValueAtTime(1318.5, now + 0.045);
-    gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(0.12, now + 0.012);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
-
-    oscillator.connect(gain);
-    gain.connect(context.destination);
-    oscillator.start(now);
-    oscillator.stop(now + 0.23);
-    oscillator.onended = () => {
-      void context.close();
-    };
+    play();
   } catch {
     // Audio is an enhancement; a blocked or unsupported sound must not break notifications.
   }
