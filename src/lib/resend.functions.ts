@@ -52,7 +52,7 @@ export const resendSendTest = createServerFn({ method: "POST" })
     const email = context.claims?.email as string | undefined;
     if (!email) throw new Error("Tu cuenta de administrador no tiene correo");
 
-    const { resendSendEmail } = await import("@/lib/resend.server");
+    const { resendSendBulkEmails } = await import("@/lib/resend.server");
     const { render } = await import("@react-email/render");
     const { AccountReadyEmail } = await import("@/lib/email-templates/account-ready");
     const base = process.env["PUBLIC_URL"] || "https://lajanrapid.app";
@@ -110,13 +110,9 @@ export const resendSendAnnouncement = createServerFn({ method: "POST" })
       return { ok: true, total: 0, sent: 0, failed: 0, message: "No hay usuarios con correo confirmado." };
     }
 
-    let sent = 0;
-    let failed = 0;
-    for (const email of emails) {
-      const result = await resendSendEmail({ to: email, subject: data.subject, html });
-      if (result.ok) sent += 1;
-      else failed += 1;
-    }
+    const { sent, failed } = await resendSendBulkEmails(
+      emails.map((to) => ({ to, subject: data.subject, html })),
+    );
 
     return {
       ok: failed === 0,
