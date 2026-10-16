@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { playNotificationDing } from "@/lib/notification-sound";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -59,8 +60,11 @@ export function NotificationBell({ triggerClassName }: { triggerClassName?: stri
       .channel(`notifications-${user.id}-${instanceId}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
-        () => qc.invalidateQueries({ queryKey: ["notifications", user.id] }),
+        { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
+        () => {
+          playNotificationDing();
+          void qc.invalidateQueries({ queryKey: ["notifications", user.id] });
+        },
       )
       .subscribe();
     return () => {
