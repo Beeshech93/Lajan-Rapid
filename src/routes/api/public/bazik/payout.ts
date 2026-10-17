@@ -1,5 +1,37 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+function toHex(bytes: ArrayBuffer): string {
+  return Array.from(new Uint8Array(bytes), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+/**
+ * Verify HMAC-SHA256 over the exact raw request body.
+ * Expected header: x-bazik-signature: <hex> or sha256=<hex>.
+ * Confirm this exact header/encoding/payload contract with Bazik before production.
+ */
+async function verifyBazikHmac(rawBody: string, provided: string | null, secret: string): Promise<boolean> {
+  if (!provided || !secret) return false;
+  const suppliedHex = provided.trim().replace(/^sha256=/i, "").toLowerCase();
+  if (!/^[0-9a-f]{64}$/.test(suppliedHex)) return false;
+
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(rawBody));
+  const expectedHex = toHex(signature);
+
+  // Compare fixed-length values without early exit.
+  let difference = 0;
+  for (let i = 0; i < expectedHex.length; i++) {
+    difference |= expectedHex.charCodeAt(i) ^ suppliedHex.charCodeAt(i);
+  }
+  return difference === 0;
+}
+
 /** Callback de Bazik para resultados de pagos MonCash/NatCash. */
 export const Route = createFileRoute("/api/public/bazik/payout")({
   server: {
@@ -32,14 +64,16 @@ export const Route = createFileRoute("/api/public/bazik/payout")({
           return new Response("Webhook not configured", { status: 401 });
         }
 
-        // Accept the configured shared secret only in headers. Query-string secrets
-        // can leak through access logs, browser history, and monitoring systems.
-        // This is shared-secret comparison, not HMAC verification; use Bazik's
-        // documented signature scheme if the provider supports one.
-        const provided =
-          request.headers.get("x-bazik-signature") ??
-          request.headers.get("x-webhook-secret");
-        if (!provided || provided !== secret) {
+        // HMAC-SHA256 of the exact raw body. Confirm Bazik's header name,
+        // encoding, signed content and replay-protection contract before production.
+        const provided = request.headers.get("x-bazik-signature");
+        let validSignature = false;
+        try {
+          validSignature = await verifyBazikHmac(raw, provided, secret);
+        } catch (error) {
+          console.error("Bazik webhook: error verificando HMAC");
+        }
+        if (!validSignature) {
           await logAndAlertSecurityEvent({
             eventType: "webhook_invalid_signature",
             detail: { webhook: "bazik", ip: request.headers.get("x-forwarded-for") },
@@ -73,7 +107,10 @@ export const Route = createFileRoute("/api/public/bazik/payout")({
           detail: detail != null ? String(detail) : null,
         });
 
-        if (!result.ok) console.warn("Bazik payout webhook:", result.reason);
+        if (!result.ok) {
+          console.warn("Bazik payout webhook:", result.reason);
+          return new Response("Webhook processing failed", { status: 500 });
+        }
 
         return Response.json({ received: true });
       },
