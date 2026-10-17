@@ -68,12 +68,26 @@ export const Route = createFileRoute("/api/public/bazik/payout")({
           return new Response("Webhook not configured", { status: 401 });
         }
 
-        // HMAC-SHA256 of the exact raw body. Confirm Bazik's header name,
-        // encoding, signed content and replay-protection contract before production.
+        // Bazik signs timestamp.eventId.rawBody; reject stale timestamps to limit replay.
+        const timestamp = request.headers.get("x-bazik-timestamp");
+        const eventId = request.headers.get("x-bazik-event-id");
+        const environment = request.headers.get("x-bazik-env");
         const provided = request.headers.get("x-bazik-signature");
+        const expectedEnvironment = process.env.BAZIK_ENVIRONMENT === "live" ? "live" : "sandbox";
+        const timestampSeconds = timestamp && /^\d+$/.test(timestamp) ? Number(timestamp) : NaN;
+        const nowSeconds = Math.floor(Date.now() / 1000);
+        if (
+          environment !== expectedEnvironment ||
+          !Number.isFinite(timestampSeconds) ||
+          Math.abs(nowSeconds - timestampSeconds) > 300 ||
+          !eventId
+        ) {
+          return new Response("Invalid webhook headers", { status: 401 });
+        }
+
         let validSignature = false;
         try {
-          validSignature = await verifyBazikHmac(raw, provided, secret);
+          validSignature = await verifyBazikHmac(raw, timestamp, eventId, provided, secret);
         } catch (error) {
           console.error("Bazik webhook: error verificando HMAC");
         }
