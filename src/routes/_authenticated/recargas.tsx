@@ -245,6 +245,19 @@ function Recargas() {
         : null;
   const receivedCurrency = operatorCurrency || payCurrency;
   const missingRate = Boolean(hasAmount && !sameCurrency && operatorCurrency && !topupRate);
+  const providerRangeKnown = selected?.minValue != null;
+  const providerMin = Number(selected?.minValue ?? 0);
+  const providerMax = Number(selected?.maxValue ?? selected?.minValue ?? 0);
+  const providerAmountValid =
+    !providerRangeKnown ||
+    (receivedCurrency === selected?.currency &&
+      receivedAmount != null &&
+      receivedAmount >= providerMin &&
+      receivedAmount <= providerMax);
+  const suggestedPayAmount =
+    topupRate && Number(topupRate.rate) > 0 && selected?.minValue != null
+      ? Math.ceil((Number(selected.minValue) / Number(topupRate.rate)) * 100) / 100
+      : null;
 
   const sendMut = useMutation({
     mutationFn: async () => {
@@ -547,10 +560,22 @@ function Recargas() {
               </p>
             )}
             {selected?.minValue != null && (
-              <p className="text-xs text-muted-foreground">
-                {t("topup.operator_range")}: {selected.minValue} – {selected.maxValue}{" "}
-                {selected.currency}
-              </p>
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">
+                  Recarga disponible con el proveedor: {selected.minValue} – {selected.maxValue ?? selected.minValue} {selected.currency}
+                </p>
+                {Number(selected.minValue) === Number(selected.maxValue ?? selected.minValue) && (
+                  <p className="text-xs text-muted-foreground">
+                    Esta es una recarga de importe fijo. Para comprarla, el importe pagado debe equivaler a {selected.minValue} {selected.currency}.
+                    {suggestedPayAmount != null ? ` Con la tasa configurada, el pago aproximado es ${suggestedPayAmount.toFixed(2)} ${payCurrency}.` : ""}
+                  </p>
+                )}
+                {!providerAmountValid && hasAmount && (
+                  <p className="text-xs text-destructive">
+                    El importe actual no coincide con una recarga admitida por el proveedor. Ajusta el pago al importe compatible antes de continuar.
+                  </p>
+                )}
+              </div>
             )}
           </div>
 
@@ -561,7 +586,8 @@ function Recargas() {
                 sendMut.isPending ||
                 !phoneCheck.ok ||
                 profile?.kyc_status !== "approved" ||
-                missingRate
+                missingRate ||
+                !providerAmountValid
               }
               onClick={() => sendMut.mutate()}
             >
