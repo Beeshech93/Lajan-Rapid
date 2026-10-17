@@ -212,12 +212,30 @@ function Recargas() {
     [products, country, operator],
   );
 
-  // Antes se elegía el plan a mano; ahora se toma automáticamente el primero
-  // disponible del operador (sigue siendo necesario para saber qué producto
-  // real enviarle a DingConnect — rango de monto, moneda, etc.).
-  useEffect(() => {
-    setSku(plans[0]?.skuCode ?? "");
+  // Prioriza un producto de importe variable cuando DingConnect lo ofrece.
+  // Si hay varios, elige el de mayor rango permitido; si todos son fijos,
+  // conserva el primer producto disponible. Nunca se inventa un SKU.
+  const preferredPlan = useMemo(() => {
+    return [...plans].sort((a, b) => {
+      const aHasRange = a.minValue != null && a.maxValue != null;
+      const bHasRange = b.minValue != null && b.maxValue != null;
+      const aMin = Number(a.minValue ?? 0);
+      const aMax = Number(a.maxValue ?? a.minValue ?? 0);
+      const bMin = Number(b.minValue ?? 0);
+      const bMax = Number(b.maxValue ?? b.minValue ?? 0);
+      const aFlexible = aHasRange && aMax > aMin;
+      const bFlexible = bHasRange && bMax > bMin;
+
+      if (aFlexible !== bFlexible) return aFlexible ? -1 : 1;
+      if (aFlexible && bFlexible) return (bMax - bMin) - (aMax - aMin);
+      if (aHasRange !== bHasRange) return aHasRange ? 1 : -1;
+      return 0;
+    })[0];
   }, [plans]);
+
+  useEffect(() => {
+    setSku(preferredPlan?.skuCode ?? "");
+  }, [preferredPlan]);
 
   const selected = (products?.items ?? []).find((p) => p.skuCode === sku);
 
