@@ -513,18 +513,22 @@ function Recargas() {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
             />
-            <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-3 py-2">
-              <p className="text-xs text-muted-foreground">
-                Monto que recibe el destinatario
+            <div
+              data-testid="recipient-amount"
+              aria-live="polite"
+              className="block w-full rounded-xl border-2 border-emerald-500 bg-emerald-500/10 p-4"
+            >
+              <p className="text-sm font-semibold">
+                Monto que recibe el destinatario / Recipient receives
               </p>
-              <p className="text-lg font-semibold text-emerald-500">
+              <p className="mt-1 text-2xl font-bold text-emerald-600">
                 {hasAmount && receivedAmount != null
                   ? `${receivedAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${receivedCurrency}`
                   : `— ${operatorCurrency || destinationCurrency || "HTG"}`}
               </p>
               {hasAmount && receivedAmount == null && (
-                <p className="text-xs text-muted-foreground">
-                  Configura la tasa de recarga para calcular el monto en la moneda del destinatario.
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Falta una tasa de recarga válida para calcular el importe en HTG.
                 </p>
               )}
             </div>
