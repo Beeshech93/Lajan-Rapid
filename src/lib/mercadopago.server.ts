@@ -199,6 +199,11 @@ export async function applyMpPayment(payment: MpPayment) {
 
   if (!transfer) return { ok: false, reason: `No existe el envío ${ref}` };
   if (transfer.status === next) return { ok: true, unchanged: true, transferId: transfer.id };
+  // Ignore stale "pending" notifications after payment has already been confirmed.
+  // A real refund/chargeback still follows the provider's explicit cancelled state.
+  if (transfer.status === "paid" && next === "awaiting_payment") {
+    return { ok: true, unchanged: true, transferId: transfer.id };
+  }
   if (["completed", "processing"].includes(transfer.status)) {
     return { ok: true, unchanged: true, transferId: transfer.id };
   }
