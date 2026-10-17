@@ -260,10 +260,15 @@ function Recargas() {
           interpolate(t("topup.err_no_rate"), { from: payCurrency, to: operatorCurrency }),
         );
       if (receivedAmount == null) throw new Error(t("topup.err_no_received"));
+      // DingConnect's product limits apply to the provider send amount and
+      // currency, not to the MXN amount paid by the customer. Keep this guard
+      // explicit and do not silently send an out-of-range amount.
       if (
         selected?.minValue != null &&
-        (receivedAmount < Number(selected.minValue) || receivedAmount > Number(selected.maxValue))
-      )
+        (receivedCurrency !== selected.currency ||
+          receivedAmount < Number(selected.minValue) ||
+          receivedAmount > Number(selected.maxValue ?? selected.minValue))
+      ) {
         throw new Error(
           interpolate(t("topup.err_range"), {
             min: selected.minValue,
@@ -271,6 +276,7 @@ function Recargas() {
             currency: selected.currency,
           }),
         );
+      }
 
       if (payMethod === "wallet") {
         return {
