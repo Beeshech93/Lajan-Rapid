@@ -531,9 +531,6 @@ export async function applyBazikResult(opts: {
   if (transfer.status === "completed" && next !== "completed") {
     return { ok: true, unchanged: true, transferId: transfer.id };
   }
-  if (transfer.status === "processing" && next === "completed") {
-    return { ok: true, unchanged: true, transferId: transfer.id };
-  }
 
   const { error } = await supabaseAdmin
     .from("transfers")
