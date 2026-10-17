@@ -83,7 +83,7 @@ function pick(stored: Record<string, string>, name: BazikCredName): string | und
 
 function credsFor(stored: Record<string, string>): Creds {
   const baseUrl = (pick(stored, "BAZIK_BASE_URL") ?? "https://api.bazik.io").replace(/\/$/, "");
-  const envRaw = (pick(stored, "BAZIK_ENVIRONMENT") ?? "production").toLowerCase();
+  const envRaw = (pick(stored, "BAZIK_ENVIRONMENT") ?? "sandbox").toLowerCase();
   const environment: Creds["environment"] = envRaw === "sandbox" ? "sandbox" : "production";
   const userId = pick(stored, "BAZIK_USER_ID");
   const secretKey = pick(stored, "BAZIK_SECRET_KEY");
