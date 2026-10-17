@@ -456,7 +456,16 @@ function Recargas() {
               </SelectContent>
             </Select>
             {products && !products.ok && (
-              <p className="text-xs text-muted-foreground">{t("topup.provider_fallback_note")}</p>
+              <p role="alert" className="text-xs text-destructive">
+                No se pudieron cargar los operadores de DingConnect.
+                {products.error ? ` Detalle: ${products.error}` : " Revisa la configuración o los registros del servidor."}
+              </p>
+            )}
+            {products?.ok && products.items.length === 0 && !isFetching && (
+              <p role="status" className="text-xs text-amber-600">
+                DingConnect respondió, pero no devolvió productos de recarga móvil para este país.
+                Comprueba la disponibilidad del catálogo de Haití o el filtro de productos en el servidor.
+              </p>
             )}
           </div>
 
