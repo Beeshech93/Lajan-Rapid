@@ -1,18 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-/** Callback de Bazik para envíos MonCash/NatCash (payouts vía /moncash/withdraw o /natcash/transfers). */
+/** Callback de Bazik para resultados de pagos MonCash/NatCash. */
 export const Route = createFileRoute("/api/public/bazik/payout")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const url = new URL(request.url);
         const raw = await request.text();
 
-        let body: Record<string, unknown> = {};
+        let payload: Record<string, unknown>;
         try {
-          body = JSON.parse(raw) as Record<string, unknown>;
+          const parsed: unknown = JSON.parse(raw);
+          if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+            return new Response("Invalid JSON payload", { status: 400 });
+          }
+          payload = parsed as Record<string, unknown>;
         } catch {
-          // payload puede no venir en JSON
+          return new Response("Invalid JSON payload", { status: 400 });
         }
 
         const { bazikExtractReference, bazikWebhookSecret, applyBazikResult } =
@@ -28,12 +31,15 @@ export const Route = createFileRoute("/api/public/bazik/payout")({
           });
           return new Response("Webhook not configured", { status: 401 });
         }
-        const provided = request.headers.get("x-bazik-signature");
-        const sharedSecret =
-          request.headers.get("x-webhook-secret") ?? url.searchParams.get("secret");
-        const validSignature = Boolean(provided && provided === secret);
-        const validShared = Boolean(sharedSecret && sharedSecret === secret);
-        if (!validSignature && !validShared) {
+
+        // Accept the configured shared secret only in headers. Query-string secrets
+        // can leak through access logs, browser history, and monitoring systems.
+        // This is shared-secret comparison, not HMAC verification; use Bazik's
+        // documented signature scheme if the provider supports one.
+        const provided =
+          request.headers.get("x-bazik-signature") ??
+          request.headers.get("x-webhook-secret");
+        if (!provided || provided !== secret) {
           await logAndAlertSecurityEvent({
             eventType: "webhook_invalid_signature",
             detail: { webhook: "bazik", ip: request.headers.get("x-forwarded-for") },
@@ -41,13 +47,9 @@ export const Route = createFileRoute("/api/public/bazik/payout")({
           return new Response("Invalid signature", { status: 401 });
         }
 
-        const payload =
-          body && Object.keys(body).length > 0
-            ? body
-            : (JSON.parse(raw || "{}") as Record<string, unknown>);
         const nested = payload["data"] as Record<string, unknown> | undefined;
         const withdrawal = payload["withdrawal"] as Record<string, unknown> | undefined;
-        const reference = bazikExtractReference(payload) ?? url.searchParams.get("reference");
+        const reference = bazikExtractReference(payload);
         const state = String(
           payload["status"] ??
             payload["state"] ??
@@ -60,7 +62,8 @@ export const Route = createFileRoute("/api/public/bazik/payout")({
           return Response.json({ received: true, ignored: "sin referencia o estado" });
         }
 
-        const providerRef = payload["id"] ?? payload["transactionId"] ?? payload["transaction_id"];
+        const providerRef =
+          payload["id"] ?? payload["transactionId"] ?? payload["transaction_id"];
         const detail = payload["detail"] ?? payload["message"];
 
         const result = await applyBazikResult({
