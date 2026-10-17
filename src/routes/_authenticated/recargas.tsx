@@ -513,11 +513,21 @@ function Recargas() {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
             />
-            {hasAmount && receivedAmount != null && (
-              <p className="text-sm font-medium text-accent">
-                {t("topup.recipient_gets")}: {receivedAmount} {receivedCurrency}
+            <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-3 py-2">
+              <p className="text-xs text-muted-foreground">
+                Monto que recibe el destinatario
               </p>
-            )}
+              <p className="text-lg font-semibold text-emerald-500">
+                {hasAmount && receivedAmount != null
+                  ? `${receivedAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${receivedCurrency}`
+                  : `— ${operatorCurrency || destinationCurrency || "HTG"}`}
+              </p>
+              {hasAmount && receivedAmount == null && (
+                <p className="text-xs text-muted-foreground">
+                  Configura la tasa de recarga para calcular el monto en la moneda del destinatario.
+                </p>
+              )}
+            </div>
             {missingRate && (
               <p className="text-xs text-destructive">
                 {interpolate(t("topup.no_rate_configured"), {
