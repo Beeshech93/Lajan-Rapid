@@ -544,5 +544,34 @@ export async function applyBazikResult(opts: {
     body: BAZIK_STATUS_TEXT[next].body,
   });
 
+  // Notify administrators too, so a failed or completed provider payout is visible
+  // without relying on the customer to report it.
+  const { data: admins, error: adminsError } = await supabaseAdmin
+    .from("user_roles")
+    .select("user_id")
+    .eq("role", "admin");
+  if (adminsError) {
+    console.error("Bazik: no se pudieron consultar los administradores para notificar", adminsError);
+  } else if (admins?.length) {
+    const adminTitle =
+      next === "cancelled"
+        ? `Atención: Bazik rechazó el envío · ${transfer.reference}`
+        : `Bazik: ${BAZIK_STATUS_TEXT[next].title} · ${transfer.reference}`;
+    const adminBody =
+      next === "cancelled"
+        ? `Bazik informó que no pudo completar el envío. Detalle: ${opts.detail?.slice(0, 300) || opts.state}. Revisa el saldo y el estado del proveedor antes de reintentar.`
+        : `Referencia ${transfer.reference}. Estado informado por Bazik: ${opts.state}.`;
+    const { error: notifyError } = await supabaseAdmin.from("notifications").insert(
+      admins.map((admin: { user_id: string }) => ({
+        user_id: admin.user_id,
+        title: adminTitle,
+        body: adminBody,
+      })),
+    );
+    if (notifyError) {
+      console.error("Bazik: no se pudieron crear las notificaciones administrativas", notifyError);
+    }
+  }
+
   return { ok: true, transferId: transfer.id, status: next };
 }
