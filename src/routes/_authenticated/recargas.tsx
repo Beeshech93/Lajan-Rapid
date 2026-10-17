@@ -198,7 +198,9 @@ function Recargas() {
     const fromProvider = Array.from(
       new Set(items.map((p) => prettyOperator(country, p.operator || p.skuCode))),
     ).filter(Boolean);
-    return fromProvider.length > 0 ? fromProvider : (countryInfo?.operators ?? []);
+    // Nunca mostrar operadores del catálogo local como si estuvieran disponibles en DingConnect.
+    // Solo productos reales del proveedor pueden habilitar una recarga.
+    return fromProvider;
   }, [products, country, countryInfo]);
 
   // Planes/SKUs del operador elegido.
