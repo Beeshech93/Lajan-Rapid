@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Check, Circle, Copy, Landmark, Loader2, Store } from "lucide-react";
+import { ArrowLeft, Check, Circle, Copy, Landmark, Loader2, Store, Upload, FileText, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { celebrateLogo } from "@/components/LogoAnimation";
 import { useServerFn } from "@tanstack/react-start";
@@ -60,6 +60,8 @@ function Detalle() {
   const finalizePayout = useServerFn(finalizeTransferPayout);
   const [isInitiating, setIsInitiating] = useState(false);
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receiptSaving, setReceiptSaving] = useState(false);
 
   const finalize = useMutation({
     mutationFn: () => finalizePayout({ data: { transferId: id } }),
@@ -289,6 +291,41 @@ function Detalle() {
       {isSpei && status !== "completed" && status !== "cancelled" && (
         <SpeiCard transferId={id} amount={money(Number(t.total_send), t.send_currency)} />
       )}
+
+      <Card>
+        <CardHeader><CardTitle className="text-base">Comprobante de pago</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          {t.receipt_path ? <p className="text-sm text-muted-foreground">Ya se adjuntó un comprobante para esta transacción.</p> : <p className="text-sm text-muted-foreground">Sube una imagen o PDF del pago. El archivo será privado.</p>}
+          {!isAdmin && !t.receipt_path && status !== "cancelled" && (
+            <div className="flex flex-wrap items-center gap-3">
+              <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={(e) => setReceiptFile(e.target.files?.[0] ?? null)} className="block max-w-full text-sm" />
+              <Button size="sm" disabled={!receiptFile || receiptSaving} onClick={async () => {
+                if (!receiptFile || !t) return;
+                if (receiptFile.size > 8 * 1024 * 1024) { toast.error("El archivo no puede superar 8 MB."); return; }
+                if (!["image/jpeg","image/png","image/webp","application/pdf"].includes(receiptFile.type)) { toast.error("Usa JPG, PNG, WEBP o PDF."); return; }
+                setReceiptSaving(true);
+                try {
+                  const path = `${t.user_id}/${t.id}/${Date.now()}-${receiptFile.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+                  const { error: uploadError } = await supabase.storage.from("transaction-receipts").upload(path, receiptFile, { upsert: false, contentType: receiptFile.type });
+                  if (uploadError) throw uploadError;
+                  const { error: updateError } = await supabase.from("transfers").update({ receipt_path: path }).eq("id", t.id);
+                  if (updateError) { await supabase.storage.from("transaction-receipts").remove([path]); throw updateError; }
+                  toast.success("Comprobante adjuntado."); setReceiptFile(null);
+                  await qc.invalidateQueries({ queryKey: ["transfer", id] });
+                } catch (err) { toast.error(err instanceof Error ? err.message : "No se pudo subir el comprobante."); }
+                finally { setReceiptSaving(false); }
+              }}>
+                {receiptSaving ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Upload className="mr-2 size-4" />}Subir comprobante
+              </Button>
+            </div>
+          )}
+          {isAdmin && t.receipt_path && <Button size="sm" variant="outline" onClick={async () => {
+            const { data, error } = await supabase.storage.from("transaction-receipts").createSignedUrl(t.receipt_path, 60);
+            if (error || !data?.signedUrl) { toast.error("No se pudo abrir el comprobante."); return; }
+            window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+          }}><FileText className="mr-2 size-4" />Ver recibo <ExternalLink className="ml-2 size-4" /></Button>}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
