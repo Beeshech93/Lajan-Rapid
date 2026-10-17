@@ -2,7 +2,7 @@ import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, FileText, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeInvalidate } from "@/hooks/useRealtimeInvalidate";
@@ -368,6 +368,11 @@ function TxPanel() {
             <Badge className={STATUS_TONE[t.status as TransferStatus]} variant="secondary">
               {STATUS_LABEL[t.status as TransferStatus]}
             </Badge>
+            {t.receipt_path ? <Button size="sm" variant="outline" onClick={async () => {
+              const { data, error } = await supabase.storage.from("transaction-receipts").createSignedUrl(t.receipt_path, 60);
+              if (error || !data?.signedUrl) { toast.error("No se pudo abrir el recibo."); return; }
+              window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+            }}><FileText className="mr-2 size-4" />Ver recibo <ExternalLink className="ml-2 size-4" /></Button> : <span className="text-xs text-muted-foreground">Sin recibo</span>}
             <Select
               value={t.status}
               disabled={busy === t.id || t.status === "cancelled" || t.status === "completed"}
