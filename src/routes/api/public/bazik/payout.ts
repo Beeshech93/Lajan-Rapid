@@ -5,15 +5,21 @@ function toHex(bytes: ArrayBuffer): string {
 }
 
 /**
- * Verify HMAC-SHA256 over the exact raw request body.
- * Expected header: x-bazik-signature: <hex> or sha256=<hex>.
- * Confirm this exact header/encoding/payload contract with Bazik before production.
+ * Bazik signs: timestamp.eventId.rawBody using HMAC-SHA256.
+ * Signature header format documented by Bazik: v1=<hex digest>.
  */
-async function verifyBazikHmac(rawBody: string, provided: string | null, secret: string): Promise<boolean> {
-  if (!provided || !secret) return false;
-  const suppliedHex = provided.trim().replace(/^sha256=/i, "").toLowerCase();
-  if (!/^[0-9a-f]{64}$/.test(suppliedHex)) return false;
+async function verifyBazikHmac(
+  rawBody: string,
+  timestamp: string | null,
+  eventId: string | null,
+  provided: string | null,
+  secret: string,
+): Promise<boolean> {
+  if (!timestamp || !eventId || !provided || !secret) return false;
+  const supplied = provided.trim().toLowerCase();
+  if (!/^v1=[0-9a-f]{64}$/.test(supplied)) return false;
 
+  const signedPayload = `${timestamp}.${eventId}.${rawBody}`;
   const key = await crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(secret),
@@ -21,13 +27,11 @@ async function verifyBazikHmac(rawBody: string, provided: string | null, secret:
     false,
     ["sign"],
   );
-  const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(rawBody));
-  const expectedHex = toHex(signature);
-
-  // Compare fixed-length values without early exit.
+  const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(signedPayload));
+  const expected = `v1=${toHex(signature)}`;
   let difference = 0;
-  for (let i = 0; i < expectedHex.length; i++) {
-    difference |= expectedHex.charCodeAt(i) ^ suppliedHex.charCodeAt(i);
+  for (let i = 0; i < expected.length; i++) {
+    difference |= expected.charCodeAt(i) ^ supplied.charCodeAt(i);
   }
   return difference === 0;
 }
