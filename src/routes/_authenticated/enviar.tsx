@@ -121,6 +121,28 @@ function Enviar() {
       toast.error(parsed.error.issues[0]?.message ?? t("send.error_generic"));
       return;
     }
+
+    // Límites del monto recibido en Haití (HTG), según la billetera elegida.
+    const amountReceiveHtg = q.receives;
+    if (destination === "HT" && delivery === "moncash" && amountReceiveHtg > 75_000) {
+      toast.error("MonCash permite un máximo de 75,000 HTG por transacción.");
+      return;
+    }
+    if (destination === "HT" && delivery === "natcash") {
+      if (amountReceiveHtg < 3_998) {
+        toast.error("NatCash requiere un mínimo de 3,998 HTG por transacción.");
+        return;
+      }
+      if (amountReceiveHtg > 75_000) {
+        toast.error("NatCash permite un máximo de 75,000 HTG por transacción.");
+        return;
+      }
+      if (!Number.isInteger(amountReceiveHtg)) {
+        toast.error("Para NatCash, el monto recibido debe ser un número entero en HTG. Ajusta el monto enviado.");
+        return;
+      }
+    }
+
     setSaving(true);
     const { data, error } = await supabase
       .from("transfers")
@@ -246,6 +268,13 @@ function Enviar() {
             <Line label={t("send.fee")} value={money(q.fee, sendCur)} />
             <Line label={t("send.total")} value={money(q.total, sendCur)} strong />
           </div>
+          {destination === "HT" && (
+            <p className="text-xs text-muted-foreground">
+              {delivery === "natcash"
+                ? "NatCash: mínimo 3,998 HTG, máximo 75,000 HTG; monto entero."
+                : "MonCash: máximo 75,000 HTG por transacción."}
+            </p>
+          )}
           <div className="rounded-xl bg-mint p-4">
             <p className="text-xs font-semibold text-warning-foreground/80">
               {t("send.family_gets")}
