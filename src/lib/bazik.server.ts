@@ -381,7 +381,16 @@ async function bazikPost(
     const errorCode = (parsed as Record<string, unknown> | undefined)?.["error"] as
       string | undefined;
     console.error(`Bazik ${path} falló [${response.status}]: ${text}`);
-    return { ok: false, status: response.status, text, ...(errorCode ? { errorCode } : {}) };
+    // A non-2xx response does not always prove that no payout was created.
+    // Do not automatically retry any provider HTTP error until its documented
+    // semantics are known; an operator must reconcile ambiguous outcomes first.
+    return {
+      ok: false,
+      status: response.status,
+      text,
+      retryable: false,
+      ...(errorCode ? { errorCode } : {}),
+    };
   }
 
   return { ok: true, parsed };
@@ -518,7 +527,11 @@ export async function applyBazikResult(opts: {
 
   if (!transfer) return { ok: false, reason: `No existe el envío ${opts.reference}` };
   if (transfer.status === next) return { ok: true, unchanged: true, transferId: transfer.id };
-  if (["completed", "processing"].includes(transfer.status) && next === "completed") {
+  // A late or duplicated failure webhook must never downgrade a completed transfer.
+  if (transfer.status === "completed" && next !== "completed") {
+    return { ok: true, unchanged: true, transferId: transfer.id };
+  }
+  if (transfer.status === "processing" && next === "completed") {
     return { ok: true, unchanged: true, transferId: transfer.id };
   }
 
