@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Check, Circle, Copy, Landmark, Loader2, Store, Upload, FileText, ExternalLink } from "lucide-react";
+import { ArrowLeft, Check, Circle, Copy, Landmark, Loader2, Store, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { celebrateLogo } from "@/components/LogoAnimation";
 import { useServerFn } from "@tanstack/react-start";
@@ -60,8 +60,6 @@ function Detalle() {
   const finalizePayout = useServerFn(finalizeTransferPayout);
   const [isInitiating, setIsInitiating] = useState(false);
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
-  const [receiptFile, setReceiptFile] = useState<File | null>(null);
-  const [receiptSaving, setReceiptSaving] = useState(false);
 
   const finalize = useMutation({
     mutationFn: () => finalizePayout({ data: { transferId: id } }),
@@ -188,6 +186,12 @@ function Detalle() {
         </Badge>
       </div>
 
+      <div className="flex justify-end"><Button variant="outline" className="gap-2" onClick={() => {
+const w=window.open("", "_blank", "width=800,height=700"); if(!w){toast.error("Permite las ventanas emergentes.");return;}
+const safe=(v:unknown)=>String(v??"").replace(/[&<>"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]??ch));
+w.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Recibo ${safe(t.reference)}</title><style>body{font:16px Arial;max-width:720px;margin:40px auto;padding:24px;color:#172033}h1{color:#0e9f6e}.row{display:flex;justify-content:space-between;border-bottom:1px solid #ddd;padding:13px 0}span{color:#667085}@media print{button{display:none}}</style></head><body><h1>LAJAN RAPID</h1><h2>Recibo de transacción</h2><p>Referencia: ${safe(t.reference)} · Fecha: ${safe(shortDate(t.created_at))}</p><div class="row"><span>Estado</span><strong>${safe(STATUS_LABEL[t.status as TransferStatus]??t.status)}</strong></div><div class="row"><span>Destinatario</span><strong>${safe(t.recipient_name)}</strong></div><div class="row"><span>Origen</span><strong>${safe(t.origin_country)}</strong></div><div class="row"><span>Destino</span><strong>${safe(t.destination_country)}</strong></div><div class="row"><span>Método de pago</span><strong>${safe(paymentName)}</strong></div><div class="row"><span>Monto enviado</span><strong>${safe(money(Number(t.amount_send),t.send_currency))}</strong></div><div class="row"><span>Monto a recibir</span><strong>${safe(money(Number(t.amount_receive),t.receive_currency))}</strong></div><p>Recibo informativo; no sustituye confirmación bancaria.</p><button onclick="window.print()">Imprimir / Guardar como PDF</button></body></html>`);w.document.close();
+}}><FileText className="size-4"/> Generar recibo</Button></div>
+
       <Card className="bg-brand text-primary-foreground">
         <CardContent className="grid gap-4 p-5 sm:grid-cols-3">
           <Metric
@@ -291,41 +295,6 @@ function Detalle() {
       {isSpei && status !== "completed" && status !== "cancelled" && (
         <SpeiCard transferId={id} amount={money(Number(t.total_send), t.send_currency)} />
       )}
-
-      <Card>
-        <CardHeader><CardTitle className="text-base">Comprobante de pago</CardTitle></CardHeader>
-        <CardContent className="space-y-3">
-          {t.receipt_path ? <p className="text-sm text-muted-foreground">Ya se adjuntó un comprobante para esta transacción.</p> : <p className="text-sm text-muted-foreground">Sube una imagen o PDF del pago. El archivo será privado.</p>}
-          {!isAdmin && !t.receipt_path && status !== "cancelled" && (
-            <div className="flex flex-wrap items-center gap-3">
-              <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={(e) => setReceiptFile(e.target.files?.[0] ?? null)} className="block max-w-full text-sm" />
-              <Button size="sm" disabled={!receiptFile || receiptSaving} onClick={async () => {
-                if (!receiptFile || !t) return;
-                if (receiptFile.size > 8 * 1024 * 1024) { toast.error("El archivo no puede superar 8 MB."); return; }
-                if (!["image/jpeg","image/png","image/webp","application/pdf"].includes(receiptFile.type)) { toast.error("Usa JPG, PNG, WEBP o PDF."); return; }
-                setReceiptSaving(true);
-                try {
-                  const path = `${t.user_id}/${t.id}/${Date.now()}-${receiptFile.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
-                  const { error: uploadError } = await supabase.storage.from("transaction-receipts").upload(path, receiptFile, { upsert: false, contentType: receiptFile.type });
-                  if (uploadError) throw uploadError;
-                  const { error: updateError } = await supabase.from("transfers").update({ receipt_path: path }).eq("id", t.id);
-                  if (updateError) { await supabase.storage.from("transaction-receipts").remove([path]); throw updateError; }
-                  toast.success("Comprobante adjuntado."); setReceiptFile(null);
-                  await qc.invalidateQueries({ queryKey: ["transfer", id] });
-                } catch (err) { toast.error(err instanceof Error ? err.message : "No se pudo subir el comprobante."); }
-                finally { setReceiptSaving(false); }
-              }}>
-                {receiptSaving ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Upload className="mr-2 size-4" />}Subir comprobante
-              </Button>
-            </div>
-          )}
-          {isAdmin && t.receipt_path && <Button size="sm" variant="outline" onClick={async () => {
-            const { data, error } = await supabase.storage.from("transaction-receipts").createSignedUrl(t.receipt_path, 60);
-            if (error || !data?.signedUrl) { toast.error("No se pudo abrir el comprobante."); return; }
-            window.open(data.signedUrl, "_blank", "noopener,noreferrer");
-          }}><FileText className="mr-2 size-4" />Ver recibo <ExternalLink className="ml-2 size-4" /></Button>}
-        </CardContent>
-      </Card>
 
       <Card>
         <CardHeader>
