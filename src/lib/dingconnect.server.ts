@@ -99,7 +99,20 @@ export async function dingStatusInfo(client?: any) {
 async function dingFetch(path: string, init?: RequestInit) {
   const stored = await loadDingCreds();
   const apiKey = pick(stored, "DINGCONNECT_API_KEY");
-  const baseUrl = (pick(stored, "DINGCONNECT_BASE_URL") ?? DEFAULT_BASE_URL).replace(/\/$/, "");
+  const configuredBaseUrl = (pick(stored, "DINGCONNECT_BASE_URL") ?? DEFAULT_BASE_URL).trim().replace(/\/$/, "");
+  // The public DingConnect website is not the API host. Recover safely if it was
+  // entered in the admin panel instead of the documented API base URL.
+  let baseUrl = configuredBaseUrl;
+  try {
+    const parsed = new URL(configuredBaseUrl);
+    if (parsed.hostname === "www.dingconnect.com" || parsed.hostname === "dingconnect.com") {
+      baseUrl = DEFAULT_BASE_URL;
+    } else {
+      baseUrl = configuredBaseUrl;
+    }
+  } catch {
+    baseUrl = DEFAULT_BASE_URL;
+  }
   if (!apiKey)
     throw new Error("Falta DINGCONNECT_API_KEY: configúralo en Administración → DingConnect");
 
@@ -114,8 +127,14 @@ async function dingFetch(path: string, init?: RequestInit) {
   });
   const text = await res.text();
   if (!res.ok) {
-    console.error(`DingConnect ${path} falló [${res.status}]: ${text}`);
-    throw new Error(`DingConnect [${res.status}]: ${text.slice(0, 300)}`);
+    const contentType = res.headers.get("content-type") ?? "";
+    const isHtml = contentType.includes("text/html") || /^\s*<!doctype html|^\s*<html/i.test(text);
+    console.error(`DingConnect ${path} falló [${res.status}] (content-type: ${contentType || "desconocido"}; HTML: ${isHtml})`);
+    throw new Error(
+      isHtml
+        ? `DingConnect [${res.status}]: el servidor devolvió una página HTML en vez de JSON. Revisa la URL base de la API y el acceso permitido por DingConnect.`
+        : `DingConnect [${res.status}]: ${text.slice(0, 160)}`,
+    );
   }
   let parsed: unknown;
   try {

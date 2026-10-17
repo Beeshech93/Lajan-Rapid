@@ -124,10 +124,13 @@ export function DingConnectPanel() {
             <Label htmlFor="ding-url">URL base de la API</Label>
             <Input
               id="ding-url"
-              placeholder={info?.baseUrl ?? "https://api.dingconnect.com/api/V1"}
+              placeholder="https://api.dingconnect.com/api/V1"
               value={creds.DINGCONNECT_BASE_URL}
               onChange={(e) => setCred("DINGCONNECT_BASE_URL", e.target.value)}
             />
+            <p className="text-xs text-muted-foreground">
+              Usa la URL de la API, no la página web: https://api.dingconnect.com/api/V1.
+            </p>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="ding-key">API Key</Label>
