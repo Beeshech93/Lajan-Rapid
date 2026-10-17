@@ -73,7 +73,9 @@ export const Route = createFileRoute("/api/public/bazik/payout")({
         const eventId = request.headers.get("x-bazik-event-id");
         const environment = request.headers.get("x-bazik-env");
         const provided = request.headers.get("x-bazik-signature");
-        const expectedEnvironment = process.env.BAZIK_ENVIRONMENT === "live" ? "live" : "sandbox";
+        const configuredEnvironment = (process.env.BAZIK_ENVIRONMENT ?? "sandbox").toLowerCase();
+        const expectedEnvironment =
+          configuredEnvironment === "production" || configuredEnvironment === "live" ? "live" : "sandbox";
         const timestampSeconds = timestamp && /^\d+$/.test(timestamp) ? Number(timestamp) : NaN;
         const nowSeconds = Math.floor(Date.now() / 1000);
         if (
@@ -99,6 +101,12 @@ export const Route = createFileRoute("/api/public/bazik/payout")({
           return new Response("Invalid signature", { status: 401 });
         }
 
+        // This endpoint updates outgoing transfers only; payment events must not alter withdrawals.
+        const eventType = String(payload["type"] ?? "").trim().toLowerCase();
+        if (!["transfer.succeeded", "transfer.failed"].includes(eventType)) {
+          return new Response("Unsupported webhook event", { status: 400 });
+        }
+
         const nested = payload["data"] as Record<string, unknown> | undefined;
         const withdrawal = payload["withdrawal"] as Record<string, unknown> | undefined;
         const reference = bazikExtractReference(payload);
@@ -116,7 +124,7 @@ export const Route = createFileRoute("/api/public/bazik/payout")({
 
         const providerRef =
           payload["id"] ?? payload["transactionId"] ?? payload["transaction_id"];
-        const detail = payload["detail"] ?? payload["message"];
+        const detail = payload["failureReason"] ?? payload["detail"] ?? payload["message"];
 
         const result = await applyBazikResult({
           reference,
