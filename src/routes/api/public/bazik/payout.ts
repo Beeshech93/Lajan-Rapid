@@ -54,8 +54,13 @@ export const Route = createFileRoute("/api/public/bazik/payout")({
           return new Response("Invalid JSON payload", { status: 400 });
         }
 
-        const { bazikExtractReference, bazikWebhookSecret, applyBazikResult } =
-          await import("@/lib/bazik.server");
+        const {
+          bazikExtractReference,
+          bazikWebhookSecret,
+          applyBazikResult,
+          registerBazikWebhookEvent,
+          finishBazikWebhookEvent,
+        } = await import("@/lib/bazik.server");
         const { logAndAlertSecurityEvent } = await import("@/lib/security.server");
         const secret = await bazikWebhookSecret();
         if (!secret) {
@@ -115,6 +120,29 @@ export const Route = createFileRoute("/api/public/bazik/payout")({
         // The event type is authoritative for final status; don't let a conflicting payload
         // status turn a failed event into success (or vice versa).
         const state = eventType === "transfer.succeeded" ? "succeeded" : "failed";
+        const payloadDigest = toHex(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(raw)));
+        const ledger = await registerBazikWebhookEvent({
+          environment: expectedEnvironment,
+          eventId: eventId!,
+          eventType,
+          reference,
+          payloadSha256: payloadDigest,
+        });
+        if (!ledger.ok) {
+          if (ledger.conflict) {
+            await logAndAlertSecurityEvent({
+              eventType: "webhook_event_id_payload_conflict",
+              severity: "high",
+              detail: { webhook: "bazik", eventId, reference },
+            });
+            return new Response("Conflicting event ID", { status: 409 });
+          }
+          return new Response("Webhook event not ready for processing", { status: 500 });
+        }
+        if (ledger.duplicate) {
+          return Response.json({ received: true, duplicate: true });
+        }
+
         const nested = payload["data"] as Record<string, unknown> | undefined;
         const providerRef =
           nested?.["transactionId"] ??
@@ -133,7 +161,24 @@ export const Route = createFileRoute("/api/public/bazik/payout")({
 
         if (!result.ok) {
           console.warn("Bazik payout webhook processing failed:", result.reason);
+          await finishBazikWebhookEvent({
+            environment: expectedEnvironment,
+            eventId: eventId!,
+            processed: false,
+            error: result.reason,
+          });
           return new Response("Webhook processing failed", { status: 500 });
+        }
+
+        const finalized = await finishBazikWebhookEvent({
+          environment: expectedEnvironment,
+          eventId: eventId!,
+          processed: true,
+        });
+        if (!finalized) {
+          // Return non-2xx to make the provider retry; the event ledger will prevent
+          // a second state transition if the transfer was already finalized.
+          return new Response("Webhook ledger finalization failed", { status: 500 });
         }
 
         return Response.json({ received: true, duplicate: Boolean(result.unchanged) });
