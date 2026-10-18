@@ -487,7 +487,18 @@ export async function registerBazikWebhookEvent(input: {
       return { ok: false, conflict: true, reason: "El event ID ya existe con un payload diferente." };
     }
     if (existing.processing_status === "processed") return { ok: true, duplicate: true };
-    return { ok: false, reason: "El evento ya existe pero todavía no está procesado; se puede reintentar." };
+    if (existing.processing_status === "retryable_failed") {
+      const { data: reclaimed, error: reclaimError } = await supabaseAdmin
+        .from("bazik_webhook_events")
+        .update({ processing_status: "processing", last_error: null })
+        .eq("id", existing.id)
+        .eq("processing_status", "retryable_failed")
+        .select("id")
+        .maybeSingle();
+      if (reclaimError) return { ok: false, reason: "No se pudo recuperar el evento para reintento." };
+      if (reclaimed?.id) return { ok: true, duplicate: false, ledgerId: reclaimed.id };
+    }
+    return { ok: false, reason: "El evento ya está siendo procesado; reintenta más tarde." };
   }
 
   console.error("Bazik: no se pudo registrar el evento webhook", error);
