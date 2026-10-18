@@ -527,19 +527,35 @@ export async function applyBazikResult(opts: {
 
   if (!transfer) return { ok: false, reason: `No existe el envío ${opts.reference}` };
   if (transfer.status === next) return { ok: true, unchanged: true, transferId: transfer.id };
-  // A late or duplicated failure webhook must never downgrade a completed transfer.
-  if (transfer.status === "completed" && next !== "completed") {
+
+  // A webhook may finalize only a payout already claimed for processing.
+  // Both final states are terminal; delayed events must never reverse them.
+  if (transfer.status === "completed" || transfer.status === "cancelled") {
     return { ok: true, unchanged: true, transferId: transfer.id };
   }
+  if (transfer.status !== "processing") {
+    return {
+      ok: false,
+      reason: `El envío ${opts.reference} no está en processing (estado actual: ${transfer.status})`,
+    };
+  }
 
-  const { error } = await supabaseAdmin
+  // Compare-and-set prevents concurrent webhook requests from overwriting
+  // a status that changed after the initial read.
+  const { data: updated, error } = await supabaseAdmin
     .from("transfers")
     .update({ status: next })
-    .eq("id", transfer.id);
+    .eq("id", transfer.id)
+    .eq("status", "processing")
+    .select("id")
+    .maybeSingle();
 
   if (error) {
     console.error("Bazik: no se pudo actualizar el envío", error);
     return { ok: false, reason: error.message };
+  }
+  if (!updated) {
+    return { ok: true, unchanged: true, transferId: transfer.id };
   }
 
   await supabaseAdmin.from("transfer_events").insert({
