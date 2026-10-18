@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS public.bazik_webhook_events (
   processing_status TEXT NOT NULL DEFAULT 'processing'
     CHECK (processing_status IN ('processing', 'processed', 'retryable_failed')),
   received_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  processing_started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   processed_at TIMESTAMPTZ,
   last_error TEXT,
   CONSTRAINT bazik_webhook_events_environment_event_id_uq UNIQUE (environment, event_id)
