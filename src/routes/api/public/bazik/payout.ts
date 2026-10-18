@@ -36,7 +36,7 @@ async function verifyBazikHmac(
   return difference === 0;
 }
 
-/** Callback de Bazik para resultados de pagos MonCash/NatCash. */
+/** Callback de Bazik para resultados de transferencias MonCash/NatCash. */
 export const Route = createFileRoute("/api/public/bazik/payout")({
   server: {
     handlers: {
@@ -68,7 +68,6 @@ export const Route = createFileRoute("/api/public/bazik/payout")({
           return new Response("Webhook not configured", { status: 401 });
         }
 
-        // Bazik signs timestamp.eventId.rawBody; reject stale timestamps to limit replay.
         const timestamp = request.headers.get("x-bazik-timestamp");
         const eventId = request.headers.get("x-bazik-event-id");
         const environment = request.headers.get("x-bazik-env");
@@ -90,7 +89,7 @@ export const Route = createFileRoute("/api/public/bazik/payout")({
         let validSignature = false;
         try {
           validSignature = await verifyBazikHmac(raw, timestamp, eventId, provided, secret);
-        } catch (error) {
+        } catch {
           console.error("Bazik webhook: error verificando HMAC");
         }
         if (!validSignature) {
@@ -103,28 +102,27 @@ export const Route = createFileRoute("/api/public/bazik/payout")({
 
         // This endpoint updates outgoing transfers only; payment events must not alter withdrawals.
         const eventType = String(payload["type"] ?? "").trim().toLowerCase();
-        if (!["transfer.succeeded", "transfer.failed"].includes(eventType)) {
+        if (eventType !== "transfer.succeeded" && eventType !== "transfer.failed") {
           return new Response("Unsupported webhook event", { status: 400 });
         }
 
-        const nested = payload["data"] as Record<string, unknown> | undefined;
-        const withdrawal = payload["withdrawal"] as Record<string, unknown> | undefined;
         const reference = bazikExtractReference(payload);
-        const state = String(
-          payload["status"] ??
-            payload["state"] ??
-            nested?.["status"] ??
-            withdrawal?.["status"] ??
-            "",
-        ).trim();
-
-        if (!reference || !state) {
-          return Response.json({ received: true, ignored: "sin referencia o estado" });
+        if (!reference) {
+          // Return non-2xx so the provider/operator can investigate instead of silently acknowledging it.
+          return new Response("Missing transfer reference", { status: 400 });
         }
 
+        // The event type is authoritative for final status; don't let a conflicting payload
+        // status turn a failed event into success (or vice versa).
+        const state = eventType === "transfer.succeeded" ? "succeeded" : "failed";
+        const nested = payload["data"] as Record<string, unknown> | undefined;
         const providerRef =
-          payload["id"] ?? payload["transactionId"] ?? payload["transaction_id"];
-        const detail = payload["failureReason"] ?? payload["detail"] ?? payload["message"];
+          nested?.["transactionId"] ??
+          nested?.["transaction_id"] ??
+          payload["transactionId"] ??
+          payload["transaction_id"] ??
+          payload["id"];
+        const detail = nested?.["failureReason"] ?? payload["failureReason"] ?? payload["detail"] ?? payload["message"];
 
         const result = await applyBazikResult({
           reference,
@@ -134,11 +132,11 @@ export const Route = createFileRoute("/api/public/bazik/payout")({
         });
 
         if (!result.ok) {
-          console.warn("Bazik payout webhook:", result.reason);
+          console.warn("Bazik payout webhook processing failed:", result.reason);
           return new Response("Webhook processing failed", { status: 500 });
         }
 
-        return Response.json({ received: true });
+        return Response.json({ received: true, duplicate: Boolean(result.unchanged) });
       },
       GET: () => Response.json({ endpoint: "bazik-payout", status: "ready" }),
     },
