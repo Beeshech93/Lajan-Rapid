@@ -465,6 +465,7 @@ export async function registerBazikWebhookEvent(input: {
       transfer_reference: input.reference,
       payload_sha256: input.payloadSha256,
       processing_status: "processing",
+      processing_started_at: new Date().toISOString(),
     })
     .select("id")
     .maybeSingle();
@@ -493,6 +494,7 @@ export async function registerBazikWebhookEvent(input: {
         .update({ processing_status: "processing", processing_started_at: new Date().toISOString(), last_error: null })
         .eq("id", existing.id)
         .eq("processing_status", "retryable_failed")
+        .eq("processing_started_at", existing.processing_started_at)
         .select("id")
         .maybeSingle();
       if (reclaimError) return { ok: false, reason: "No se pudo recuperar el evento para reintento." };
@@ -533,7 +535,8 @@ export async function finishBazikWebhookEvent(
       last_error: input.processed ? null : (input.error ?? "Processing failed").slice(0, 500),
     })
     .eq("environment", input.environment)
-    .eq("event_id", input.eventId);
+    .eq("event_id", input.eventId)
+    .eq("processing_status", "processing");
   if (error) {
     console.error("Bazik: no se pudo actualizar el registro del evento", error);
     return false;
