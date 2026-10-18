@@ -442,6 +442,78 @@ function toBazikResult(response: BazikRawResponse, path: string): BazikResult {
   };
 }
 
+// Persistent webhook idempotency ledger. A unique (environment,event_id) key
+// prevents duplicate deliveries from applying the same payout transition twice.
+export type BazikWebhookLedgerResult =
+  | { ok: true; duplicate: boolean; ledgerId?: string }
+  | { ok: false; conflict?: boolean; reason: string };
+
+export async function registerBazikWebhookEvent(input: {
+  environment: "sandbox" | "live";
+  eventId: string;
+  eventType: string;
+  reference: string;
+  payloadSha256: string;
+}): Promise<BazikWebhookLedgerResult> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin
+    .from("bazik_webhook_events")
+    .insert({
+      environment: input.environment,
+      event_id: input.eventId,
+      event_type: input.eventType,
+      transfer_reference: input.reference,
+      payload_sha256: input.payloadSha256,
+      processing_status: "processing",
+    })
+    .select("id")
+    .maybeSingle();
+
+  if (!error && data?.id) return { ok: true, duplicate: false, ledgerId: data.id };
+
+  // Postgres unique violation: inspect the existing record rather than treating
+  // every duplicate as successfully processed.
+  if (error?.code === "23505") {
+    const { data: existing, error: readError } = await supabaseAdmin
+      .from("bazik_webhook_events")
+      .select("id, payload_sha256, processing_status")
+      .eq("environment", input.environment)
+      .eq("event_id", input.eventId)
+      .maybeSingle();
+    if (readError || !existing) {
+      return { ok: false, reason: "No se pudo verificar el evento Bazik duplicado." };
+    }
+    if (existing.payload_sha256 !== input.payloadSha256) {
+      return { ok: false, conflict: true, reason: "El event ID ya existe con un payload diferente." };
+    }
+    if (existing.processing_status === "processed") return { ok: true, duplicate: true };
+    return { ok: false, reason: "El evento ya existe pero todavía no está procesado; se puede reintentar." };
+  }
+
+  console.error("Bazik: no se pudo registrar el evento webhook", error);
+  return { ok: false, reason: "No se pudo registrar el evento webhook." };
+}
+
+export async function finishBazikWebhookEvent(
+  input: { environment: "sandbox" | "live"; eventId: string; processed: boolean; error?: string },
+): Promise<boolean> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { error } = await supabaseAdmin
+    .from("bazik_webhook_events")
+    .update({
+      processing_status: input.processed ? "processed" : "retryable_failed",
+      processed_at: input.processed ? new Date().toISOString() : null,
+      last_error: input.processed ? null : (input.error ?? "Processing failed").slice(0, 500),
+    })
+    .eq("environment", input.environment)
+    .eq("event_id", input.eventId);
+  if (error) {
+    console.error("Bazik: no se pudo actualizar el registro del evento", error);
+    return false;
+  }
+  return true;
+}
+
 // --- Webhook: recepción de resultados asíncronos ---------------------------
 
 export function bazikStatusLooksSuccessful(status?: string | null): boolean {
