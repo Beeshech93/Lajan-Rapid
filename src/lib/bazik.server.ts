@@ -476,7 +476,7 @@ export async function registerBazikWebhookEvent(input: {
   if (error?.code === "23505") {
     const { data: existing, error: readError } = await supabaseAdmin
       .from("bazik_webhook_events")
-      .select("id, payload_sha256, processing_status")
+      .select("id, payload_sha256, processing_status, processing_started_at")
       .eq("environment", input.environment)
       .eq("event_id", input.eventId)
       .maybeSingle();
@@ -490,13 +490,29 @@ export async function registerBazikWebhookEvent(input: {
     if (existing.processing_status === "retryable_failed") {
       const { data: reclaimed, error: reclaimError } = await supabaseAdmin
         .from("bazik_webhook_events")
-        .update({ processing_status: "processing", last_error: null })
+        .update({ processing_status: "processing", processing_started_at: new Date().toISOString(), last_error: null })
         .eq("id", existing.id)
         .eq("processing_status", "retryable_failed")
         .select("id")
         .maybeSingle();
       if (reclaimError) return { ok: false, reason: "No se pudo recuperar el evento para reintento." };
       if (reclaimed?.id) return { ok: true, duplicate: false, ledgerId: reclaimed.id };
+    }
+    if (existing.processing_status === "processing") {
+      const startedAt = Date.parse(String(existing.processing_started_at ?? ""));
+      const staleBefore = Date.now() - 2 * 60 * 1000;
+      if (Number.isFinite(startedAt) && startedAt < staleBefore) {
+        const { data: reclaimed, error: reclaimError } = await supabaseAdmin
+          .from("bazik_webhook_events")
+          .update({ processing_started_at: new Date().toISOString(), last_error: null })
+          .eq("id", existing.id)
+          .eq("processing_status", "processing")
+          .eq("processing_started_at", existing.processing_started_at)
+          .select("id")
+          .maybeSingle();
+        if (reclaimError) return { ok: false, reason: "No se pudo recuperar el evento interrumpido." };
+        if (reclaimed?.id) return { ok: true, duplicate: false, ledgerId: reclaimed.id };
+      }
     }
     return { ok: false, reason: "El evento ya está siendo procesado; reintenta más tarde." };
   }
