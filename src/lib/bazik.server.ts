@@ -24,6 +24,8 @@ export const BAZIK_CRED_NAMES = [
   "BAZIK_USER_ID",
   "BAZIK_SECRET_KEY",
   "BAZIK_WEBHOOK_SECRET",
+  "BAZIK_WEBHOOK_SECRET_SANDBOX",
+  "BAZIK_WEBHOOK_SECRET_LIVE",
   "BAZIK_ENVIRONMENT",
 ] as const;
 
@@ -95,9 +97,13 @@ function credsFor(stored: Record<string, string>): Creds {
   };
 }
 
-export async function bazikWebhookSecret(): Promise<string | undefined> {
+export async function bazikWebhookSecret(environment: "sandbox" | "live"): Promise<string | undefined> {
+  // Prefer environment-specific secrets. The legacy shared secret is accepted
+  // only as a compatibility fallback; production should configure both secrets.
   const stored = await loadStoredCreds();
-  return pick(stored, "BAZIK_WEBHOOK_SECRET");
+  const specificName = environment === "live" ? "BAZIK_WEBHOOK_SECRET_LIVE" : "BAZIK_WEBHOOK_SECRET_SANDBOX";
+  return process.env[specificName] ?? stored[specificName] ??
+    process.env["BAZIK_WEBHOOK_SECRET"] ?? stored["BAZIK_WEBHOOK_SECRET"];
 }
 
 // --- Autenticación --------------------------------------------------------
@@ -306,6 +312,18 @@ export function normaliseBazikResult(payload: unknown): {
 
 /** Envía un pago MonCash o NatCash real vía Bazik. */
 export async function bazikPayout(input: BazikPayoutInput): Promise<BazikResult> {
+  if (!Number.isFinite(input.amount) || input.amount <= 0) {
+    return { ok: false, error: "El importe debe ser un número positivo y finito." };
+  }
+  if (!input.phone || normalisePhoneToWallet(input.phone).length !== 8) {
+    return { ok: false, error: "El número de billetera debe contener 8 dígitos válidos." };
+  }
+  if (!input.reference.trim() || input.reference.trim().length > 100) {
+    return { ok: false, error: "La referencia del pago es obligatoria y debe tener como máximo 100 caracteres." };
+  }
+  if (!input.recipientName.trim()) {
+    return { ok: false, error: "El nombre del destinatario es obligatorio." };
+  }
   if (input.currency !== "HTG") {
     return { ok: false, error: "Bazik solo soporta pagos en HTG (gourdes)." };
   }
@@ -593,8 +611,7 @@ export function bazikExtractReference(payload: unknown): string | null {
     (data["referenceId"] as string | undefined) ??
     (data["reference"] as string | undefined) ??
     (nested?.["referenceId"] as string | undefined) ??
-    (nested?.["reference"] as string | undefined) ??
-    (data["id"] as string | undefined);
+    (nested?.["reference"] as string | undefined);
   return candidate ? String(candidate).trim() : null;
 }
 
