@@ -132,6 +132,14 @@ export const Route = createFileRoute("/api/public/bazik/payout")({
           return new Response("Invalid transfer details", { status: 400 });
         }
 
+        const nestedPayload = payload["data"] && typeof payload["data"] === "object" && !Array.isArray(payload["data"])
+          ? payload["data"] as Record<string, unknown>
+          : payload;
+        const status = String(nestedPayload["status"] ?? payload["status"] ?? "").toLowerCase();
+        const expectedStatus = eventType === "transfer.succeeded" ? "successful" : "failed";
+        if (status !== expectedStatus) {
+          return new Response("Event type and transfer status do not match", { status: 400 });
+        }
         const reference = bazikExtractReference(payload);
         if (!reference) {
           // Return non-2xx so the provider/operator can investigate instead of silently acknowledging it.
