@@ -62,31 +62,34 @@ export const Route = createFileRoute("/api/public/bazik/payout")({
           finishBazikWebhookEvent,
         } = await import("@/lib/bazik.server");
         const { logAndAlertSecurityEvent } = await import("@/lib/security.server");
-        const secret = await bazikWebhookSecret();
-        if (!secret) {
-          console.error("Bazik webhook: BAZIK_WEBHOOK_SECRET no configurado, rechazando");
-          await logAndAlertSecurityEvent({
-            eventType: "webhook_not_configured",
-            severity: "critical",
-            detail: { webhook: "bazik" },
-          });
-          return new Response("Webhook not configured", { status: 401 });
-        }
-
         const timestamp = request.headers.get("x-bazik-timestamp");
         const eventId = request.headers.get("x-bazik-event-id");
-        const environment = request.headers.get("x-bazik-env");
+        const environment = request.headers.get("x-bazik-env")?.toLowerCase() ?? null;
         const provided = request.headers.get("x-bazik-signature");
         const configuredEnvironment = (process.env.BAZIK_ENVIRONMENT ?? "sandbox").toLowerCase();
         const expectedEnvironment =
           configuredEnvironment === "production" || configuredEnvironment === "live" ? "live" : "sandbox";
+
+        if (environment !== expectedEnvironment) {
+          return new Response("Invalid webhook environment", { status: 401 });
+        }
+        const secret = await bazikWebhookSecret(expectedEnvironment);
+        if (!secret) {
+          console.error("Bazik webhook: no hay secreto configurado para el entorno, rechazando");
+          await logAndAlertSecurityEvent({
+            eventType: "webhook_not_configured",
+            severity: "critical",
+            detail: { webhook: "bazik", environment: expectedEnvironment },
+          });
+          return new Response("Webhook not configured", { status: 401 });
+        }
         const timestampSeconds = timestamp && /^\d+$/.test(timestamp) ? Number(timestamp) : NaN;
         const nowSeconds = Math.floor(Date.now() / 1000);
         if (
-          environment !== expectedEnvironment ||
           !Number.isFinite(timestampSeconds) ||
           Math.abs(nowSeconds - timestampSeconds) > 300 ||
-          !eventId
+          !eventId ||
+          eventId.length > 200
         ) {
           return new Response("Invalid webhook headers", { status: 401 });
         }
@@ -109,6 +112,24 @@ export const Route = createFileRoute("/api/public/bazik/payout")({
         const eventType = String(payload["type"] ?? "").trim().toLowerCase();
         if (eventType !== "transfer.succeeded" && eventType !== "transfer.failed") {
           return new Response("Unsupported webhook event", { status: 400 });
+        }
+
+        const nestedData = payload["data"];
+        if (nestedData !== undefined && (!nestedData || typeof nestedData !== "object" || Array.isArray(nestedData))) {
+          return new Response("Invalid transfer payload", { status: 400 });
+        }
+        const data = (nestedData && typeof nestedData === "object" ? nestedData : payload) as Record<string, unknown>;
+        const transactionId = data["transactionId"] ?? data["transaction_id"] ?? payload["transactionId"] ?? payload["transaction_id"];
+        const amount = data["amount"] ?? payload["amount"];
+        const currency = data["currency"] ?? payload["currency"];
+        const provider = data["provider"] ?? payload["provider"];
+        if (
+          typeof transactionId !== "string" || !transactionId.trim() ||
+          typeof amount !== "number" || !Number.isFinite(amount) || amount <= 0 ||
+          typeof currency !== "string" || currency.trim().toUpperCase() !== "HTG" ||
+          typeof provider !== "string" || !["moncash", "natcash"].includes(provider.trim().toLowerCase())
+        ) {
+          return new Response("Invalid transfer details", { status: 400 });
         }
 
         const reference = bazikExtractReference(payload);
@@ -144,12 +165,7 @@ export const Route = createFileRoute("/api/public/bazik/payout")({
         }
 
         const nested = payload["data"] as Record<string, unknown> | undefined;
-        const providerRef =
-          nested?.["transactionId"] ??
-          nested?.["transaction_id"] ??
-          payload["transactionId"] ??
-          payload["transaction_id"] ??
-          payload["id"];
+        const providerRef = transactionId;
         const detail = nested?.["failureReason"] ?? payload["failureReason"] ?? payload["detail"] ?? payload["message"];
 
         const result = await applyBazikResult({
