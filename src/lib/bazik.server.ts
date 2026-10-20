@@ -635,20 +635,40 @@ const BAZIK_STATUS_TEXT: Record<
 export async function applyBazikResult(opts: {
   reference: string;
   state: string;
-  providerRef?: string | null;
+  providerRef: string;
+  amount: number;
+  currency: string;
+  provider: "moncash" | "natcash";
   detail?: string | null;
 }) {
   const next = bazikWebhookState(opts.state);
   if (!next) return { ok: false, reason: `Estado no manejado: ${opts.state}` };
 
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data: transfer } = await supabaseAdmin
+  const { data: transfer, error: transferError } = await supabaseAdmin
     .from("transfers")
-    .select("id, user_id, status, reference")
+    .select("id, user_id, status, reference, bazik_transaction_id, delivery_method, amount_receive, receive_currency")
     .eq("reference", opts.reference)
     .maybeSingle();
 
+  if (transferError) return { ok: false, reason: "No se pudo verificar la transferencia asociada." };
   if (!transfer) return { ok: false, reason: `No existe el envío ${opts.reference}` };
+
+  // Never trust a signed webhook's claimed transfer details without matching
+  // them to the immutable payout request saved in our own database.
+  if (!transfer.bazik_transaction_id || String(transfer.bazik_transaction_id) !== opts.providerRef) {
+    return { ok: false, reason: "El ID de transacción de Bazik no coincide con el envío registrado." };
+  }
+  if (String(transfer.delivery_method).toLowerCase() !== opts.provider) {
+    return { ok: false, reason: "El proveedor del webhook no coincide con el método de entrega registrado." };
+  }
+  if (String(transfer.receive_currency).toUpperCase() !== opts.currency.toUpperCase()) {
+    return { ok: false, reason: "La moneda del webhook no coincide con el envío registrado." };
+  }
+  const expectedAmount = Number(transfer.amount_receive);
+  if (!Number.isFinite(expectedAmount) || Math.abs(expectedAmount - opts.amount) > 0.01) {
+    return { ok: false, reason: "El importe del webhook no coincide con el envío registrado." };
+  }
   if (transfer.status === next) return { ok: true, unchanged: true, transferId: transfer.id };
 
   // A webhook may finalize only a payout already claimed for processing.
