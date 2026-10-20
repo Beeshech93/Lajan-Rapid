@@ -73,12 +73,15 @@ export const adminSetTransferStatus = createServerFn({ method: "POST" })
     }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error: updateError } = await supabaseAdmin
+    const { data: updated, error: updateError } = await supabaseAdmin
       .from("transfers")
       .update({ status: data.status })
       .eq("id", t.id)
-      .eq("status", t.status);
+      .eq("status", t.status)
+      .select("id")
+      .maybeSingle();
     if (updateError) throw new Error(updateError.message);
+    if (!updated) throw new Error("El estado del envío cambió. Actualiza la página y vuelve a intentarlo.");
 
     const label = ADMIN_STATUS_LABEL[data.status] ?? data.status;
     const eventMessage = data.note
