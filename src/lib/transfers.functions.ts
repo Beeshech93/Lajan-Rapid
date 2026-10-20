@@ -141,7 +141,7 @@ export const finalizeTransferPayout = createServerFn({ method: "POST" })
     const { data: t, error } = await context.supabase
       .from("transfers")
       .select(
-        "id, user_id, status, reference, recipient_name, recipient_phone, delivery_method, amount_receive, receive_currency",
+        "id, user_id, status, reference, recipient_name, recipient_phone, delivery_method, amount_htg",
       )
       .eq("id", data.transferId)
       .maybeSingle();
@@ -171,8 +171,8 @@ export const finalizeTransferPayout = createServerFn({ method: "POST" })
     const result = await bazikPayout({
       provider: t.delivery_method,
       phone: t.recipient_phone,
-      amount: Number(t.amount_receive),
-      currency: t.receive_currency,
+      amount: Number(t.amount_htg),
+      currency: "HTG",
       reference: t.reference,
       recipientName: t.recipient_name,
     });
@@ -220,7 +220,7 @@ export const adminConfirmTransfer = createServerFn({ method: "POST" })
     const { data: t, error } = await context.supabase
       .from("transfers")
       .select(
-        "id, status, reference, recipient_name, recipient_phone, delivery_method, amount_receive, receive_currency",
+        "id, status, reference, recipient_name, recipient_phone, delivery_method, amount_htg",
       )
       .eq("id", data.transferId)
       .maybeSingle();
@@ -248,8 +248,8 @@ export const adminConfirmTransfer = createServerFn({ method: "POST" })
       const result = await bazikPayout({
         provider: t.delivery_method,
         phone: t.recipient_phone,
-        amount: Number(t.amount_receive),
-        currency: t.receive_currency,
+        amount: Number(t.amount_htg),
+        currency: "HTG",
         reference: t.reference,
         recipientName: t.recipient_name,
       });
