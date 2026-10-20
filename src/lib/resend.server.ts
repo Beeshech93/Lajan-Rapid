@@ -2,6 +2,8 @@
 // confirmación de la cuenta), distinto del correo de confirmación que ya
 // envía Supabase Auth. Credenciales guardadas desde el panel de admin.
 
+import { protectCredential, revealCredential } from "@/lib/integration-credentials-crypto.server";
+
 export const RESEND_CRED_NAMES = [
   "RESEND_API_KEY",
   "RESEND_FROM_EMAIL",
@@ -21,7 +23,7 @@ export async function loadResendCreds(client?: any): Promise<Record<string, stri
       .select("name, value")
       .in("name", [...RESEND_CRED_NAMES]);
     const out: Record<string, string> = {};
-    for (const row of data ?? []) if (row.value) out[row.name] = row.value;
+    for (const row of data ?? []) if (row.value) out[row.name] = revealCredential(row.name, row.value);
     return out;
   } catch (e) {
     console.error("No se pudieron leer las credenciales de Resend", e);
@@ -59,7 +61,7 @@ export async function saveResendCred(name: string, value: string, userId: string
     const res = await primary
       .from("integration_credentials")
       .upsert(
-        { name, value, updated_at: now, updated_by: userId },
+        { name, value: protectCredential(name, value), updated_at: now, updated_by: userId },
         { onConflict: "name" },
       );
     upsertError = res.error;
@@ -72,7 +74,7 @@ export async function saveResendCred(name: string, value: string, userId: string
       const res = await supabaseAdmin
         .from("integration_credentials")
         .upsert(
-          { name, value, updated_at: now, updated_by: userId },
+          { name, value: protectCredential(name, value), updated_at: now, updated_by: userId },
           { onConflict: "name" },
         );
       upsertError = res.error;

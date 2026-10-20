@@ -50,7 +50,7 @@ export const adminSetTransferStatus = createServerFn({ method: "POST" })
 
     const { data: t, error } = await context.supabase
       .from("transfers")
-      .select("id, user_id, status, reference")
+      .select("id, user_id, status, reference, delivery_method")
       .eq("id", data.transferId)
       .maybeSingle();
 
@@ -59,12 +59,29 @@ export const adminSetTransferStatus = createServerFn({ method: "POST" })
       return { ok: true, message: "Ya estaba en esa etapa", status: data.status };
     }
 
+    // La edición manual no debe saltarse los controles de pago ni el webhook
+    // autenticado de Bazik para marcar un envío como entregado.
+    const isBazikPayout = ["moncash", "natcash"].includes(String(t.delivery_method ?? "").toLowerCase());
+    if (data.status === "completed" && t.status !== "paid") {
+      throw new Error("Solo se puede completar un envío cuando el pago está confirmado.");
+    }
+    if (isBazikPayout && t.status === "processing") {
+      throw new Error("No se puede cambiar manualmente un payout de Bazik en proceso; espera el webhook o reconcilia el estado con el proveedor.");
+    }
+    if (isBazikPayout && data.status === "completed") {
+      throw new Error("Los envíos de Bazik solo pueden completarse mediante un webhook válido del proveedor.");
+    }
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error: updateError } = await supabaseAdmin
+    const { data: updated, error: updateError } = await supabaseAdmin
       .from("transfers")
       .update({ status: data.status })
-      .eq("id", t.id);
+      .eq("id", t.id)
+      .eq("status", t.status)
+      .select("id")
+      .maybeSingle();
     if (updateError) throw new Error(updateError.message);
+    if (!updated) throw new Error("El estado del envío cambió. Actualiza la página y vuelve a intentarlo.");
 
     const label = ADMIN_STATUS_LABEL[data.status] ?? data.status;
     const eventMessage = data.note
@@ -97,22 +114,30 @@ export const adminCancelTransfer = createServerFn({ method: "POST" })
 
     const { data: t, error } = await context.supabase
       .from("transfers")
-      .select("id, user_id, status, reference")
+      .select("id, user_id, status, reference, delivery_method")
       .eq("id", data.transferId)
       .maybeSingle();
 
     if (error || !t) throw new Error("Envío no encontrado");
     if (t.status === "completed") throw new Error("No se puede cancelar un envío ya entregado");
+    const isBazikPayout = ["moncash", "natcash"].includes(String(t.delivery_method ?? "").toLowerCase());
+    if (isBazikPayout && t.status === "processing") {
+      throw new Error("No se puede cancelar manualmente un payout de Bazik en proceso; primero reconcilia su estado con el proveedor.");
+    }
     if (t.status === "cancelled") {
       return { ok: true, message: "Ya estaba cancelado", status: "cancelled" };
     }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error: updateError } = await supabaseAdmin
+    const { data: cancelled, error: updateError } = await supabaseAdmin
       .from("transfers")
       .update({ status: "cancelled" })
-      .eq("id", t.id);
+      .eq("id", t.id)
+      .eq("status", t.status)
+      .select("id")
+      .maybeSingle();
     if (updateError) throw new Error(updateError.message);
+    if (!cancelled) throw new Error("El estado del envío cambió. Actualiza la página y vuelve a intentarlo.");
 
     const eventMessage = data.reason
       ? `Cancelado por un administrador: ${data.reason}`
@@ -141,7 +166,7 @@ export const finalizeTransferPayout = createServerFn({ method: "POST" })
     const { data: t, error } = await context.supabase
       .from("transfers")
       .select(
-        "id, user_id, status, reference, recipient_name, recipient_phone, delivery_method, amount_receive, receive_currency",
+        "id, user_id, status, reference, recipient_name, recipient_phone, delivery_method, amount_htg",
       )
       .eq("id", data.transferId)
       .maybeSingle();
@@ -171,8 +196,8 @@ export const finalizeTransferPayout = createServerFn({ method: "POST" })
     const result = await bazikPayout({
       provider: t.delivery_method,
       phone: t.recipient_phone,
-      amount: Number(t.amount_receive),
-      currency: t.receive_currency,
+      amount: Number(t.amount_htg),
+      currency: "HTG",
       reference: t.reference,
       recipientName: t.recipient_name,
     });
@@ -220,7 +245,7 @@ export const adminConfirmTransfer = createServerFn({ method: "POST" })
     const { data: t, error } = await context.supabase
       .from("transfers")
       .select(
-        "id, status, reference, recipient_name, recipient_phone, delivery_method, amount_receive, receive_currency",
+        "id, status, reference, recipient_name, recipient_phone, delivery_method, amount_htg",
       )
       .eq("id", data.transferId)
       .maybeSingle();
@@ -231,14 +256,27 @@ export const adminConfirmTransfer = createServerFn({ method: "POST" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // Si es MonCash/NatCash, llamar a Bazik (solo MonCash está soportado por su API).
-    if (
-      (t.delivery_method === "moncash" || t.delivery_method === "natcash") &&
-      t.status === "awaiting_payment"
-    ) {
+    const usesBazikPayout = t.delivery_method === "moncash" || t.delivery_method === "natcash";
+
+    // Nunca marcar como completado un payout de Bazik solo porque ya está en processing.
+    // El estado final debe venir del webhook autenticado del proveedor.
+    if (usesBazikPayout && t.status === "processing") {
+      return {
+        ok: true,
+        message: "El envío ya fue enviado a Bazik y espera confirmación del proveedor.",
+        status: "processing",
+      };
+    }
+
+    if (usesBazikPayout && t.status !== "paid") {
+      throw new Error("El pago de entrada debe estar confirmado antes de iniciar el payout de Bazik.");
+    }
+
+    // Bazik payout: el envío permanece en processing hasta recibir un webhook válido.
+    if (usesBazikPayout) {
       const { data: claimed, error: claimError } = await supabaseAdmin.rpc("claim_bazik_payout", {
         _transfer_id: t.id,
-        _from_status: "awaiting_payment",
+        _from_status: "paid",
       });
       if (claimError || !claimed) {
         throw new Error("Este envío ya está siendo procesado o ya fue enviado a Bazik.");
@@ -248,8 +286,8 @@ export const adminConfirmTransfer = createServerFn({ method: "POST" })
       const result = await bazikPayout({
         provider: t.delivery_method,
         phone: t.recipient_phone,
-        amount: Number(t.amount_receive),
-        currency: t.receive_currency,
+        amount: Number(t.amount_htg),
+        currency: "HTG",
         reference: t.reference,
         recipientName: t.recipient_name,
       });
@@ -260,7 +298,7 @@ export const adminConfirmTransfer = createServerFn({ method: "POST" })
           .update({
             bazik_status: result.retryable === false ? "unknown" : "failed",
             bazik_error: result.error,
-            ...(result.retryable === false ? {} : { status: "awaiting_payment" }),
+            ...(result.retryable === false ? {} : { status: "paid" }),
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } as any)
           .eq("id", t.id);
@@ -283,9 +321,20 @@ export const adminConfirmTransfer = createServerFn({ method: "POST" })
       };
     }
 
-    // Si no es MonCash/NatCash o ya está en processing, marcar directo como completed
-    await supabaseAdmin.from("transfers").update({ status: "completed" }).eq("id", t.id);
+    // Para métodos gestionados manualmente, solo se permite completar después de
+    // confirmar que el pago de entrada está registrado. Nunca completar desde created
+    // o awaiting_payment.
+    if (t.status !== "paid") {
+      throw new Error("El envío debe tener el pago confirmado antes de marcarlo como completado.");
+    }
 
+    const { error: completeError } = await supabaseAdmin
+      .from("transfers")
+      .update({ status: "completed" })
+      .eq("id", t.id)
+      .eq("status", "paid");
+    if (completeError) throw new Error("No se pudo completar el envío.");
+    
     return {
       ok: true,
       message: "Transacción confirmada",

@@ -17,6 +17,8 @@
 // forma de la respuesta). Este archivo implementa la autenticación real; las funciones
 // de payout/quote quedan pendientes hasta tener esa documentación.
 
+import { protectCredential, revealCredential } from "@/lib/integration-credentials-crypto.server";
+
 export const BAZIK_MAX_TRANSACTION_HTG = 75000;
 
 export const BAZIK_CRED_NAMES = [
@@ -24,6 +26,8 @@ export const BAZIK_CRED_NAMES = [
   "BAZIK_USER_ID",
   "BAZIK_SECRET_KEY",
   "BAZIK_WEBHOOK_SECRET",
+  "BAZIK_WEBHOOK_SECRET_SANDBOX",
+  "BAZIK_WEBHOOK_SECRET_LIVE",
   "BAZIK_ENVIRONMENT",
 ] as const;
 
@@ -52,7 +56,7 @@ export async function loadStoredCreds(client?: any): Promise<Record<string, stri
       if (fallback.data && fallback.data.length > 0) data = fallback.data;
     }
     const out: Record<string, string> = {};
-    for (const row of data ?? []) if (row.value) out[row.name] = String(row.value).trim();
+    for (const row of data ?? []) if (row.value) out[row.name] = revealCredential(row.name, String(row.value)).trim();
     return out;
   } catch (e) {
     console.error("No se pudieron leer las credenciales guardadas de Bazik", e);
@@ -71,7 +75,7 @@ export async function saveStoredCred(name: string, value: string, userId: string
   const { error } = await supabaseAdmin
     .from("integration_credentials")
     .upsert(
-      { name, value, updated_at: new Date().toISOString(), updated_by: userId },
+      { name, value: protectCredential(name, value), updated_at: new Date().toISOString(), updated_by: userId },
       { onConflict: "name" },
     );
   if (error) throw new Error(`Error guardando credencial ${name}: ${error.message}`);
@@ -83,7 +87,7 @@ function pick(stored: Record<string, string>, name: BazikCredName): string | und
 
 function credsFor(stored: Record<string, string>): Creds {
   const baseUrl = (pick(stored, "BAZIK_BASE_URL") ?? "https://api.bazik.io").replace(/\/$/, "");
-  const envRaw = (pick(stored, "BAZIK_ENVIRONMENT") ?? "production").toLowerCase();
+  const envRaw = (pick(stored, "BAZIK_ENVIRONMENT") ?? "sandbox").toLowerCase();
   const environment: Creds["environment"] = envRaw === "sandbox" ? "sandbox" : "production";
   const userId = pick(stored, "BAZIK_USER_ID");
   const secretKey = pick(stored, "BAZIK_SECRET_KEY");
@@ -95,9 +99,13 @@ function credsFor(stored: Record<string, string>): Creds {
   };
 }
 
-export async function bazikWebhookSecret(): Promise<string | undefined> {
+export async function bazikWebhookSecret(environment: "sandbox" | "live"): Promise<string | undefined> {
+  // Prefer environment-specific secrets. The legacy shared secret is accepted
+  // only as a compatibility fallback; production should configure both secrets.
   const stored = await loadStoredCreds();
-  return pick(stored, "BAZIK_WEBHOOK_SECRET");
+  const specificName = environment === "live" ? "BAZIK_WEBHOOK_SECRET_LIVE" : "BAZIK_WEBHOOK_SECRET_SANDBOX";
+  return process.env[specificName] ?? stored[specificName] ??
+    process.env["BAZIK_WEBHOOK_SECRET"] ?? stored["BAZIK_WEBHOOK_SECRET"];
 }
 
 // --- Autenticación --------------------------------------------------------
@@ -173,13 +181,13 @@ export async function bazikAuthenticate(forceRefresh = false): Promise<BazikAuth
     }
 
     if (!response.ok) {
-      console.error(`Bazik /token falló [${response.status}]: ${text}`);
+      console.error(`Bazik /token falló [${response.status}]. Se omitió el cuerpo de respuesta por seguridad.`);
       return { ok: false, error: `Bazik rechazó la autenticación (HTTP ${response.status}).` };
     }
 
     const { token, expiresAt } = extractToken(parsed);
     if (!token) {
-      console.error("Bazik /token: respuesta sin token reconocible", parsed);
+      console.error("Bazik /token: respuesta sin token reconocible; se omitió el payload por seguridad.");
       return { ok: false, error: "Bazik no devolvió un token reconocible." };
     }
 
@@ -206,7 +214,11 @@ export async function bazikStatusInfo(client?: any) {
     configured: Boolean(creds.userId && creds.secretKey),
     hasUserId: Boolean(creds.userId),
     hasSecretKey: Boolean(creds.secretKey),
-    hasWebhookSecret: Boolean(pick(stored, "BAZIK_WEBHOOK_SECRET")),
+    hasWebhookSecret: Boolean(
+      pick(stored, "BAZIK_WEBHOOK_SECRET_SANDBOX") ||
+      pick(stored, "BAZIK_WEBHOOK_SECRET_LIVE") ||
+      pick(stored, "BAZIK_WEBHOOK_SECRET"),
+    ),
     authOk: auth.ok,
     authError: auth.ok ? undefined : auth.error,
   };
@@ -306,6 +318,44 @@ export function normaliseBazikResult(payload: unknown): {
 
 /** Envía un pago MonCash o NatCash real vía Bazik. */
 export async function bazikPayout(input: BazikPayoutInput): Promise<BazikResult> {
+  // Fail closed: la documentación oficial disponible solo confirma MonCash.
+  // No enviar dinero a una ruta NatCash no verificada.
+  if (input.provider === "natcash") {
+    return {
+      ok: false,
+      retryable: true,
+      error: "Los pagos NatCash están deshabilitados hasta que Bazik confirme oficialmente el endpoint y su contrato.",
+    };
+  }
+
+  // Live money movement remains disabled by default until Bazik's payout and
+  // webhook contracts have been verified end-to-end. Enabling it requires an
+  // explicit server-only deployment variable; never expose it to the browser.
+  const configuredStored = await loadStoredCreds();
+  const configuredCreds = credsFor(configuredStored);
+  if (
+    configuredCreds.environment === "production" &&
+    process.env["BAZIK_ENABLE_LIVE_PAYOUTS"] !== "true"
+  ) {
+    return {
+      ok: false,
+      retryable: false,
+      error: "Los pagos reales de Bazik están bloqueados. Verifica endpoint, estado y webhook en sandbox antes de habilitarlos.",
+    };
+  }
+
+  if (!Number.isFinite(input.amount) || input.amount <= 0) {
+    return { ok: false, error: "El importe debe ser un número positivo y finito." };
+  }
+  if (!input.phone || normalisePhoneToWallet(input.phone).length !== 8) {
+    return { ok: false, error: "El número de billetera debe contener 8 dígitos válidos." };
+  }
+  if (!input.reference.trim() || input.reference.trim().length > 100) {
+    return { ok: false, error: "La referencia del pago es obligatoria y debe tener como máximo 100 caracteres." };
+  }
+  if (!input.recipientName.trim()) {
+    return { ok: false, error: "El nombre del destinatario es obligatorio." };
+  }
   if (input.currency !== "HTG") {
     return { ok: false, error: "Bazik solo soporta pagos en HTG (gourdes)." };
   }
@@ -381,7 +431,16 @@ async function bazikPost(
     const errorCode = (parsed as Record<string, unknown> | undefined)?.["error"] as
       string | undefined;
     console.error(`Bazik ${path} falló [${response.status}]: ${text}`);
-    return { ok: false, status: response.status, text, ...(errorCode ? { errorCode } : {}) };
+    // A non-2xx response does not always prove that no payout was created.
+    // Do not automatically retry any provider HTTP error until its documented
+    // semantics are known; an operator must reconcile ambiguous outcomes first.
+    return {
+      ok: false,
+      status: response.status,
+      text,
+      retryable: false,
+      ...(errorCode ? { errorCode } : {}),
+    };
   }
 
   return { ok: true, parsed };
@@ -409,12 +468,12 @@ function humaniseBazikError(response: Extract<BazikRawResponse, { ok: false }>):
     return "El tipo de cuenta de Bazik no está autorizado para este endpoint.";
   }
 
-  return `Bazik rechazó el pago (HTTP ${response.status}): ${response.text.slice(0, 200)}`;
+  return `Bazik rechazó la solicitud (HTTP ${response.status}). Revisa el panel del proveedor para obtener más detalles sin exponer datos sensibles.`;
 }
 
 function toBazikResult(response: BazikRawResponse, path: string): BazikResult {
   if (!response.ok) {
-    console.error(`Bazik ${path}: ${response.errorCode ?? "error"} — ${response.text}`);
+    console.error(`Bazik ${path}: HTTP ${response.status}; code=${response.errorCode ?? "unknown"}`);
     return {
       ok: false,
       error: humaniseBazikError(response),
@@ -431,6 +490,108 @@ function toBazikResult(response: BazikRawResponse, path: string): BazikResult {
     ...(total !== undefined ? { total } : {}),
     raw: response.parsed,
   };
+}
+
+// Persistent webhook idempotency ledger. A unique (environment,event_id) key
+// prevents duplicate deliveries from applying the same payout transition twice.
+export type BazikWebhookLedgerResult =
+  | { ok: true; duplicate: boolean; ledgerId?: string }
+  | { ok: false; conflict?: boolean; reason: string };
+
+export async function registerBazikWebhookEvent(input: {
+  environment: "sandbox" | "live";
+  eventId: string;
+  eventType: string;
+  reference: string;
+  payloadSha256: string;
+}): Promise<BazikWebhookLedgerResult> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin
+    .from("bazik_webhook_events")
+    .insert({
+      environment: input.environment,
+      event_id: input.eventId,
+      event_type: input.eventType,
+      transfer_reference: input.reference,
+      payload_sha256: input.payloadSha256,
+      processing_status: "processing",
+      processing_started_at: new Date().toISOString(),
+    })
+    .select("id")
+    .maybeSingle();
+
+  if (!error && data?.id) return { ok: true, duplicate: false, ledgerId: data.id };
+
+  // Postgres unique violation: inspect the existing record rather than treating
+  // every duplicate as successfully processed.
+  if (error?.code === "23505") {
+    const { data: existing, error: readError } = await supabaseAdmin
+      .from("bazik_webhook_events")
+      .select("id, payload_sha256, processing_status, processing_started_at")
+      .eq("environment", input.environment)
+      .eq("event_id", input.eventId)
+      .maybeSingle();
+    if (readError || !existing) {
+      return { ok: false, reason: "No se pudo verificar el evento Bazik duplicado." };
+    }
+    if (existing.payload_sha256 !== input.payloadSha256) {
+      return { ok: false, conflict: true, reason: "El event ID ya existe con un payload diferente." };
+    }
+    if (existing.processing_status === "processed") return { ok: true, duplicate: true };
+    if (existing.processing_status === "retryable_failed") {
+      const { data: reclaimed, error: reclaimError } = await supabaseAdmin
+        .from("bazik_webhook_events")
+        .update({ processing_status: "processing", processing_started_at: new Date().toISOString(), last_error: null })
+        .eq("id", existing.id)
+        .eq("processing_status", "retryable_failed")
+        .eq("processing_started_at", existing.processing_started_at)
+        .select("id")
+        .maybeSingle();
+      if (reclaimError) return { ok: false, reason: "No se pudo recuperar el evento para reintento." };
+      if (reclaimed?.id) return { ok: true, duplicate: false, ledgerId: reclaimed.id };
+    }
+    if (existing.processing_status === "processing") {
+      const startedAt = Date.parse(String(existing.processing_started_at ?? ""));
+      const staleBefore = Date.now() - 2 * 60 * 1000;
+      if (Number.isFinite(startedAt) && startedAt < staleBefore) {
+        const { data: reclaimed, error: reclaimError } = await supabaseAdmin
+          .from("bazik_webhook_events")
+          .update({ processing_started_at: new Date().toISOString(), last_error: null })
+          .eq("id", existing.id)
+          .eq("processing_status", "processing")
+          .eq("processing_started_at", existing.processing_started_at)
+          .select("id")
+          .maybeSingle();
+        if (reclaimError) return { ok: false, reason: "No se pudo recuperar el evento interrumpido." };
+        if (reclaimed?.id) return { ok: true, duplicate: false, ledgerId: reclaimed.id };
+      }
+    }
+    return { ok: false, reason: "El evento ya está siendo procesado; reintenta más tarde." };
+  }
+
+  console.error("Bazik: no se pudo registrar el evento webhook", error);
+  return { ok: false, reason: "No se pudo registrar el evento webhook." };
+}
+
+export async function finishBazikWebhookEvent(
+  input: { environment: "sandbox" | "live"; eventId: string; processed: boolean; error?: string },
+): Promise<boolean> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { error } = await supabaseAdmin
+    .from("bazik_webhook_events")
+    .update({
+      processing_status: input.processed ? "processed" : "retryable_failed",
+      processed_at: input.processed ? new Date().toISOString() : null,
+      last_error: input.processed ? null : (input.error ?? "Processing failed").slice(0, 500),
+    })
+    .eq("environment", input.environment)
+    .eq("event_id", input.eventId)
+    .eq("processing_status", "processing");
+  if (error) {
+    console.error("Bazik: no se pudo actualizar el registro del evento", error);
+    return false;
+  }
+  return true;
 }
 
 // --- Webhook: recepción de resultados asíncronos ---------------------------
@@ -482,8 +643,7 @@ export function bazikExtractReference(payload: unknown): string | null {
     (data["referenceId"] as string | undefined) ??
     (data["reference"] as string | undefined) ??
     (nested?.["referenceId"] as string | undefined) ??
-    (nested?.["reference"] as string | undefined) ??
-    (data["id"] as string | undefined);
+    (nested?.["reference"] as string | undefined);
   return candidate ? String(candidate).trim() : null;
 }
 
@@ -503,33 +663,74 @@ const BAZIK_STATUS_TEXT: Record<
 export async function applyBazikResult(opts: {
   reference: string;
   state: string;
-  providerRef?: string | null;
+  providerRef: string;
+  amount: number;
+  currency: string;
+  provider: "moncash" | "natcash";
   detail?: string | null;
 }) {
   const next = bazikWebhookState(opts.state);
   if (!next) return { ok: false, reason: `Estado no manejado: ${opts.state}` };
 
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data: transfer } = await supabaseAdmin
+  const { data: transfer, error: transferError } = await supabaseAdmin
     .from("transfers")
-    .select("id, user_id, status, reference")
+    .select("id, user_id, status, reference, bazik_transaction_id, delivery_method, amount_htg")
     .eq("reference", opts.reference)
     .maybeSingle();
 
+  if (transferError) {
+    console.error("Bazik: no se pudo consultar la transferencia", transferError);
+    return { ok: false, reason: "No se pudo verificar la transferencia asociada." };
+  }
   if (!transfer) return { ok: false, reason: `No existe el envío ${opts.reference}` };
+
+  // Match webhook details against columns in the canonical transfers schema.
+  // The app stores the recipient amount in HTG as amount_htg; it has no
+  // amount_receive or receive_currency columns.
+  if (!transfer.bazik_transaction_id || String(transfer.bazik_transaction_id) !== opts.providerRef) {
+    return { ok: false, reason: "El ID de transacción de Bazik no coincide con el envío registrado." };
+  }
+  if (String(transfer.delivery_method).toLowerCase() !== opts.provider) {
+    return { ok: false, reason: "El proveedor del webhook no coincide con el método de entrega registrado." };
+  }
+  if (opts.currency.toUpperCase() !== "HTG") {
+    return { ok: false, reason: "La moneda del webhook no es HTG." };
+  }
+  const expectedAmount = Number(transfer.amount_htg);
+  if (!Number.isFinite(expectedAmount) || Math.abs(expectedAmount - opts.amount) > 0.01) {
+    return { ok: false, reason: "El importe del webhook no coincide con el envío registrado." };
+  }
   if (transfer.status === next) return { ok: true, unchanged: true, transferId: transfer.id };
-  if (["completed", "processing"].includes(transfer.status) && next === "completed") {
+
+  // A webhook may finalize only a payout already claimed for processing.
+  // Both final states are terminal; delayed events must never reverse them.
+  if (transfer.status === "completed" || transfer.status === "cancelled") {
     return { ok: true, unchanged: true, transferId: transfer.id };
   }
+  if (transfer.status !== "processing") {
+    return {
+      ok: false,
+      reason: `El envío ${opts.reference} no está en processing (estado actual: ${transfer.status})`,
+    };
+  }
 
-  const { error } = await supabaseAdmin
+  // Compare-and-set prevents concurrent webhook requests from overwriting
+  // a status that changed after the initial read.
+  const { data: updated, error } = await supabaseAdmin
     .from("transfers")
     .update({ status: next })
-    .eq("id", transfer.id);
+    .eq("id", transfer.id)
+    .eq("status", "processing")
+    .select("id")
+    .maybeSingle();
 
   if (error) {
     console.error("Bazik: no se pudo actualizar el envío", error);
     return { ok: false, reason: error.message };
+  }
+  if (!updated) {
+    return { ok: true, unchanged: true, transferId: transfer.id };
   }
 
   await supabaseAdmin.from("transfer_events").insert({
@@ -543,6 +744,35 @@ export async function applyBazikResult(opts: {
     title: `${BAZIK_STATUS_TEXT[next].title} · ${transfer.reference}`,
     body: BAZIK_STATUS_TEXT[next].body,
   });
+
+  // Notify administrators too, so a failed or completed provider payout is visible
+  // without relying on the customer to report it.
+  const { data: admins, error: adminsError } = await supabaseAdmin
+    .from("user_roles")
+    .select("user_id")
+    .eq("role", "admin");
+  if (adminsError) {
+    console.error("Bazik: no se pudieron consultar los administradores para notificar", adminsError);
+  } else if (admins?.length) {
+    const adminTitle =
+      next === "cancelled"
+        ? `Atención: Bazik rechazó el envío · ${transfer.reference}`
+        : `Bazik: ${BAZIK_STATUS_TEXT[next].title} · ${transfer.reference}`;
+    const adminBody =
+      next === "cancelled"
+        ? `Bazik informó que no pudo completar el envío. Detalle: ${opts.detail?.slice(0, 300) || opts.state}. Revisa el saldo y el estado del proveedor antes de reintentar.`
+        : `Referencia ${transfer.reference}. Estado informado por Bazik: ${opts.state}.`;
+    const { error: notifyError } = await supabaseAdmin.from("notifications").insert(
+      admins.map((admin: { user_id: string }) => ({
+        user_id: admin.user_id,
+        title: adminTitle,
+        body: adminBody,
+      })),
+    );
+    if (notifyError) {
+      console.error("Bazik: no se pudieron crear las notificaciones administrativas", notifyError);
+    }
+  }
 
   return { ok: true, transferId: transfer.id, status: next };
 }
