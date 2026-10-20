@@ -7,6 +7,8 @@ export const bazikCredentialsSchema = z.object({
   BAZIK_USER_ID: credField,
   BAZIK_SECRET_KEY: credField,
   BAZIK_WEBHOOK_SECRET: credField,
+  BAZIK_WEBHOOK_SECRET_SANDBOX: credField,
+  BAZIK_WEBHOOK_SECRET_LIVE: credField,
   BAZIK_ENVIRONMENT: credField,
 });
 
