@@ -50,7 +50,7 @@ export const adminSetTransferStatus = createServerFn({ method: "POST" })
 
     const { data: t, error } = await context.supabase
       .from("transfers")
-      .select("id, user_id, status, reference")
+      .select("id, user_id, status, reference, delivery_method")
       .eq("id", data.transferId)
       .maybeSingle();
 
@@ -59,11 +59,22 @@ export const adminSetTransferStatus = createServerFn({ method: "POST" })
       return { ok: true, message: "Ya estaba en esa etapa", status: data.status };
     }
 
+    // La edición manual no debe saltarse los controles de pago ni el webhook
+    // autenticado de Bazik para marcar un envío como entregado.
+    const isBazikPayout = ["moncash", "natcash"].includes(String(t.delivery_method ?? "").toLowerCase());
+    if (data.status === "completed" && t.status !== "paid") {
+      throw new Error("Solo se puede completar un envío cuando el pago está confirmado.");
+    }
+    if (data.status === "completed" && isBazikPayout) {
+      throw new Error("Los envíos de Bazik solo pueden completarse mediante un webhook válido del proveedor.");
+    }
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error: updateError } = await supabaseAdmin
       .from("transfers")
       .update({ status: data.status })
-      .eq("id", t.id);
+      .eq("id", t.id)
+      .eq("status", t.status);
     if (updateError) throw new Error(updateError.message);
 
     const label = ADMIN_STATUS_LABEL[data.status] ?? data.status;
