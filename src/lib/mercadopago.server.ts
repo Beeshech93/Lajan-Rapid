@@ -2,6 +2,8 @@
 // Credenciales guardadas manualmente desde el panel de administración
 // (o por variables de entorno del mismo nombre).
 
+import { protectCredential, revealCredential } from "@/lib/integration-credentials-crypto.server";
+
 export const MP_CRED_NAMES = ["MERCADOPAGO_ACCESS_TOKEN", "MERCADOPAGO_WEBHOOK_SECRET"] as const;
 
 export type MpCredName = (typeof MP_CRED_NAMES)[number];
@@ -24,7 +26,7 @@ export async function loadMpCreds(client?: any): Promise<Record<string, string>>
       if (fallback.data && fallback.data.length > 0) data = fallback.data;
     }
     const out: Record<string, string> = {};
-    for (const row of data ?? []) if (row.value) out[row.name] = row.value;
+    for (const row of data ?? []) if (row.value) out[row.name] = revealCredential(row.name, row.value);
     return out;
   } catch (e) {
     console.error("No se pudieron leer las credenciales de Mercado Pago", e);
@@ -43,7 +45,7 @@ export async function saveMpCred(name: string, value: string, userId: string, _c
   const { error } = await supabaseAdmin
     .from("integration_credentials")
     .upsert(
-      { name, value, updated_at: new Date().toISOString(), updated_by: userId },
+      { name, value: protectCredential(name, value), updated_at: new Date().toISOString(), updated_by: userId },
       { onConflict: "name" },
     );
   if (error) throw new Error(`Error guardando credencial ${name}: ${error.message}`);
