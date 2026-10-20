@@ -2,6 +2,8 @@
 // Credenciales guardadas manualmente desde el panel de administración
 // (o por variables de entorno del mismo nombre).
 
+import { protectCredential, revealCredential } from "@/lib/integration-credentials-crypto.server";
+
 export const STRIPE_CRED_NAMES = ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"] as const;
 
 export type StripeCredName = (typeof STRIPE_CRED_NAMES)[number];
@@ -24,7 +26,7 @@ export async function loadStripeCreds(client?: any): Promise<Record<string, stri
       if (fallback.data && fallback.data.length > 0) data = fallback.data;
     }
     const out: Record<string, string> = {};
-    for (const row of data ?? []) if (row.value) out[row.name] = row.value;
+    for (const row of data ?? []) if (row.value) out[row.name] = revealCredential(row.name, row.value);
     return out;
   } catch (e) {
     console.error("No se pudieron leer las credenciales de Stripe", e);
@@ -62,7 +64,7 @@ export async function saveStripeCred(name: string, value: string, userId: string
     const res = await primary
       .from("integration_credentials")
       .upsert(
-        { name, value, updated_at: now, updated_by: userId },
+        { name, value: protectCredential(name, value), updated_at: now, updated_by: userId },
         { onConflict: "name" },
       );
     upsertError = res.error;
@@ -75,7 +77,7 @@ export async function saveStripeCred(name: string, value: string, userId: string
       const res = await supabaseAdmin
         .from("integration_credentials")
         .upsert(
-          { name, value, updated_at: now, updated_by: userId },
+          { name, value: protectCredential(name, value), updated_at: now, updated_by: userId },
           { onConflict: "name" },
         );
       upsertError = res.error;
