@@ -65,7 +65,10 @@ export const adminSetTransferStatus = createServerFn({ method: "POST" })
     if (data.status === "completed" && t.status !== "paid") {
       throw new Error("Solo se puede completar un envío cuando el pago está confirmado.");
     }
-    if (data.status === "completed" && isBazikPayout) {
+    if (isBazikPayout && t.status === "processing") {
+      throw new Error("No se puede cambiar manualmente un payout de Bazik en proceso; espera el webhook o reconcilia el estado con el proveedor.");
+    }
+    if (isBazikPayout && data.status === "completed") {
       throw new Error("Los envíos de Bazik solo pueden completarse mediante un webhook válido del proveedor.");
     }
 
@@ -108,22 +111,30 @@ export const adminCancelTransfer = createServerFn({ method: "POST" })
 
     const { data: t, error } = await context.supabase
       .from("transfers")
-      .select("id, user_id, status, reference")
+      .select("id, user_id, status, reference, delivery_method")
       .eq("id", data.transferId)
       .maybeSingle();
 
     if (error || !t) throw new Error("Envío no encontrado");
     if (t.status === "completed") throw new Error("No se puede cancelar un envío ya entregado");
+    const isBazikPayout = ["moncash", "natcash"].includes(String(t.delivery_method ?? "").toLowerCase());
+    if (isBazikPayout && t.status === "processing") {
+      throw new Error("No se puede cancelar manualmente un payout de Bazik en proceso; primero reconcilia su estado con el proveedor.");
+    }
     if (t.status === "cancelled") {
       return { ok: true, message: "Ya estaba cancelado", status: "cancelled" };
     }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error: updateError } = await supabaseAdmin
+    const { data: cancelled, error: updateError } = await supabaseAdmin
       .from("transfers")
       .update({ status: "cancelled" })
-      .eq("id", t.id);
+      .eq("id", t.id)
+      .eq("status", t.status)
+      .select("id")
+      .maybeSingle();
     if (updateError) throw new Error(updateError.message);
+    if (!cancelled) throw new Error("El estado del envío cambió. Actualiza la página y vuelve a intentarlo.");
 
     const eventMessage = data.reason
       ? `Cancelado por un administrador: ${data.reason}`
