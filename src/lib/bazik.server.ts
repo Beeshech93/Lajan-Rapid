@@ -185,7 +185,7 @@ export async function bazikAuthenticate(forceRefresh = false): Promise<BazikAuth
 
     const { token, expiresAt } = extractToken(parsed);
     if (!token) {
-      console.error("Bazik /token: respuesta sin token reconocible", parsed);
+      console.error("Bazik /token: respuesta sin token reconocible; se omitió el payload por seguridad.");
       return { ok: false, error: "Bazik no devolvió un token reconocible." };
     }
 
