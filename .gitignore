@@ -34,3 +34,8 @@ dist-ssr
 *.sln
 *.sw?
 supabase/.temp/
+
+# Environment files (never commit credentials or project-specific local config)
+.env
+.env.*
+!.env.example
