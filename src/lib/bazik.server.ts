@@ -326,6 +326,22 @@ export async function bazikPayout(input: BazikPayoutInput): Promise<BazikResult>
     };
   }
 
+  // Live money movement remains disabled by default until Bazik's payout and
+  // webhook contracts have been verified end-to-end. Enabling it requires an
+  // explicit server-only deployment variable; never expose it to the browser.
+  const configuredStored = await loadStoredCreds();
+  const configuredCreds = credsFor(configuredStored);
+  if (
+    configuredCreds.environment === "production" &&
+    process.env["BAZIK_ENABLE_LIVE_PAYOUTS"] !== "true"
+  ) {
+    return {
+      ok: false,
+      retryable: false,
+      error: "Los pagos reales de Bazik están bloqueados. Verifica endpoint, estado y webhook en sandbox antes de habilitarlos.",
+    };
+  }
+
   if (!Number.isFinite(input.amount) || input.amount <= 0) {
     return { ok: false, error: "El importe debe ser un número positivo y finito." };
   }
