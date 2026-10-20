@@ -647,25 +647,29 @@ export async function applyBazikResult(opts: {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: transfer, error: transferError } = await supabaseAdmin
     .from("transfers")
-    .select("id, user_id, status, reference, bazik_transaction_id, delivery_method, amount_receive, receive_currency")
+    .select("id, user_id, status, reference, bazik_transaction_id, delivery_method, amount_htg")
     .eq("reference", opts.reference)
     .maybeSingle();
 
-  if (transferError) return { ok: false, reason: "No se pudo verificar la transferencia asociada." };
+  if (transferError) {
+    console.error("Bazik: no se pudo consultar la transferencia", transferError);
+    return { ok: false, reason: "No se pudo verificar la transferencia asociada." };
+  }
   if (!transfer) return { ok: false, reason: `No existe el envío ${opts.reference}` };
 
-  // Never trust a signed webhook's claimed transfer details without matching
-  // them to the immutable payout request saved in our own database.
+  // Match webhook details against columns in the canonical transfers schema.
+  // The app stores the recipient amount in HTG as amount_htg; it has no
+  // amount_receive or receive_currency columns.
   if (!transfer.bazik_transaction_id || String(transfer.bazik_transaction_id) !== opts.providerRef) {
     return { ok: false, reason: "El ID de transacción de Bazik no coincide con el envío registrado." };
   }
   if (String(transfer.delivery_method).toLowerCase() !== opts.provider) {
     return { ok: false, reason: "El proveedor del webhook no coincide con el método de entrega registrado." };
   }
-  if (String(transfer.receive_currency).toUpperCase() !== opts.currency.toUpperCase()) {
-    return { ok: false, reason: "La moneda del webhook no coincide con el envío registrado." };
+  if (opts.currency.toUpperCase() !== "HTG") {
+    return { ok: false, reason: "La moneda del webhook no es HTG." };
   }
-  const expectedAmount = Number(transfer.amount_receive);
+  const expectedAmount = Number(transfer.amount_htg);
   if (!Number.isFinite(expectedAmount) || Math.abs(expectedAmount - opts.amount) > 0.01) {
     return { ok: false, reason: "El importe del webhook no coincide con el envío registrado." };
   }
