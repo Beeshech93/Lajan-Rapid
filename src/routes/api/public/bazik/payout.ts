@@ -179,7 +179,10 @@ export const Route = createFileRoute("/api/public/bazik/payout")({
         const result = await applyBazikResult({
           reference,
           state,
-          providerRef: providerRef != null ? String(providerRef) : null,
+          providerRef: String(providerRef),
+          amount,
+          currency: currency.trim().toUpperCase(),
+          provider: provider.trim().toLowerCase() as "moncash" | "natcash",
           detail: detail != null ? String(detail) : null,
         });
 
