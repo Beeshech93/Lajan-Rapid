@@ -254,15 +254,15 @@ export const adminConfirmTransfer = createServerFn({ method: "POST" })
       };
     }
 
-    if (usesBazikPayout && t.status !== "awaiting_payment") {
-      throw new Error("El envío de Bazik debe estar en espera de pago antes de iniciar el payout.");
+    if (usesBazikPayout && t.status !== "paid") {
+      throw new Error("El pago de entrada debe estar confirmado antes de iniciar el payout de Bazik.");
     }
 
     // Bazik payout: el envío permanece en processing hasta recibir un webhook válido.
     if (usesBazikPayout) {
       const { data: claimed, error: claimError } = await supabaseAdmin.rpc("claim_bazik_payout", {
         _transfer_id: t.id,
-        _from_status: "awaiting_payment",
+        _from_status: "paid",
       });
       if (claimError || !claimed) {
         throw new Error("Este envío ya está siendo procesado o ya fue enviado a Bazik.");
@@ -284,7 +284,7 @@ export const adminConfirmTransfer = createServerFn({ method: "POST" })
           .update({
             bazik_status: result.retryable === false ? "unknown" : "failed",
             bazik_error: result.error,
-            ...(result.retryable === false ? {} : { status: "awaiting_payment" }),
+            ...(result.retryable === false ? {} : { status: "paid" }),
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } as any)
           .eq("id", t.id);
