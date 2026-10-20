@@ -231,11 +231,24 @@ export const adminConfirmTransfer = createServerFn({ method: "POST" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // Si es MonCash/NatCash, llamar a Bazik (solo MonCash está soportado por su API).
-    if (
-      (t.delivery_method === "moncash" || t.delivery_method === "natcash") &&
-      t.status === "awaiting_payment"
-    ) {
+    const usesBazikPayout = t.delivery_method === "moncash" || t.delivery_method === "natcash";
+
+    // Nunca marcar como completado un payout de Bazik solo porque ya está en processing.
+    // El estado final debe venir del webhook autenticado del proveedor.
+    if (usesBazikPayout && t.status === "processing") {
+      return {
+        ok: true,
+        message: "El envío ya fue enviado a Bazik y espera confirmación del proveedor.",
+        status: "processing",
+      };
+    }
+
+    if (usesBazikPayout && t.status !== "awaiting_payment") {
+      throw new Error("El envío de Bazik debe estar en espera de pago antes de iniciar el payout.");
+    }
+
+    // Bazik payout: el envío permanece en processing hasta recibir un webhook válido.
+    if (usesBazikPayout) {
       const { data: claimed, error: claimError } = await supabaseAdmin.rpc("claim_bazik_payout", {
         _transfer_id: t.id,
         _from_status: "awaiting_payment",
@@ -283,9 +296,20 @@ export const adminConfirmTransfer = createServerFn({ method: "POST" })
       };
     }
 
-    // Si no es MonCash/NatCash o ya está en processing, marcar directo como completed
-    await supabaseAdmin.from("transfers").update({ status: "completed" }).eq("id", t.id);
+    // Para métodos gestionados manualmente, solo se permite completar después de
+    // confirmar que el pago de entrada está registrado. Nunca completar desde created
+    // o awaiting_payment.
+    if (t.status !== "paid") {
+      throw new Error("El envío debe tener el pago confirmado antes de marcarlo como completado.");
+    }
 
+    const { error: completeError } = await supabaseAdmin
+      .from("transfers")
+      .update({ status: "completed" })
+      .eq("id", t.id)
+      .eq("status", "paid");
+    if (completeError) throw new Error("No se pudo completar el envío.");
+    
     return {
       ok: true,
       message: "Transacción confirmada",
