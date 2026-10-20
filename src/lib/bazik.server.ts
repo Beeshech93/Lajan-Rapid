@@ -17,6 +17,8 @@
 // forma de la respuesta). Este archivo implementa la autenticación real; las funciones
 // de payout/quote quedan pendientes hasta tener esa documentación.
 
+import { protectCredential, revealCredential } from "@/lib/integration-credentials-crypto.server";
+
 export const BAZIK_MAX_TRANSACTION_HTG = 75000;
 
 export const BAZIK_CRED_NAMES = [
@@ -54,7 +56,7 @@ export async function loadStoredCreds(client?: any): Promise<Record<string, stri
       if (fallback.data && fallback.data.length > 0) data = fallback.data;
     }
     const out: Record<string, string> = {};
-    for (const row of data ?? []) if (row.value) out[row.name] = String(row.value).trim();
+    for (const row of data ?? []) if (row.value) out[row.name] = revealCredential(row.name, String(row.value)).trim();
     return out;
   } catch (e) {
     console.error("No se pudieron leer las credenciales guardadas de Bazik", e);
@@ -73,7 +75,7 @@ export async function saveStoredCred(name: string, value: string, userId: string
   const { error } = await supabaseAdmin
     .from("integration_credentials")
     .upsert(
-      { name, value, updated_at: new Date().toISOString(), updated_by: userId },
+      { name, value: protectCredential(name, value), updated_at: new Date().toISOString(), updated_by: userId },
       { onConflict: "name" },
     );
   if (error) throw new Error(`Error guardando credencial ${name}: ${error.message}`);
