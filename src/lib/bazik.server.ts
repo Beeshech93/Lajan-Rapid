@@ -212,7 +212,11 @@ export async function bazikStatusInfo(client?: any) {
     configured: Boolean(creds.userId && creds.secretKey),
     hasUserId: Boolean(creds.userId),
     hasSecretKey: Boolean(creds.secretKey),
-    hasWebhookSecret: Boolean(pick(stored, "BAZIK_WEBHOOK_SECRET")),
+    hasWebhookSecret: Boolean(
+      pick(stored, "BAZIK_WEBHOOK_SECRET_SANDBOX") ||
+      pick(stored, "BAZIK_WEBHOOK_SECRET_LIVE") ||
+      pick(stored, "BAZIK_WEBHOOK_SECRET"),
+    ),
     authOk: auth.ok,
     authError: auth.ok ? undefined : auth.error,
   };
