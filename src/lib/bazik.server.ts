@@ -316,6 +316,16 @@ export function normaliseBazikResult(payload: unknown): {
 
 /** Envía un pago MonCash o NatCash real vía Bazik. */
 export async function bazikPayout(input: BazikPayoutInput): Promise<BazikResult> {
+  // Fail closed: la documentación oficial disponible solo confirma MonCash.
+  // No enviar dinero a una ruta NatCash no verificada.
+  if (input.provider === "natcash") {
+    return {
+      ok: false,
+      retryable: true,
+      error: "Los pagos NatCash están deshabilitados hasta que Bazik confirme oficialmente el endpoint y su contrato.",
+    };
+  }
+
   if (!Number.isFinite(input.amount) || input.amount <= 0) {
     return { ok: false, error: "El importe debe ser un número positivo y finito." };
   }
