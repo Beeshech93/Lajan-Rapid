@@ -179,7 +179,7 @@ export async function bazikAuthenticate(forceRefresh = false): Promise<BazikAuth
     }
 
     if (!response.ok) {
-      console.error(`Bazik /token falló [${response.status}]: ${text}`);
+      console.error(`Bazik /token falló [${response.status}]. Se omitió el cuerpo de respuesta por seguridad.`);
       return { ok: false, error: `Bazik rechazó la autenticación (HTTP ${response.status}).` };
     }
 
@@ -466,12 +466,12 @@ function humaniseBazikError(response: Extract<BazikRawResponse, { ok: false }>):
     return "El tipo de cuenta de Bazik no está autorizado para este endpoint.";
   }
 
-  return `Bazik rechazó el pago (HTTP ${response.status}): ${response.text.slice(0, 200)}`;
+  return `Bazik rechazó la solicitud (HTTP ${response.status}). Revisa el panel del proveedor para obtener más detalles sin exponer datos sensibles.`;
 }
 
 function toBazikResult(response: BazikRawResponse, path: string): BazikResult {
   if (!response.ok) {
-    console.error(`Bazik ${path}: ${response.errorCode ?? "error"} — ${response.text}`);
+    console.error(`Bazik ${path}: HTTP ${response.status}; code=${response.errorCode ?? "unknown"}`);
     return {
       ok: false,
       error: humaniseBazikError(response),
