@@ -28,9 +28,9 @@ type CredKey = (typeof CRED_KEYS)[number];
 
 const EMPTY: Record<CredKey, string> = {
   BAZIK_BASE_URL: "https://api.bazik.io",
-  BAZIK_USER_ID: "bzk_70182274_1778902693",
-  BAZIK_SECRET_KEY: "sk_c8cacb5ed90eddbc8c63d8da7261b880",
-  BAZIK_WEBHOOK_SECRET: "whsec_0f843d2ed606b97a595facc6e7e8e117",
+  BAZIK_USER_ID: "",
+  BAZIK_SECRET_KEY: "",
+  BAZIK_WEBHOOK_SECRET: "",
   BAZIK_ENVIRONMENT: "production",
 };
 

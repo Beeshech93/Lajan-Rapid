@@ -10,15 +10,6 @@ function isNewSupabaseApiKey(value: string): boolean {
 
 function createSupabaseFetch(supabaseKey: string): typeof fetch {
   return (input, init) => {
-    const url =
-      typeof input === "string"
-        ? input
-        : typeof URL !== "undefined" && input instanceof URL
-          ? input.toString()
-          : typeof Request !== "undefined" && input instanceof Request
-            ? input.url
-            : String(input);
-
     const headers = new Headers(
       typeof Request !== "undefined" && input instanceof Request ? input.headers : undefined,
     );
@@ -35,26 +26,16 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
       headers.delete("Authorization");
     }
 
-    if (!headers.has("apikey")) {
-      headers.set("apikey", supabaseKey);
-    }
-    return fetch(url, { ...init, headers });
+    headers.set("apikey", supabaseKey);
+    return fetch(input, { ...init, headers });
   };
 }
 
 export const requireSupabaseAuth = createMiddleware({ type: "function" }).server(
   async ({ next }) => {
-    const SUPABASE_URL =
-      process.env["SUPABASE_URL"] ||
-      (typeof import.meta !== "undefined" && import.meta.env?.["VITE_SUPABASE_URL"]) ||
-      process.env["VITE_SUPABASE_URL"] ||
-      "https://pkximkpyguxehbjyaigt.supabase.co";
-
+    const SUPABASE_URL = process.env["SUPABASE_URL"] || process.env["VITE_SUPABASE_URL"];
     const SUPABASE_PUBLISHABLE_KEY =
-      process.env["SUPABASE_PUBLISHABLE_KEY"] ||
-      (typeof import.meta !== "undefined" && import.meta.env?.["VITE_SUPABASE_PUBLISHABLE_KEY"]) ||
-      process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ||
-      "sb_publishable_Ltcc93naQBuVJG3H0U2oqQ_KPgfm5ru";
+      process.env["SUPABASE_PUBLISHABLE_KEY"] || process.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
 
     if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
       const missing = [
@@ -101,68 +82,24 @@ export const requireSupabaseAuth = createMiddleware({ type: "function" }).server
       },
     });
 
-    let userId: string | null = null;
-    let userObj: Record<string, any> = {};
+    const { data: userData, error: userError } = await supabase.auth.getUser(token);
 
-    // 1. Validar directamente con supabase.auth.getUser(token)
-    try {
-      const { data: userData, error: userError } = await supabase.auth.getUser(token);
-      if (!userError && userData?.user?.id) {
-        userId = userData.user.id;
-        userObj = userData.user as Record<string, any>;
-      }
-    } catch {
-      // Intentar siguiente método
-    }
-
-    // 2. Si falló (por incompatibilidad de api key sb_publishable_), validar con supabaseAdmin
-    if (!userId) {
-      try {
-        const { supabaseAdmin } = await import("./client.server");
-        const { data: adminData, error: adminError } = await supabaseAdmin.auth.getUser(token);
-        if (!adminError && adminData?.user?.id) {
-          userId = adminData.user.id;
-          userObj = adminData.user as Record<string, any>;
-        }
-      } catch {
-        // Intentar siguiente método
-      }
-    }
-
-    // 3. Fallback: Validar estructura y vigencia del JWT de Supabase
-    if (!userId) {
-      try {
-        const parts = token.split(".");
-        if (parts.length === 3) {
-          const payload = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf-8"));
-          if (payload.sub && payload.exp && payload.exp * 1000 > Date.now()) {
-            userId = payload.sub;
-            userObj = {
-              id: payload.sub,
-              email: payload.email,
-              ...payload,
-            };
-          }
-        }
-      } catch (err) {
-        console.error("[requireSupabaseAuth] Falló decodificación de JWT:", err);
-      }
-    }
-
-    if (!userId) {
-      console.error("[requireSupabaseAuth] Token inválido o expirado");
+    if (userError || !userData?.user) {
+      console.error("[requireSupabaseAuth] Error validando token:", userError?.message ?? "Sin usuario");
       throw new Error("Unauthorized: Invalid token");
+    }
+
+    if (!userData.user.id) {
+      throw new Error("Unauthorized: No user ID found in token");
     }
 
     return next({
       context: {
         supabase,
-        userId,
+        userId: userData.user.id,
         claims: {
-          ...userObj,
-          id: userId,
-          sub: userId,
-          email: userObj["email"],
+          ...userData.user,
+          sub: userData.user.id,
         },
       },
     });

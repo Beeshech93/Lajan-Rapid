@@ -20,7 +20,7 @@ export function TopupRatesPanel() {
   const qc = useQueryClient();
   const [saving, setSaving] = useState(false);
   const [from, setFrom] = useState("MXN");
-  const [to, setTo] = useState("USD");
+  const [to, setTo] = useState("HTG");
 
   const { data: rates } = useQuery({
     queryKey: ["all-topup-rates"],
@@ -67,7 +67,7 @@ export function TopupRatesPanel() {
           <CardTitle className="text-base">Tasas de recarga (DingConnect)</CardTitle>
           <p className="text-xs text-muted-foreground">
             Tasa manual específica para recargas móviles — de la moneda que paga el usuario a la
-            moneda real que pide el operador (ej. MXN a USD para Digicel Haití). Separada de las
+            moneda que debe recibir el destinatario. Para Haití, configura MXN → HTG; no cambies solo la etiqueta de una tasa USD existente. Separada de las
             tasas de envíos de dinero, para poder ajustarlas sin afectarse entre sí.
           </p>
         </CardHeader>
@@ -90,7 +90,7 @@ export function TopupRatesPanel() {
                 value={to}
                 onChange={(e) => setTo(e.target.value.toUpperCase())}
                 maxLength={6}
-                placeholder="USD"
+                placeholder="HTG"
               />
             </div>
             <div className="space-y-1.5 sm:col-span-2">
@@ -105,7 +105,7 @@ export function TopupRatesPanel() {
                 min="0"
                 defaultValue={rate?.rate ?? ""}
                 key={rate?.id ?? `${from}-${to}`}
-                placeholder="0.0500"
+                placeholder="0.5000"
               />
               {rate && <p className="text-xs text-muted-foreground">Ya configurada: {rate.rate}</p>}
             </div>

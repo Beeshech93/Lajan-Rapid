@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1791689716172,
+      "tag": "0000_bazik_payout_claim",
+      "breakpoints": true
+    }
+  ]
+}

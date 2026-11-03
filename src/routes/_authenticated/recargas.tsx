@@ -203,7 +203,9 @@ function Recargas() {
     const fromProvider = Array.from(
       new Set(items.map((p) => prettyOperator(country, p.operator || p.skuCode))),
     ).filter(Boolean);
-    return fromProvider.length > 0 ? fromProvider : (countryInfo?.operators ?? []);
+    // Nunca mostrar operadores del catálogo local como si estuvieran disponibles en DingConnect.
+    // Solo productos reales del proveedor pueden habilitar una recarga.
+    return fromProvider;
   }, [products, country, countryInfo]);
 
   // Planes/SKUs del operador elegido.
@@ -215,12 +217,30 @@ function Recargas() {
     [products, country, operator],
   );
 
-  // Antes se elegía el plan a mano; ahora se toma automáticamente el primero
-  // disponible del operador (sigue siendo necesario para saber qué producto
-  // real enviarle a DingConnect — rango de monto, moneda, etc.).
-  useEffect(() => {
-    setSku(plans[0]?.skuCode ?? "");
+  // Prioriza un producto de importe variable cuando DingConnect lo ofrece.
+  // Si hay varios, elige el de mayor rango permitido; si todos son fijos,
+  // conserva el primer producto disponible. Nunca se inventa un SKU.
+  const preferredPlan = useMemo(() => {
+    return [...plans].sort((a, b) => {
+      const aHasRange = a.minValue != null && a.maxValue != null;
+      const bHasRange = b.minValue != null && b.maxValue != null;
+      const aMin = Number(a.minValue ?? 0);
+      const aMax = Number(a.maxValue ?? a.minValue ?? 0);
+      const bMin = Number(b.minValue ?? 0);
+      const bMax = Number(b.maxValue ?? b.minValue ?? 0);
+      const aFlexible = aHasRange && aMax > aMin;
+      const bFlexible = bHasRange && bMax > bMin;
+
+      if (aFlexible !== bFlexible) return aFlexible ? -1 : 1;
+      if (aFlexible && bFlexible) return (bMax - bMin) - (aMax - aMin);
+      if (aHasRange !== bHasRange) return aHasRange ? 1 : -1;
+      return 0;
+    })[0];
   }, [plans]);
+
+  useEffect(() => {
+    setSku(preferredPlan?.skuCode ?? "");
+  }, [preferredPlan]);
 
   const selected = (products?.items ?? []).find((p) => p.skuCode === sku);
 
@@ -248,6 +268,19 @@ function Recargas() {
         : null;
   const receivedCurrency = operatorCurrency || payCurrency;
   const missingRate = Boolean(hasAmount && !sameCurrency && operatorCurrency && !topupRate);
+  const providerRangeKnown = selected?.minValue != null;
+  const providerMin = Number(selected?.minValue ?? 0);
+  const providerMax = Number(selected?.maxValue ?? selected?.minValue ?? 0);
+  const providerAmountValid =
+    !providerRangeKnown ||
+    (receivedCurrency === selected?.currency &&
+      receivedAmount != null &&
+      receivedAmount >= providerMin &&
+      receivedAmount <= providerMax);
+  const suggestedPayAmount =
+    topupRate && Number(topupRate.rate) > 0 && selected?.minValue != null
+      ? Math.ceil((Number(selected.minValue) / Number(topupRate.rate)) * 100) / 100
+      : null;
 
   const sendMut = useMutation({
     mutationFn: async () => {
@@ -264,10 +297,15 @@ function Recargas() {
           interpolate(t("topup.err_no_rate"), { from: payCurrency, to: operatorCurrency }),
         );
       if (receivedAmount == null) throw new Error(t("topup.err_no_received"));
+      // DingConnect's product limits apply to the provider send amount and
+      // currency, not to the MXN amount paid by the customer. Keep this guard
+      // explicit and do not silently send an out-of-range amount.
       if (
         selected?.minValue != null &&
-        (receivedAmount < Number(selected.minValue) || receivedAmount > Number(selected.maxValue))
-      )
+        (receivedCurrency !== selected.currency ||
+          receivedAmount < Number(selected.minValue) ||
+          receivedAmount > Number(selected.maxValue ?? selected.minValue))
+      ) {
         throw new Error(
           interpolate(t("topup.err_range"), {
             min: selected.minValue,
@@ -275,6 +313,7 @@ function Recargas() {
             currency: selected.currency,
           }),
         );
+      }
 
       if (payMethod === "wallet") {
         return {
@@ -467,7 +506,16 @@ function Recargas() {
               </SelectContent>
             </Select>
             {products && !products.ok && (
-              <p className="text-xs text-muted-foreground">{t("topup.provider_fallback_note")}</p>
+              <p role="alert" className="text-xs text-destructive">
+                No se pudieron cargar los operadores de DingConnect.
+                {products.error ? ` Detalle: ${products.error}` : " Revisa la configuración o los registros del servidor."}
+              </p>
+            )}
+            {products?.ok && products.items.length === 0 && !isFetching && (
+              <p role="status" className="text-xs text-amber-600">
+                DingConnect respondió, pero no devolvió productos de recarga móvil para este país.
+                Comprueba la disponibilidad del catálogo de Haití o el filtro de productos en el servidor.
+              </p>
             )}
           </div>
 
@@ -515,11 +563,25 @@ function Recargas() {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
             />
-            {hasAmount && receivedAmount != null && (
-              <p className="text-sm font-medium text-accent">
-                {t("topup.recipient_gets")}: {receivedAmount} {receivedCurrency}
+            <div
+              data-testid="recipient-amount"
+              aria-live="polite"
+              className="block w-full rounded-xl border-2 border-emerald-500 bg-emerald-500/10 p-4"
+            >
+              <p className="text-sm font-semibold">
+                Monto que recibe el destinatario / Recipient receives
               </p>
-            )}
+              <p className="mt-1 text-2xl font-bold text-emerald-600">
+                {hasAmount && receivedAmount != null
+                  ? `${receivedAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${receivedCurrency}`
+                  : `— ${operatorCurrency || destinationCurrency || "HTG"}`}
+              </p>
+              {hasAmount && receivedAmount == null && (
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Falta una tasa de recarga válida para calcular el importe en HTG.
+                </p>
+              )}
+            </div>
             {missingRate && (
               <p className="text-xs text-destructive">
                 {interpolate(t("topup.no_rate_configured"), {
@@ -529,10 +591,22 @@ function Recargas() {
               </p>
             )}
             {selected?.minValue != null && (
-              <p className="text-xs text-muted-foreground">
-                {t("topup.operator_range")}: {selected.minValue} – {selected.maxValue}{" "}
-                {selected.currency}
-              </p>
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">
+                  Recarga disponible con el proveedor: {selected.minValue} – {selected.maxValue ?? selected.minValue} {selected.currency}
+                </p>
+                {Number(selected.minValue) === Number(selected.maxValue ?? selected.minValue) && (
+                  <p className="text-xs text-muted-foreground">
+                    Esta es una recarga de importe fijo. Para comprarla, el importe pagado debe equivaler a {selected.minValue} {selected.currency}.
+                    {suggestedPayAmount != null ? ` Con la tasa configurada, el pago aproximado es ${suggestedPayAmount.toFixed(2)} ${payCurrency}.` : ""}
+                  </p>
+                )}
+                {!providerAmountValid && hasAmount && (
+                  <p className="text-xs text-destructive">
+                    El importe actual no coincide con una recarga admitida por el proveedor. Ajusta el pago al importe compatible antes de continuar.
+                  </p>
+                )}
+              </div>
             )}
           </div>
 
@@ -544,7 +618,8 @@ function Recargas() {
                 sendMut.isPending ||
                 !phoneCheck.ok ||
                 profile?.kyc_status !== "approved" ||
-                missingRate
+                missingRate ||
+                !providerAmountValid
               }
               onClick={() => sendMut.mutate()}
             >

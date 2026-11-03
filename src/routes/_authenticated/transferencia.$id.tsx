@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Check, Circle, Copy, Landmark, Loader2, Store } from "lucide-react";
+import { ArrowLeft, Check, Circle, Copy, Landmark, Loader2, Store, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { celebrateLogo } from "@/components/LogoAnimation";
 import { useServerFn } from "@tanstack/react-start";
@@ -185,6 +185,12 @@ function Detalle() {
           {STATUS_LABEL_T[definiteStatus]}
         </Badge>
       </div>
+
+      <div className="flex justify-end"><Button variant="outline" className="gap-2" onClick={() => {
+const w=window.open("", "_blank", "width=800,height=700"); if(!w){toast.error("Permite las ventanas emergentes.");return;}
+const safe=(v:unknown)=>String(v??"").replace(/[&<>"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]??ch));
+w.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Recibo ${safe(t.reference)}</title><style>body{font:16px Arial;max-width:720px;margin:40px auto;padding:24px;color:#172033}h1{color:#0e9f6e}.row{display:flex;justify-content:space-between;border-bottom:1px solid #ddd;padding:13px 0}span{color:#667085}@media print{button{display:none}}</style></head><body><h1>LAJAN RAPID</h1><h2>Recibo de transacción</h2><p>Referencia: ${safe(t.reference)} · Fecha: ${safe(shortDate(t.created_at))}</p><div class="row"><span>Estado</span><strong>${safe(STATUS_LABEL[t.status as TransferStatus]??t.status)}</strong></div><div class="row"><span>Destinatario</span><strong>${safe(t.recipient_name)}</strong></div><div class="row"><span>Origen</span><strong>${safe(t.origin_country)}</strong></div><div class="row"><span>Destino</span><strong>${safe(t.destination_country)}</strong></div><div class="row"><span>Método de pago</span><strong>${safe(paymentName)}</strong></div><div class="row"><span>Monto enviado</span><strong>${safe(money(Number(t.amount_send),t.send_currency))}</strong></div><div class="row"><span>Monto a recibir</span><strong>${safe(money(Number(t.amount_receive),t.receive_currency))}</strong></div><p>Recibo informativo; no sustituye confirmación bancaria.</p><button onclick="window.print()">Imprimir / Guardar como PDF</button></body></html>`);w.document.close();
+}}><FileText className="size-4"/> Generar recibo</Button></div>
 
       <Card className="bg-brand text-primary-foreground">
         <CardContent className="grid gap-4 p-5 sm:grid-cols-3">
