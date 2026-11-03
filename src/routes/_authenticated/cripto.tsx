@@ -2,8 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { celebrateLogo } from "@/components/LogoAnimation";
-import { ArrowDownToLine, ArrowLeft, ArrowUpFromLine, Copy, Coins } from "lucide-react";
+import { ArrowDownToLine, ArrowLeft, ArrowUpFromLine, Copy, Coins, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useServicesConfig } from "@/hooks/useServicesConfig";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -70,6 +71,11 @@ function Cripto() {
   const refreshCrypto = useRefreshCrypto();
   const refreshWallet = useRefreshWallet();
 
+  const { isEnabled, getMessage } = useServicesConfig();
+  const cryptoEnabled = isEnabled("crypto");
+  const cryptoMessage =
+    getMessage("crypto") || "El servicio de criptomonedas está temporalmente en mantenimiento.";
+
   const [assetId, setAssetId] = useState("");
   const [depAmount, setDepAmount] = useState("");
   const [txHash, setTxHash] = useState("");
@@ -104,6 +110,10 @@ function Cripto() {
   };
 
   const submitDeposit = async () => {
+    if (!cryptoEnabled) {
+      toast.error(cryptoMessage);
+      return;
+    }
     const value = Number(depAmount);
     if (!asset || !Number.isFinite(value) || value <= 0 || txHash.trim().length < 6) {
       toast.error("Elige la cripto, el monto y pega el hash de la transacción");
@@ -133,6 +143,10 @@ function Cripto() {
   };
 
   const submitWithdrawal = async () => {
+    if (!cryptoEnabled) {
+      toast.error(cryptoMessage);
+      return;
+    }
     const value = Number(wAmount);
     if (!Number.isFinite(value) || value <= 0 || !wDestination.trim()) {
       toast.error("Indica destino y monto válido");
@@ -187,6 +201,13 @@ function Cripto() {
           </p>
         </div>
       </div>
+
+      {!cryptoEnabled && (
+        <div className="flex items-center gap-3 rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
+          <AlertTriangle className="size-5 shrink-0" />
+          <p className="font-medium">{cryptoMessage}</p>
+        </div>
+      )}
 
       <Card className="bg-brand text-primary-foreground">
         <CardContent className="flex items-center justify-between p-5">
@@ -291,8 +312,12 @@ function Cripto() {
                 </p>
               )}
 
-              <Button className="w-full" disabled={busy} onClick={submitDeposit}>
-                Enviar comprobante
+              <Button
+                className="w-full"
+                disabled={busy || !cryptoEnabled}
+                onClick={submitDeposit}
+              >
+                {!cryptoEnabled ? "Servicio en mantenimiento" : "Enviar comprobante"}
               </Button>
             </CardContent>
           </Card>
@@ -402,8 +427,12 @@ function Cripto() {
                 </p>
               )}
 
-              <Button className="w-full" disabled={busy} onClick={submitWithdrawal}>
-                Solicitar retiro
+              <Button
+                className="w-full"
+                disabled={busy || !cryptoEnabled}
+                onClick={submitWithdrawal}
+              >
+                {!cryptoEnabled ? "Servicio en mantenimiento" : "Solicitar retiro"}
               </Button>
             </CardContent>
           </Card>

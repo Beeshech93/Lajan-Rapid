@@ -32,6 +32,7 @@ import { DingConnectPanel } from "@/components/admin/DingConnectPanel";
 import { AccountingPanel } from "@/components/admin/AccountingPanel";
 import { SupportPanel } from "@/components/admin/SupportPanel";
 import { AdBannerPanel } from "@/components/admin/AdBannerPanel";
+import { ServicesPanel } from "@/components/admin/ServicesPanel";
 import { KycPanel } from "@/components/admin/KycPanel";
 import { TopupsPanel } from "@/components/admin/TopupsPanel";
 import { adminCancelTransfer, adminSetTransferStatus } from "@/lib/transfers.functions";
@@ -113,6 +114,7 @@ function Admin() {
       <Tabs defaultValue="resumen">
         <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
           <TabsTrigger value="resumen">Resumen</TabsTrigger>
+          <TabsTrigger value="servicios">Servicios</TabsTrigger>
           <TabsTrigger value="contabilidad">Contabilidad</TabsTrigger>
           <TabsTrigger value="soporte">Soporte</TabsTrigger>
           <TabsTrigger value="banner">Banner</TabsTrigger>
@@ -133,6 +135,9 @@ function Admin() {
         </TabsList>
         <TabsContent value="resumen" className="mt-4">
           <Resumen />
+        </TabsContent>
+        <TabsContent value="servicios" className="mt-4">
+          <ServicesPanel />
         </TabsContent>
         <TabsContent value="contabilidad" className="mt-4">
           <AccountingPanel />

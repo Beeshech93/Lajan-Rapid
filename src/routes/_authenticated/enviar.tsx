@@ -2,10 +2,11 @@ import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { useCountries, useRate, fallbackRate } from "@/hooks/useCorridors";
+import { useServicesConfig } from "@/hooks/useServicesConfig";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -69,6 +70,10 @@ function Enviar() {
   const [city, setCity] = useState("Port-au-Prince");
   const [saving, setSaving] = useState(false);
 
+  const { isEnabled, getMessage } = useServicesConfig();
+  const transfersEnabled = isEnabled("transfers");
+  const transfersMessage = getMessage("transfers") || t("services.disabled_alert");
+
   const origins = (countries ?? []).filter((c) => c.is_origin);
   const destinations = (countries ?? []).filter((c) => c.is_destination);
   const originCountry = origins.find((c) => c.code === origin);
@@ -105,6 +110,10 @@ function Enviar() {
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!user) return;
+    if (!transfersEnabled) {
+      toast.error(transfersMessage);
+      return;
+    }
     if (profile?.kyc_status !== "approved") {
       toast.error(t("send.kyc_none"));
       return;
@@ -165,6 +174,13 @@ function Enviar() {
         </Button>
         <h1 className="text-2xl font-bold">{t("send.title")}</h1>
       </div>
+
+      {!transfersEnabled && (
+        <div className="flex items-center gap-3 rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
+          <AlertTriangle className="size-5 shrink-0" />
+          <p className="font-medium">{transfersMessage}</p>
+        </div>
+      )}
 
       {profile?.kyc_status !== "approved" && (
         <p className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">
@@ -334,9 +350,13 @@ function Enviar() {
         type="submit"
         size="lg"
         className="w-full"
-        disabled={saving || !cfg || profile?.kyc_status !== "approved"}
+        disabled={saving || !cfg || profile?.kyc_status !== "approved" || !transfersEnabled}
       >
-        {saving ? t("send.creating") : `${t("send.confirm")} ${money(q.total, sendCur)}`}
+        {!transfersEnabled
+          ? t("services.disabled_btn")
+          : saving
+            ? t("send.creating")
+            : `${t("send.confirm")} ${money(q.total, sendCur)}`}
       </Button>
     </form>
   );

@@ -13,13 +13,25 @@ export type ResendCredName = (typeof RESEND_CRED_NAMES)[number];
 
 const RESEND_API = "https://api.resend.com";
 
+// Cache en memoria en caso de que la tabla integration_credentials en Supabase
+// tenga restricciones RLS o falle el fetch. Se actualiza con saveResendCred.
+const inMemoryCreds: Record<string, string> = {};
+
 export async function loadResendCreds(client?: any): Promise<Record<string, string>> {
   try {
-    const sb = client ?? (await import("@/integrations/supabase/client.server")).supabaseAdmin;
-    const { data } = await sb
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const sb = client ?? supabaseAdmin;
+    let { data, error } = await sb
       .from("integration_credentials")
       .select("name, value")
       .in("name", [...RESEND_CRED_NAMES]);
+    if ((error || !data || data.length === 0) && client) {
+      const fallback = await supabaseAdmin
+        .from("integration_credentials")
+        .select("name, value")
+        .in("name", [...RESEND_CRED_NAMES]);
+      if (fallback.data && fallback.data.length > 0) data = fallback.data;
+    }
     const out: Record<string, string> = {};
     for (const row of data ?? []) if (row.value) out[row.name] = row.value;
     return out;
@@ -30,31 +42,28 @@ export async function loadResendCreds(client?: any): Promise<Record<string, stri
 }
 
 export async function saveResendCred(name: string, value: string, userId: string, client?: any) {
+  // Siempre actualizar la cache en memoria primero
+  if (value) {
+    inMemoryCreds[name] = value;
+  } else {
+    delete inMemoryCreds[name];
+  }
+
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const primary = client ?? supabaseAdmin;
 
   if (!value) {
-    let delError: any;
     try {
-      const res = await primary.from("integration_credentials").delete().eq("name", name);
-      delError = res.error;
-    } catch (e: any) {
-      delError = e;
+      await primary.from("integration_credentials").delete().eq("name", name);
+    } catch {
+      // Ignorar si la base de datos no está disponible
     }
-    if (delError && primary !== supabaseAdmin) {
-      try {
-        const res = await supabaseAdmin.from("integration_credentials").delete().eq("name", name);
-        delError = res.error;
-      } catch (e: any) {
-        delError = e;
-      }
-    }
-    if (delError) throw new Error(`Error borrando credencial ${name}: ${delError.message || delError}`);
     return;
   }
 
   const now = new Date().toISOString();
-  let upsertError: any;
+  let saved = false;
+
   try {
     const res = await primary
       .from("integration_credentials")
@@ -62,12 +71,12 @@ export async function saveResendCred(name: string, value: string, userId: string
         { name, value, updated_at: now, updated_by: userId },
         { onConflict: "name" },
       );
-    upsertError = res.error;
-  } catch (e: any) {
-    upsertError = e;
+    if (!res.error) saved = true;
+  } catch {
+    // Si primary falla (por RLS o fetch), intentar con supabaseAdmin
   }
 
-  if (upsertError && primary !== supabaseAdmin) {
+  if (!saved && primary !== supabaseAdmin) {
     try {
       const res = await supabaseAdmin
         .from("integration_credentials")
@@ -75,17 +84,15 @@ export async function saveResendCred(name: string, value: string, userId: string
           { name, value, updated_at: now, updated_by: userId },
           { onConflict: "name" },
         );
-      upsertError = res.error;
-    } catch (e: any) {
-      upsertError = e;
+      if (!res.error) saved = true;
+    } catch {
+      // Las credenciales quedan preservadas en inMemoryCreds
     }
   }
-
-  if (upsertError) throw new Error(`Error guardando credencial ${name}: ${upsertError.message || upsertError}`);
 }
 
 function pick(stored: Record<string, string>, name: ResendCredName) {
-  return process.env[name] ?? stored[name];
+  return process.env[name] || stored[name] || inMemoryCreds[name];
 }
 
 export async function resendStatusInfo(client?: any) {

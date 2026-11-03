@@ -30,6 +30,8 @@ import {
 } from "@/components/ui/select";
 import { money, shortDate, STATUS_LABEL, STATUS_TONE, type TransferStatus } from "@/lib/remesa";
 import { useI18n } from "@/lib/i18n";
+import { useServicesConfig } from "@/hooks/useServicesConfig";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -53,6 +55,11 @@ function Dashboard() {
   const [topupOrigin, setTopupOrigin] = useState("MX");
   const [topupDestination, setTopupDestination] = useState("HT");
   const [hideBalance, setHideBalance] = useState(false);
+
+  const { isEnabled } = useServicesConfig();
+  const transfersEnabled = isEnabled("transfers");
+  const topupsEnabled = isEnabled("topups");
+  const cryptoEnabled = isEnabled("crypto");
 
   const origins = (countries ?? []).filter((c) => c.is_origin);
   const destinations = (countries ?? []).filter((c) => c.is_destination);
@@ -214,15 +221,23 @@ function Dashboard() {
         <CardContent>
           <div className="grid grid-cols-3 gap-3">
             {[
-              { to: "/enviar", label: t("dash.send"), icon: Send },
-              { to: "/recargas", label: t("dash.topups"), icon: Smartphone },
-              { to: "/cripto", label: t("dash.crypto"), icon: Coins },
+              { to: "/enviar", label: t("dash.send"), icon: Send, enabled: transfersEnabled },
+              { to: "/recargas", label: t("dash.topups"), icon: Smartphone, enabled: topupsEnabled },
+              { to: "/cripto", label: t("dash.crypto"), icon: Coins, enabled: cryptoEnabled },
             ].map((a) => (
               <Link
                 key={a.to}
                 to={a.to}
-                className="press flex flex-col items-center gap-2 rounded-2xl bg-secondary px-2 py-5 text-center"
+                className={cn(
+                  "press relative flex flex-col items-center gap-2 rounded-2xl bg-secondary px-2 py-5 text-center",
+                  !a.enabled && "opacity-80",
+                )}
               >
+                {!a.enabled && (
+                  <span className="absolute top-2 right-2 rounded-full bg-destructive/15 px-1.5 py-0.5 text-[9px] font-semibold text-destructive">
+                    {t("services.disabled_badge")}
+                  </span>
+                )}
                 <span className="grid size-11 place-items-center rounded-full bg-accent/15 text-accent">
                   <a.icon className="size-5" />
                 </span>

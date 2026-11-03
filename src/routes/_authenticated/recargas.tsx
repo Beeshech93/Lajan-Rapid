@@ -4,10 +4,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { celebrateLogo } from "@/components/LogoAnimation";
-import { Smartphone, Send, Copy, Check, ArrowLeft } from "lucide-react";
+import { Smartphone, Send, Copy, Check, ArrowLeft, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCountries, useTopupRate } from "@/hooks/useCorridors";
 import { useProfile } from "@/hooks/useProfile";
+import { useServicesConfig } from "@/hooks/useServicesConfig";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -85,6 +86,10 @@ function Recargas() {
     | { mode: "checkout"; checkoutUrl: string }
     | null
   >(null);
+
+  const { isEnabled, getMessage } = useServicesConfig();
+  const topupsEnabled = isEnabled("topups");
+  const topupsMessage = getMessage("topups") || t("services.disabled_alert");
 
   const payOrigins = (countries ?? []).filter((c) => c.is_origin);
   const payMethods = useMemo(
@@ -246,6 +251,7 @@ function Recargas() {
 
   const sendMut = useMutation({
     mutationFn: async () => {
+      if (!topupsEnabled) throw new Error(topupsMessage);
       if (profile?.kyc_status !== "approved") throw new Error(t("topup.err_kyc"));
       if (!operator) throw new Error(t("topup.err_operator"));
       if (!phone.trim()) throw new Error(t("topup.err_phone_empty"));
@@ -349,6 +355,13 @@ function Recargas() {
         </Button>
         <h1 className="text-2xl font-bold">{t("topup.title")}</h1>
       </div>
+
+      {!topupsEnabled && (
+        <div className="flex items-center gap-3 rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
+          <AlertTriangle className="size-5 shrink-0" />
+          <p className="font-medium">{topupsMessage}</p>
+        </div>
+      )}
 
       {profile?.kyc_status !== "approved" && (
         <p className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">
@@ -527,6 +540,7 @@ function Recargas() {
             <Button
               className="w-full"
               disabled={
+                !topupsEnabled ||
                 sendMut.isPending ||
                 !phoneCheck.ok ||
                 profile?.kyc_status !== "approved" ||
@@ -535,15 +549,17 @@ function Recargas() {
               onClick={() => sendMut.mutate()}
             >
               <Send className="mr-2 size-4" />
-              {sendMut.isPending
-                ? t("topup.sending")
-                : payMethod === "wallet"
-                  ? t("topup.send_recharge")
-                  : payMethod === "oxxo"
-                    ? t("topup.generate_oxxo")
-                    : payMethod === "spei"
-                      ? t("topup.generate_spei")
-                      : t("topup.pay_card")}
+              {!topupsEnabled
+                ? t("services.disabled_btn")
+                : sendMut.isPending
+                  ? t("topup.sending")
+                  : payMethod === "wallet"
+                    ? t("topup.send_recharge")
+                    : payMethod === "oxxo"
+                      ? t("topup.generate_oxxo")
+                      : payMethod === "spei"
+                        ? t("topup.generate_spei")
+                        : t("topup.pay_card")}
             </Button>
             <p className="mt-2 text-xs text-muted-foreground">
               {payMethod === "wallet" ? t("topup.wallet_note") : t("topup.external_note")}

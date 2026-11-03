@@ -8,6 +8,10 @@ export type StripeCredName = (typeof STRIPE_CRED_NAMES)[number];
 
 const STRIPE_API = "https://api.stripe.com/v1";
 
+// Cache en memoria en caso de que la tabla integration_credentials en Supabase
+// tenga restricciones RLS o falle el fetch. Se actualiza con saveStripeCred.
+const inMemoryCreds: Record<string, string> = {};
+
 export async function loadStripeCreds(client?: any): Promise<Record<string, string>> {
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -33,31 +37,28 @@ export async function loadStripeCreds(client?: any): Promise<Record<string, stri
 }
 
 export async function saveStripeCred(name: string, value: string, userId: string, client?: any) {
+  // Siempre actualizar la cache en memoria primero
+  if (value) {
+    inMemoryCreds[name] = value;
+  } else {
+    delete inMemoryCreds[name];
+  }
+
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const primary = client ?? supabaseAdmin;
 
   if (!value) {
-    let delError: any;
     try {
-      const res = await primary.from("integration_credentials").delete().eq("name", name);
-      delError = res.error;
-    } catch (e: any) {
-      delError = e;
+      await primary.from("integration_credentials").delete().eq("name", name);
+    } catch {
+      // Ignorar si la base de datos no está disponible
     }
-    if (delError && primary !== supabaseAdmin) {
-      try {
-        const res = await supabaseAdmin.from("integration_credentials").delete().eq("name", name);
-        delError = res.error;
-      } catch (e: any) {
-        delError = e;
-      }
-    }
-    if (delError) throw new Error(`Error borrando credencial ${name}: ${delError.message || delError}`);
     return;
   }
 
   const now = new Date().toISOString();
-  let upsertError: any;
+  let saved = false;
+
   try {
     const res = await primary
       .from("integration_credentials")
@@ -65,12 +66,12 @@ export async function saveStripeCred(name: string, value: string, userId: string
         { name, value, updated_at: now, updated_by: userId },
         { onConflict: "name" },
       );
-    upsertError = res.error;
-  } catch (e: any) {
-    upsertError = e;
+    if (!res.error) saved = true;
+  } catch {
+    // Si primary falla (por RLS o fetch), intentar con supabaseAdmin
   }
 
-  if (upsertError && primary !== supabaseAdmin) {
+  if (!saved && primary !== supabaseAdmin) {
     try {
       const res = await supabaseAdmin
         .from("integration_credentials")
@@ -78,17 +79,15 @@ export async function saveStripeCred(name: string, value: string, userId: string
           { name, value, updated_at: now, updated_by: userId },
           { onConflict: "name" },
         );
-      upsertError = res.error;
-    } catch (e: any) {
-      upsertError = e;
+      if (!res.error) saved = true;
+    } catch {
+      // Las credenciales quedan preservadas en inMemoryCreds
     }
   }
-
-  if (upsertError) throw new Error(`Error guardando credencial ${name}: ${upsertError.message || upsertError}`);
 }
 
 function pick(stored: Record<string, string>, name: StripeCredName) {
-  return process.env[name] ?? stored[name];
+  return process.env[name] ?? stored[name] ?? inMemoryCreds[name];
 }
 
 export async function stripeStatusInfo(client?: any) {

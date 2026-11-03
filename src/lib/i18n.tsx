@@ -14,6 +14,9 @@ type Dict = Record<string, string>;
 
 const es: Dict = {
   "app.tagline": "Envíos rápidos a Haití y República Dominicana",
+  "services.disabled_alert": "Este servicio se encuentra temporalmente deshabilitado por mantenimiento.",
+  "services.disabled_btn": "Servicio en mantenimiento",
+  "services.disabled_badge": "Mantenimiento",
   "nav.home": "Inicio",
   "nav.send": "Enviar",
   "nav.crypto": "Cripto",
@@ -361,6 +364,9 @@ const es: Dict = {
 
 const fr: Dict = {
   "app.tagline": "Transferts rapides vers Haïti et la République dominicaine",
+  "services.disabled_alert": "Ce service est temporairement désactivé pour maintenance.",
+  "services.disabled_btn": "Service en maintenance",
+  "services.disabled_badge": "Maintenance",
   "nav.home": "Accueil",
   "nav.send": "Envoyer",
   "nav.crypto": "Crypto",
@@ -714,6 +720,9 @@ const fr: Dict = {
 
 const ht: Dict = {
   "app.tagline": "Voye lajan rapid nan Ayiti ak Repiblik Dominikèn",
+  "services.disabled_alert": "Sèvis sa a tanporèman pa disponib pou antretyen.",
+  "services.disabled_btn": "Sèvis an antretyen",
+  "services.disabled_badge": "Antretyen",
   "nav.home": "Akèy",
   "nav.send": "Voye",
   "nav.crypto": "Kripto",
@@ -1059,6 +1068,9 @@ const ht: Dict = {
 
 const en: Dict = {
   "app.tagline": "Fast transfers to Haiti and the Dominican Republic",
+  "services.disabled_alert": "This service is temporarily disabled for maintenance.",
+  "services.disabled_btn": "Service in maintenance",
+  "services.disabled_badge": "Maintenance",
   "nav.home": "Home",
   "nav.send": "Send",
   "nav.crypto": "Crypto",

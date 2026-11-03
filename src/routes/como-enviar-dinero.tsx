@@ -6,7 +6,7 @@ export const CONTENT = {
   title: "How to Send Money to Haiti | Lajan Rapid",
   description:
     "Step-by-step guide to sending money to Haiti with Lajan Rapid: choose a country, enter the amount, pick a payment method, and track your transfer in real time.",
-  heading: "How to send money to Haiti",
+  heading: "How to send money and top up to Haiti",
   intro:
     "Sending money with Lajan Rapid takes a few simple steps, from choosing your country to confirming that your family received the funds.",
   sections: [
