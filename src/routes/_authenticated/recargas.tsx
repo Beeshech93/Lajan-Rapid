@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -56,8 +56,9 @@ export const Route = createFileRoute("/_authenticated/recargas")({
 
 function Recargas() {
   const qc = useQueryClient();
+  const router = useRouter();
   const refreshWallet = useRefreshWallet();
-  const { profile } = useProfile();
+  const { profile, isAdmin } = useProfile();
   const { t } = useI18n();
   const STATUS_LABEL: Record<string, string> = {
     pending: t("topup.status_pending"),
@@ -87,9 +88,19 @@ function Recargas() {
     | null
   >(null);
 
-  const { isEnabled, getMessage } = useServicesConfig();
+  const { isEnabled, getMessage, isLoading: isServicesLoading } = useServicesConfig();
   const topupsEnabled = isEnabled("topups");
   const topupsMessage = getMessage("topups") || t("services.disabled_alert");
+
+  useEffect(() => {
+    if (!isServicesLoading && !topupsEnabled && !isAdmin) {
+      router.navigate({ to: "/dashboard", replace: true });
+    }
+  }, [isServicesLoading, topupsEnabled, isAdmin, router]);
+
+  if (!isServicesLoading && !topupsEnabled && !isAdmin) {
+    return null;
+  }
 
   const payOrigins = (countries ?? []).filter((c) => c.is_origin);
   const payMethods = useMemo(

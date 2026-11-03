@@ -1,9 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { celebrateLogo } from "@/components/LogoAnimation";
 import { ArrowDownToLine, ArrowLeft, ArrowUpFromLine, Copy, Coins, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useProfile } from "@/hooks/useProfile";
 import { useServicesConfig } from "@/hooks/useServicesConfig";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -63,6 +64,8 @@ const KIND_LABEL: Record<string, string> = {
 };
 
 function Cripto() {
+  const router = useRouter();
+  const { isAdmin } = useProfile();
   const { data: assets } = useCryptoAssets();
   const { data: wallets } = useWallets();
   const { data: movements } = useWalletTransactions();
@@ -71,10 +74,20 @@ function Cripto() {
   const refreshCrypto = useRefreshCrypto();
   const refreshWallet = useRefreshWallet();
 
-  const { isEnabled, getMessage } = useServicesConfig();
+  const { isEnabled, getMessage, isLoading: isServicesLoading } = useServicesConfig();
   const cryptoEnabled = isEnabled("crypto");
   const cryptoMessage =
     getMessage("crypto") || "El servicio de criptomonedas está temporalmente en mantenimiento.";
+
+  useEffect(() => {
+    if (!isServicesLoading && !cryptoEnabled && !isAdmin) {
+      router.navigate({ to: "/dashboard", replace: true });
+    }
+  }, [isServicesLoading, cryptoEnabled, isAdmin, router]);
+
+  if (!isServicesLoading && !cryptoEnabled && !isAdmin) {
+    return null;
+  }
 
   const [assetId, setAssetId] = useState("");
   const [depAmount, setDepAmount] = useState("");

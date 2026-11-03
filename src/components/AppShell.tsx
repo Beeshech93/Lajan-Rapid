@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { NotificationBell } from "@/components/NotificationBell";
 import { AdBanner } from "@/components/AdBanner";
+import { useServicesConfig } from "@/hooks/useServicesConfig";
 import { useI18n } from "@/lib/i18n";
 
 const baseNav = [
@@ -69,8 +70,16 @@ export function AppShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
+  const { isEnabled } = useServicesConfig();
+  const transfersEnabled = isEnabled("transfers");
+  const topupsEnabled = isEnabled("topups");
+
   const nav = [
-    ...baseNav,
+    { to: "/dashboard", key: "nav.home", icon: Home },
+    ...(transfersEnabled ? [{ to: "/enviar", key: "nav.send", icon: Send }] : []),
+    ...(topupsEnabled ? [{ to: "/recargas", key: "nav.topups", icon: Smartphone }] : []),
+    { to: "/historial", key: "nav.history", icon: History },
+    { to: "/perfil", key: "nav.profile", icon: User },
     ...(isAgent ? [{ to: "/agente", key: "nav.agent", icon: Briefcase }] : []),
     ...(isAdmin ? [{ to: "/admin", key: "nav.admin", icon: Shield }] : []),
     { to: "/soporte", key: "nav.support", icon: LifeBuoy },
@@ -158,36 +167,84 @@ export function AppShell({ children }: { children: ReactNode }) {
           className="fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-card/95 shadow-lift backdrop-blur-xl md:hidden"
           style={{ paddingBottom: "max(env(safe-area-inset-bottom), 0.25rem)" }}
         >
-          <ul className="mx-auto grid max-w-md grid-cols-5 items-end px-1 pt-2">
-            {mobileNav.slice(0, 2).map((item) => (
+          {transfersEnabled ? (
+            <ul className="mx-auto grid max-w-md grid-cols-5 items-end px-1 pt-2">
               <NavItem
-                key={item.to}
-                item={item}
-                active={pathname === item.to}
-                label={t(item.key)}
+                item={{ to: "/dashboard", key: "nav.home", icon: Home }}
+                active={pathname === "/dashboard"}
+                label={t("nav.home")}
               />
-            ))}
+              {topupsEnabled ? (
+                <NavItem
+                  item={{ to: "/recargas", key: "nav.topups", icon: Smartphone }}
+                  active={pathname === "/recargas"}
+                  label={t("nav.topups")}
+                />
+              ) : (
+                <NavItem
+                  item={{ to: "/historial", key: "nav.history", icon: History }}
+                  active={pathname === "/historial"}
+                  label={t("nav.history")}
+                />
+              )}
 
-            <li className="relative min-w-0">
-              <span className="block h-[3.9rem]" aria-hidden />
-              <Link
-                to="/enviar"
-                aria-label={t("nav.send")}
-                className="press absolute bottom-3 left-1/2 grid size-13 -translate-x-1/2 place-items-center rounded-2xl bg-brand text-primary-foreground shadow-lift ring-4 ring-card sm:size-14"
-              >
-                <Plus className="size-6" />
-              </Link>
-            </li>
+              <li className="relative min-w-0">
+                <span className="block h-[3.9rem]" aria-hidden />
+                <Link
+                  to="/enviar"
+                  aria-label={t("nav.send")}
+                  className="press absolute bottom-3 left-1/2 grid size-13 -translate-x-1/2 place-items-center rounded-2xl bg-brand text-primary-foreground shadow-lift ring-4 ring-card sm:size-14"
+                >
+                  <Plus className="size-6" />
+                </Link>
+              </li>
 
-            {mobileNav.slice(2).map((item) => (
+              {topupsEnabled ? (
+                <NavItem
+                  item={{ to: "/historial", key: "nav.history", icon: History }}
+                  active={pathname === "/historial"}
+                  label={t("nav.history")}
+                />
+              ) : (
+                <li />
+              )}
               <NavItem
-                key={item.to}
-                item={item}
-                active={pathname === item.to}
-                label={t(item.key)}
+                item={{ to: "/perfil", key: "nav.profile", icon: User }}
+                active={pathname === "/perfil"}
+                label={t("nav.profile")}
               />
-            ))}
-          </ul>
+            </ul>
+          ) : (
+            <ul
+              className={cn(
+                "mx-auto grid max-w-md items-end px-1 pt-2",
+                topupsEnabled ? "grid-cols-4" : "grid-cols-3",
+              )}
+            >
+              <NavItem
+                item={{ to: "/dashboard", key: "nav.home", icon: Home }}
+                active={pathname === "/dashboard"}
+                label={t("nav.home")}
+              />
+              {topupsEnabled && (
+                <NavItem
+                  item={{ to: "/recargas", key: "nav.topups", icon: Smartphone }}
+                  active={pathname === "/recargas"}
+                  label={t("nav.topups")}
+                />
+              )}
+              <NavItem
+                item={{ to: "/historial", key: "nav.history", icon: History }}
+                active={pathname === "/historial"}
+                label={t("nav.history")}
+              />
+              <NavItem
+                item={{ to: "/perfil", key: "nav.profile", icon: User }}
+                active={pathname === "/perfil"}
+                label={t("nav.profile")}
+              />
+            </ul>
+          )}
         </nav>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { ArrowLeft, AlertTriangle } from "lucide-react";
@@ -70,9 +70,19 @@ function Enviar() {
   const [city, setCity] = useState("Port-au-Prince");
   const [saving, setSaving] = useState(false);
 
-  const { isEnabled, getMessage } = useServicesConfig();
+  const { isEnabled, getMessage, isLoading: isServicesLoading } = useServicesConfig();
   const transfersEnabled = isEnabled("transfers");
   const transfersMessage = getMessage("transfers") || t("services.disabled_alert");
+
+  useEffect(() => {
+    if (!isServicesLoading && !transfersEnabled && !isAdmin) {
+      router.navigate({ to: "/dashboard", replace: true });
+    }
+  }, [isServicesLoading, transfersEnabled, isAdmin, router]);
+
+  if (!isServicesLoading && !transfersEnabled && !isAdmin) {
+    return null;
+  }
 
   const origins = (countries ?? []).filter((c) => c.is_origin);
   const destinations = (countries ?? []).filter((c) => c.is_destination);

@@ -188,168 +188,199 @@ function Dashboard() {
             {hideBalance ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
           </button>
         </div>
-        <div className="relative mx-auto mt-6 grid max-w-sm grid-cols-2 gap-3">
-          <Button
-            asChild
-            className="press h-11 rounded-full gap-2 bg-primary-foreground text-primary hover:bg-primary-foreground/90"
-          >
-            <Link to="/enviar">
-              <Send className="size-4" /> {t("dash.send")}
-            </Link>
-          </Button>
-          <Button
-            asChild
-            className="press h-11 rounded-full gap-2 bg-primary-foreground text-primary hover:bg-primary-foreground/90"
-          >
-            <Link to="/cripto">
-              <Coins className="size-4" /> {t("dash.receive")}
-            </Link>
-          </Button>
+        <div className="relative mx-auto mt-6 flex max-w-sm flex-wrap justify-center gap-3">
+          {transfersEnabled && (
+            <Button
+              asChild
+              className="press h-11 flex-1 min-w-[140px] rounded-full gap-2 bg-primary-foreground text-primary hover:bg-primary-foreground/90"
+            >
+              <Link to="/enviar">
+                <Send className="size-4" /> {t("dash.send")}
+              </Link>
+            </Button>
+          )}
+          {cryptoEnabled && (
+            <Button
+              asChild
+              className="press h-11 flex-1 min-w-[140px] rounded-full gap-2 bg-primary-foreground text-primary hover:bg-primary-foreground/90"
+            >
+              <Link to="/cripto">
+                <Coins className="size-4" /> {t("dash.receive")}
+              </Link>
+            </Button>
+          )}
         </div>
       </section>
 
       {/* Quick actions */}
-      <Card className="card-elevated border-transparent">
-        <CardHeader className="flex-row items-center justify-between space-y-0">
-          <CardTitle className="text-base">{t("dash.quick_actions")}</CardTitle>
-          <Button asChild variant="ghost" size="sm" className="gap-1 text-accent">
-            <Link to="/historial">
-              {t("dash.see_more")} <ArrowRight className="size-3.5" />
-            </Link>
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              { to: "/enviar", label: t("dash.send"), icon: Send, enabled: transfersEnabled },
-              { to: "/recargas", label: t("dash.topups"), icon: Smartphone, enabled: topupsEnabled },
-              { to: "/cripto", label: t("dash.crypto"), icon: Coins, enabled: cryptoEnabled },
-            ].map((a) => (
-              <Link
-                key={a.to}
-                to={a.to}
+      {(() => {
+        const actions = [
+          transfersEnabled ? { to: "/enviar", label: t("dash.send"), icon: Send } : null,
+          topupsEnabled ? { to: "/recargas", label: t("dash.topups"), icon: Smartphone } : null,
+          cryptoEnabled ? { to: "/cripto", label: t("dash.crypto"), icon: Coins } : null,
+        ].filter(Boolean) as { to: string; label: string; icon: any }[];
+
+        if (actions.length === 0) return null;
+
+        return (
+          <Card className="card-elevated border-transparent">
+            <CardHeader className="flex-row items-center justify-between space-y-0">
+              <CardTitle className="text-base">{t("dash.quick_actions")}</CardTitle>
+              <Button asChild variant="ghost" size="sm" className="gap-1 text-accent">
+                <Link to="/historial">
+                  {t("dash.see_more")} <ArrowRight className="size-3.5" />
+                </Link>
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div
                 className={cn(
-                  "press relative flex flex-col items-center gap-2 rounded-2xl bg-secondary px-2 py-5 text-center",
-                  !a.enabled && "opacity-80",
+                  "grid gap-3",
+                  actions.length === 3
+                    ? "grid-cols-3"
+                    : actions.length === 2
+                      ? "grid-cols-2"
+                      : "grid-cols-1",
                 )}
               >
-                {!a.enabled && (
-                  <span className="absolute top-2 right-2 rounded-full bg-destructive/15 px-1.5 py-0.5 text-[9px] font-semibold text-destructive">
-                    {t("services.disabled_badge")}
-                  </span>
-                )}
-                <span className="grid size-11 place-items-center rounded-full bg-accent/15 text-accent">
-                  <a.icon className="size-5" />
-                </span>
-                <span className="text-xs font-semibold">{a.label}</span>
-              </Link>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+                {actions.map((a) => (
+                  <Link
+                    key={a.to}
+                    to={a.to}
+                    className="press flex flex-col items-center gap-2 rounded-2xl bg-secondary px-2 py-5 text-center"
+                  >
+                    <span className="grid size-11 place-items-center rounded-full bg-accent/15 text-accent">
+                      <a.icon className="size-5" />
+                    </span>
+                    <span className="text-xs font-semibold">{a.label}</span>
+                  </Link>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })()}
 
       {/* Rate card */}
-      <Card className="card-elevated border-transparent">
-        <CardContent className="p-5">
-          <Tabs value={rateTab} onValueChange={setRateTab} className="w-full">
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-              <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                <TrendingUp className="size-4 text-accent" /> {t("dash.rate_today")}
-              </p>
-              <TabsList className="h-8 bg-secondary/80 p-0.5">
-                <TabsTrigger value="envios" className="gap-1.5 px-3 text-xs">
-                  <Send className="size-3.5" /> {t("nav.send")}
-                </TabsTrigger>
-                <TabsTrigger value="recargas" className="gap-1.5 px-3 text-xs">
-                  <Smartphone className="size-3.5" /> {t("nav.topups")}
-                </TabsTrigger>
-              </TabsList>
-            </div>
-
-            <TabsContent value="envios" className="mt-0 space-y-3">
-              <div className="grid gap-2 sm:grid-cols-2">
-                <Select value={origin} onValueChange={setOrigin}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("dash.from")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {origins.map((c) => (
-                      <SelectItem key={c.code} value={c.code}>
-                        {c.flag} {c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={destination} onValueChange={setDestination}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("dash.to")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {destinations.map((c) => (
-                      <SelectItem key={c.code} value={c.code}>
-                        {c.flag} {c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <p className="mt-4 font-display text-2xl font-bold">
-                1 {sendCur || "—"} = {rate ? Number(rate.rate).toFixed(4) : "—"} {recvCur || "—"}
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {t("dash.fee")}{" "}
-                {rate
-                  ? `${Number(rate.fee_percent)}% + ${money(Number(rate.fee_fixed), sendCur)}`
-                  : "—"}
-              </p>
-            </TabsContent>
-
-            <TabsContent value="recargas" className="mt-0 space-y-3">
-              <div className="grid gap-2 sm:grid-cols-2">
-                <Select value={topupOrigin} onValueChange={setTopupOrigin}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("topup.pay_country")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {origins.map((c) => (
-                      <SelectItem key={c.code} value={c.code}>
-                        {c.flag} {c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={topupDestination} onValueChange={setTopupDestination}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("topup.number_country")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TOPUP_COUNTRIES.map((c) => (
-                      <SelectItem key={c.code} value={c.code}>
-                        {c.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <p className="mt-4 font-display text-2xl font-bold">
-                1 {topupSendCur || "—"} ={" "}
-                {effectiveTopupRate ? Number(effectiveTopupRate).toFixed(4) : "—"}{" "}
-                {topupRecvCur || "—"}
-              </p>
-              <div className="flex items-center justify-between">
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Recarga instantánea · Sin comisión fija
+      {(transfersEnabled || topupsEnabled) && (
+        <Card className="card-elevated border-transparent">
+          <CardContent className="p-5">
+            <Tabs
+              value={
+                transfersEnabled && !topupsEnabled
+                  ? "envios"
+                  : !transfersEnabled && topupsEnabled
+                    ? "recargas"
+                    : rateTab
+              }
+              onValueChange={setRateTab}
+              className="w-full"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  <TrendingUp className="size-4 text-accent" /> {t("dash.rate_today")}
                 </p>
-                <Button asChild size="sm" variant="ghost" className="gap-1 text-accent">
-                  <Link to="/recargas">
-                    {t("topup.send_recharge")} <ArrowRight className="size-3.5" />
-                  </Link>
-                </Button>
+                {transfersEnabled && topupsEnabled && (
+                  <TabsList className="h-8 bg-secondary/80 p-0.5">
+                    <TabsTrigger value="envios" className="gap-1.5 px-3 text-xs">
+                      <Send className="size-3.5" /> {t("nav.send")}
+                    </TabsTrigger>
+                    <TabsTrigger value="recargas" className="gap-1.5 px-3 text-xs">
+                      <Smartphone className="size-3.5" /> {t("nav.topups")}
+                    </TabsTrigger>
+                  </TabsList>
+                )}
               </div>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+
+              {transfersEnabled && (
+                <TabsContent value="envios" className="mt-0 space-y-3">
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <Select value={origin} onValueChange={setOrigin}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t("dash.from")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {origins.map((c) => (
+                          <SelectItem key={c.code} value={c.code}>
+                            {c.flag} {c.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={destination} onValueChange={setDestination}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t("dash.to")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {destinations.map((c) => (
+                          <SelectItem key={c.code} value={c.code}>
+                            {c.flag} {c.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <p className="mt-4 font-display text-2xl font-bold">
+                    1 {sendCur || "—"} = {rate ? Number(rate.rate).toFixed(4) : "—"} {recvCur || "—"}
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {t("dash.fee")}{" "}
+                    {rate
+                      ? `${Number(rate.fee_percent)}% + ${money(Number(rate.fee_fixed), sendCur)}`
+                      : "—"}
+                  </p>
+                </TabsContent>
+              )}
+
+              {topupsEnabled && (
+                <TabsContent value="recargas" className="mt-0 space-y-3">
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <Select value={topupOrigin} onValueChange={setTopupOrigin}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t("topup.pay_country")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {origins.map((c) => (
+                          <SelectItem key={c.code} value={c.code}>
+                            {c.flag} {c.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={topupDestination} onValueChange={setTopupDestination}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t("topup.number_country")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TOPUP_COUNTRIES.map((c) => (
+                          <SelectItem key={c.code} value={c.code}>
+                            {c.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <p className="mt-4 font-display text-2xl font-bold">
+                    1 {topupSendCur || "—"} ={" "}
+                    {effectiveTopupRate ? Number(effectiveTopupRate).toFixed(4) : "—"}{" "}
+                    {topupRecvCur || "—"}
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Recarga instantánea · Sin comisión fija
+                    </p>
+                    <Button asChild size="sm" variant="ghost" className="gap-1 text-accent">
+                      <Link to="/recargas">
+                        {t("topup.send_recharge")} <ArrowRight className="size-3.5" />
+                      </Link>
+                    </Button>
+                  </div>
+                </TabsContent>
+              )}
+            </Tabs>
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="card-elevated border-transparent">
         <CardHeader className="flex-row items-center justify-between space-y-0">
