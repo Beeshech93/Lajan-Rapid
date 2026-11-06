@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { ArrowRight, ShieldCheck, Timer, Wallet, TrendingUp, Send, Smartphone } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowRight, ShieldCheck, Timer, Wallet, TrendingUp, Send, Smartphone, AlertTriangle } from "lucide-react";
 
 import logoAsset from "@/assets/lajan-rapid-logo.png";
 import womanPhoneAsset from "@/assets/woman-phone-navy.png";
@@ -19,6 +19,7 @@ import { quote, money } from "@/lib/remesa";
 import { useCountries, useRate, useTopupRate, fallbackRate } from "@/hooks/useCorridors";
 import { TOPUP_COUNTRIES, findTopupCountry } from "@/lib/topup-operators";
 import { useI18n } from "@/lib/i18n";
+import { useServicesConfig } from "@/hooks/useServicesConfig";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { InstallAppCard } from "@/components/InstallAppCard";
 import { AdBanner } from "@/components/AdBanner";
@@ -116,7 +117,23 @@ export const Route = createFileRoute("/")({
 
 export function Landing() {
   const { t } = useI18n();
+  const { isEnabled, getMessage } = useServicesConfig();
+  const transfersEnabled = isEnabled("transfers");
+  const topupsEnabled = isEnabled("topups");
+
   const [activeTab, setActiveTab] = useState("envios");
+  const effectiveTab = transfersEnabled
+    ? (activeTab === "recargas" && topupsEnabled ? "recargas" : "envios")
+    : (topupsEnabled ? "recargas" : "none");
+
+  useEffect(() => {
+    if (!transfersEnabled && topupsEnabled && activeTab !== "recargas") {
+      setActiveTab("recargas");
+    } else if (transfersEnabled && !topupsEnabled && activeTab !== "envios") {
+      setActiveTab("envios");
+    }
+  }, [transfersEnabled, topupsEnabled, activeTab]);
+
   const [origin, setOrigin] = useState("MX");
   const [destination, setDestination] = useState("HT");
   const [amount, setAmount] = useState("2000");
@@ -246,16 +263,26 @@ export function Landing() {
               {t("landing.subtitle")}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Button
-                asChild
-                size="lg"
-                className="gap-2 bg-primary-foreground text-primary hover:bg-primary-foreground/90"
-              >
-                <Link to="/auth" search={{ modo: "registro" }}>
-                  {activeTab === "recargas" ? t("topup.send_recharge") : t("landing.cta")}{" "}
-                  <ArrowRight className="size-4" />
-                </Link>
-              </Button>
+              {transfersEnabled || topupsEnabled ? (
+                <Button
+                  asChild
+                  size="lg"
+                  className="gap-2 bg-primary-foreground text-primary hover:bg-primary-foreground/90"
+                >
+                  <Link to="/auth" search={{ modo: "registro" }}>
+                    {effectiveTab === "recargas" ? t("topup.send_recharge") : t("landing.cta")}{" "}
+                    <ArrowRight className="size-4" />
+                  </Link>
+                </Button>
+              ) : (
+                <Button
+                  size="lg"
+                  disabled
+                  className="gap-2 bg-primary-foreground/40 text-primary/70 cursor-not-allowed"
+                >
+                  {t("services.disabled_btn")}
+                </Button>
+              )}
               <Button
                 asChild
                 size="lg"
@@ -271,212 +298,248 @@ export function Landing() {
             <div className="absolute -inset-6 rounded-[2rem] bg-accent/10 blur-2xl" aria-hidden />
             <Card className="relative mx-auto w-full border-transparent shadow-lift">
               <CardContent className="space-y-4 p-6">
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 rounded-xl bg-secondary/80 p-1 mb-4">
-                    <TabsTrigger
-                      value="envios"
-                      className="gap-2 rounded-lg py-2 font-semibold text-xs sm:text-sm data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-soft"
-                    >
-                      <Send className="size-4 text-accent" />
-                      {t("nav.send")}
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="recargas"
-                      className="gap-2 rounded-lg py-2 font-semibold text-xs sm:text-sm data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-soft"
-                    >
-                      <Smartphone className="size-4 text-accent" />
-                      {t("nav.topups")}
-                    </TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="envios" className="space-y-4 mt-0">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
-                        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                          {t("landing.from")}
-                        </span>
-                        <Select value={origin} onValueChange={setOrigin}>
-                          <SelectTrigger>
-                            <SelectValue
-                              placeholder={
-                                originCountry
-                                  ? `${originCountry.flag} ${originCountry.name}`
-                                  : "🇲🇽 México"
-                              }
-                            />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {origins.map((c) => (
-                              <SelectItem key={c.code} value={c.code}>
-                                {c.flag} {c.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-1.5">
-                        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                          {t("landing.to")}
-                        </span>
-                        <Select value={destination} onValueChange={setDestination}>
-                          <SelectTrigger>
-                            <SelectValue
-                              placeholder={
-                                destCountry ? `${destCountry.flag} ${destCountry.name}` : "🇭🇹 Haití"
-                              }
-                            />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {destinations.map((c) => (
-                              <SelectItem key={c.code} value={c.code}>
-                                {c.flag} {c.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+                {!transfersEnabled && !topupsEnabled ? (
+                  <div className="space-y-4 py-8 text-center">
+                    <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-amber-500/15 text-amber-500">
+                      <AlertTriangle className="size-7" />
                     </div>
-                    <div>
-                      <label
-                        htmlFor="monto"
-                        className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                      >
-                        {t("landing.you_send")} ({sendCurrency})
-                      </label>
-                      <Input
-                        id="monto"
-                        inputMode="decimal"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
-                        className="mt-1 h-14 font-display text-2xl font-bold"
-                      />
-                    </div>
-                    <div className="space-y-1.5 rounded-xl bg-secondary p-4 text-sm">
-                      <Row
-                        label={t("landing.rate")}
-                        value={`1 ${sendCurrency} = ${Number(effectiveCfg.rate).toFixed(4)} ${receiveCurrency}`}
-                      />
-                      <Row label={t("landing.fee")} value={money(q.fee, sendCurrency)} />
-                      <Row label={t("landing.total")} value={money(q.total, sendCurrency)} strong />
-                    </div>
-                    <div className="rounded-xl bg-mint p-4">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-warning-foreground/80">
-                        {t("landing.family_gets")}
-                      </p>
-                      <p className="font-display text-3xl font-bold text-warning-foreground">
-                        {money(q.receives, receiveCurrency)}
+                    <div className="space-y-2">
+                      <h3 className="font-display text-xl font-bold tracking-tight">
+                        {t("services.disabled_badge")}
+                      </h3>
+                      <p className="mx-auto max-w-sm text-sm leading-relaxed text-muted-foreground">
+                        {getMessage("transfers") || getMessage("topups") || t("services.disabled_alert")}
                       </p>
                     </div>
-                  </TabsContent>
-
-                  <TabsContent value="recargas" className="space-y-4 mt-0">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
-                        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                          {t("topup.pay_country")}
-                        </span>
-                        <Select value={topupOrigin} onValueChange={setTopupOrigin}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {origins.map((c) => (
-                              <SelectItem key={c.code} value={c.code}>
-                                {c.flag} {c.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-1.5">
-                        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                          {t("topup.number_country")}
-                        </span>
-                        <Select
-                          value={topupDestination}
-                          onValueChange={(val) => {
-                            setTopupDestination(val);
-                            const info = findTopupCountry(val);
-                            if (info?.operators[0]) setTopupOperator(info.operators[0]);
-                          }}
+                  </div>
+                ) : (
+                  <Tabs value={effectiveTab} onValueChange={setActiveTab} className="w-full">
+                    {transfersEnabled && topupsEnabled ? (
+                      <TabsList className="grid w-full grid-cols-2 rounded-xl bg-secondary/80 p-1 mb-4">
+                        <TabsTrigger
+                          value="envios"
+                          className="gap-2 rounded-lg py-2 font-semibold text-xs sm:text-sm data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-soft"
                         >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {TOPUP_COUNTRIES.map((c) => (
-                              <SelectItem key={c.code} value={c.code}>
-                                {c.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    {topupCountryInfo?.operators && topupCountryInfo.operators.length > 0 && (
-                      <div className="space-y-1.5">
-                        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                          {t("topup.choose_operator")}
-                        </span>
-                        <Select value={topupOperator} onValueChange={setTopupOperator}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {topupCountryInfo.operators.map((op) => (
-                              <SelectItem key={op} value={op}>
-                                {op}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          <Send className="size-4 text-accent" />
+                          {t("nav.send")}
+                        </TabsTrigger>
+                        <TabsTrigger
+                          value="recargas"
+                          className="gap-2 rounded-lg py-2 font-semibold text-xs sm:text-sm data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-soft"
+                        >
+                          <Smartphone className="size-4 text-accent" />
+                          {t("nav.topups")}
+                        </TabsTrigger>
+                      </TabsList>
+                    ) : (
+                      <div className="flex items-center gap-2 rounded-xl bg-secondary/80 px-4 py-2.5 mb-4 text-xs sm:text-sm font-semibold text-foreground">
+                        {transfersEnabled ? (
+                          <>
+                            <Send className="size-4 text-accent" />
+                            <span>{t("nav.send")}</span>
+                          </>
+                        ) : (
+                          <>
+                            <Smartphone className="size-4 text-accent" />
+                            <span>{t("nav.topups")}</span>
+                          </>
+                        )}
                       </div>
                     )}
 
-                    <div>
-                      <label
-                        htmlFor="monto-recarga"
-                        className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                      >
-                        {t("topup.amount_to_pay")} ({topupSendCurrency})
-                      </label>
-                      <Input
-                        id="monto-recarga"
-                        inputMode="decimal"
-                        value={topupAmount}
-                        onChange={(e) => setTopupAmount(e.target.value.replace(/[^0-9.]/g, ""))}
-                        className="mt-1 h-14 font-display text-2xl font-bold"
-                      />
-                    </div>
+                    {transfersEnabled && (
+                      <TabsContent value="envios" className="space-y-4 mt-0">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1.5">
+                            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                              {t("landing.from")}
+                            </span>
+                            <Select value={origin} onValueChange={setOrigin}>
+                              <SelectTrigger>
+                                <SelectValue
+                                  placeholder={
+                                    originCountry
+                                      ? `${originCountry.flag} ${originCountry.name}`
+                                      : "🇲🇽 México"
+                                  }
+                                />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {origins.map((c) => (
+                                  <SelectItem key={c.code} value={c.code}>
+                                    {c.flag} {c.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-1.5">
+                            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                              {t("landing.to")}
+                            </span>
+                            <Select value={destination} onValueChange={setDestination}>
+                              <SelectTrigger>
+                                <SelectValue
+                                  placeholder={
+                                    destCountry ? `${destCountry.flag} ${destCountry.name}` : "🇭🇹 Haití"
+                                  }
+                                />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {destinations.map((c) => (
+                                  <SelectItem key={c.code} value={c.code}>
+                                    {c.flag} {c.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <div>
+                          <label
+                            htmlFor="monto"
+                            className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                          >
+                            {t("landing.you_send")} ({sendCurrency})
+                          </label>
+                          <Input
+                            id="monto"
+                            inputMode="decimal"
+                            value={amount}
+                            onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
+                            className="mt-1 h-14 font-display text-2xl font-bold"
+                          />
+                        </div>
+                        <div className="space-y-1.5 rounded-xl bg-secondary p-4 text-sm">
+                          <Row
+                            label={t("landing.rate")}
+                            value={`1 ${sendCurrency} = ${Number(effectiveCfg.rate).toFixed(4)} ${receiveCurrency}`}
+                          />
+                          <Row label={t("landing.fee")} value={money(q.fee, sendCurrency)} />
+                          <Row label={t("landing.total")} value={money(q.total, sendCurrency)} strong />
+                        </div>
+                        <div className="rounded-xl bg-mint p-4">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-warning-foreground/80">
+                            {t("landing.family_gets")}
+                          </p>
+                          <p className="font-display text-3xl font-bold text-warning-foreground">
+                            {money(q.receives, receiveCurrency)}
+                          </p>
+                        </div>
+                      </TabsContent>
+                    )}
 
-                    <div className="space-y-1.5 rounded-xl bg-secondary p-4 text-sm">
-                      <Row
-                        label={t("landing.rate")}
-                        value={
-                          effectiveTopupRate
-                            ? `1 ${topupSendCurrency} = ${Number(effectiveTopupRate).toFixed(4)} ${topupDestCurrency}`
-                            : t("landing.unavailable")
-                        }
-                      />
-                      <Row label={t("landing.fee")} value={money(0, topupSendCurrency)} />
-                      <Row
-                        label={t("landing.total")}
-                        value={money(topupAmountNum, topupSendCurrency)}
-                        strong
-                      />
-                    </div>
+                    {topupsEnabled && (
+                      <TabsContent value="recargas" className="space-y-4 mt-0">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1.5">
+                            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                              {t("topup.pay_country")}
+                            </span>
+                            <Select value={topupOrigin} onValueChange={setTopupOrigin}>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {origins.map((c) => (
+                                  <SelectItem key={c.code} value={c.code}>
+                                    {c.flag} {c.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-1.5">
+                            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                              {t("topup.number_country")}
+                            </span>
+                            <Select
+                              value={topupDestination}
+                              onValueChange={(val) => {
+                                setTopupDestination(val);
+                                const info = findTopupCountry(val);
+                                if (info?.operators[0]) setTopupOperator(info.operators[0]);
+                              }}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {TOPUP_COUNTRIES.map((c) => (
+                                  <SelectItem key={c.code} value={c.code}>
+                                    {c.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
 
-                    <div className="rounded-xl bg-mint p-4">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-warning-foreground/80">
-                        {t("topup.recipient_gets")}
-                      </p>
-                      <p className="font-display text-3xl font-bold text-warning-foreground">
-                        {money(topupReceived, topupDestCurrency)}
-                      </p>
-                    </div>
-                  </TabsContent>
-                </Tabs>
+                        {topupCountryInfo?.operators && topupCountryInfo.operators.length > 0 && (
+                          <div className="space-y-1.5">
+                            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                              {t("topup.choose_operator")}
+                            </span>
+                            <Select value={topupOperator} onValueChange={setTopupOperator}>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {topupCountryInfo.operators.map((op) => (
+                                  <SelectItem key={op} value={op}>
+                                    {op}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+
+                        <div>
+                          <label
+                            htmlFor="monto-recarga"
+                            className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                          >
+                            {t("topup.amount_to_pay")} ({topupSendCurrency})
+                          </label>
+                          <Input
+                            id="monto-recarga"
+                            inputMode="decimal"
+                            value={topupAmount}
+                            onChange={(e) => setTopupAmount(e.target.value.replace(/[^0-9.]/g, ""))}
+                            className="mt-1 h-14 font-display text-2xl font-bold"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5 rounded-xl bg-secondary p-4 text-sm">
+                          <Row
+                            label={t("landing.rate")}
+                            value={
+                              effectiveTopupRate
+                                ? `1 ${topupSendCurrency} = ${Number(effectiveTopupRate).toFixed(4)} ${topupDestCurrency}`
+                                : t("landing.unavailable")
+                            }
+                          />
+                          <Row label={t("landing.fee")} value={money(0, topupSendCurrency)} />
+                          <Row
+                            label={t("landing.total")}
+                            value={money(topupAmountNum, topupSendCurrency)}
+                            strong
+                          />
+                        </div>
+
+                        <div className="rounded-xl bg-mint p-4">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-warning-foreground/80">
+                            {t("topup.recipient_gets")}
+                          </p>
+                          <p className="font-display text-3xl font-bold text-warning-foreground">
+                            {money(topupReceived, topupDestCurrency)}
+                          </p>
+                        </div>
+                      </TabsContent>
+                    )}
+                  </Tabs>
+                )}
               </CardContent>
             </Card>
           </div>

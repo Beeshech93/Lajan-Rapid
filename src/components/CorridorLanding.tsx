@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowRight, ShieldCheck, Timer, Wallet, TrendingUp } from "lucide-react";
+import { ArrowRight, ShieldCheck, Timer, Wallet, TrendingUp, AlertTriangle } from "lucide-react";
 
 import logoAsset from "@/assets/lajan-rapid-logo.png";
 import womanPhoneAsset from "@/assets/woman-phone-navy.png";
@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { quote, money } from "@/lib/remesa";
 import { useRate } from "@/hooks/useCorridors";
 import { useI18n } from "@/lib/i18n";
+import { useServicesConfig } from "@/hooks/useServicesConfig";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { InstallAppCard } from "@/components/InstallAppCard";
 import { AdBanner } from "@/components/AdBanner";
@@ -30,6 +31,9 @@ export function CorridorLanding({
   defaultAmount?: string;
 }) {
   const { t } = useI18n();
+  const { isEnabled, getMessage } = useServicesConfig();
+  const transfersEnabled = isEnabled("transfers");
+
   const [amount, setAmount] = useState(defaultAmount);
   const receiveCurrency = "HTG";
   const { data: cfg } = useRate(originCurrency, receiveCurrency);
@@ -93,15 +97,25 @@ export function CorridorLanding({
             </h1>
             <p className="mt-5 max-w-lg text-base text-foreground/70 sm:text-lg">{subheading}</p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Button
-                asChild
-                size="lg"
-                className="gap-2 bg-primary-foreground text-primary hover:bg-primary-foreground/90"
-              >
-                <Link to="/auth" search={{ modo: "registro" }}>
-                  {t("landing.cta")} <ArrowRight className="size-4" />
-                </Link>
-              </Button>
+              {transfersEnabled ? (
+                <Button
+                  asChild
+                  size="lg"
+                  className="gap-2 bg-primary-foreground text-primary hover:bg-primary-foreground/90"
+                >
+                  <Link to="/auth" search={{ modo: "registro" }}>
+                    {t("landing.cta")} <ArrowRight className="size-4" />
+                  </Link>
+                </Button>
+              ) : (
+                <Button
+                  size="lg"
+                  disabled
+                  className="gap-2 bg-primary-foreground/40 text-primary/70 cursor-not-allowed"
+                >
+                  {t("services.disabled_btn")}
+                </Button>
+              )}
               <Button
                 asChild
                 size="lg"
@@ -117,59 +131,77 @@ export function CorridorLanding({
             <div className="absolute -inset-6 rounded-[2rem] bg-accent/10 blur-2xl" aria-hidden />
             <Card className="relative mx-auto w-full border-transparent shadow-lift">
               <CardContent className="space-y-4 p-6">
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div className="space-y-1.5">
-                    <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      {t("landing.from")}
-                    </span>
-                    <p className="flex h-10 items-center rounded-md border px-3 font-medium">
-                      {originFlag} {originCode}
-                    </p>
+                {!transfersEnabled ? (
+                  <div className="space-y-4 py-8 text-center">
+                    <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-amber-500/15 text-amber-500">
+                      <AlertTriangle className="size-7" />
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="font-display text-xl font-bold tracking-tight">
+                        {t("services.disabled_badge")}
+                      </h3>
+                      <p className="mx-auto max-w-sm text-sm leading-relaxed text-muted-foreground">
+                        {getMessage("transfers") || t("services.disabled_alert")}
+                      </p>
+                    </div>
                   </div>
-                  <div className="space-y-1.5">
-                    <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      {t("landing.to")}
-                    </span>
-                    <p className="flex h-10 items-center rounded-md border px-3 font-medium">
-                      🇭🇹 Haïti
-                    </p>
-                  </div>
-                </div>
-                <div>
-                  <label
-                    htmlFor="monto"
-                    className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                  >
-                    {t("landing.you_send")} ({originCurrency})
-                  </label>
-                  <Input
-                    id="monto"
-                    inputMode="decimal"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
-                    className="mt-1 h-14 font-display text-2xl font-bold"
-                  />
-                </div>
-                <div className="space-y-1.5 rounded-xl bg-secondary p-4 text-sm">
-                  <Row
-                    label={t("landing.rate")}
-                    value={
-                      cfg
-                        ? `1 ${originCurrency} = ${Number(cfg.rate).toFixed(4)} ${receiveCurrency}`
-                        : t("landing.unavailable")
-                    }
-                  />
-                  <Row label={t("landing.fee")} value={money(q.fee, originCurrency)} />
-                  <Row label={t("landing.total")} value={money(q.total, originCurrency)} strong />
-                </div>
-                <div className="rounded-xl bg-mint p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-warning-foreground/80">
-                    {t("landing.family_gets")}
-                  </p>
-                  <p className="font-display text-3xl font-bold text-warning-foreground">
-                    {money(q.receives, receiveCurrency)}
-                  </p>
-                </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div className="space-y-1.5">
+                        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          {t("landing.from")}
+                        </span>
+                        <p className="flex h-10 items-center rounded-md border px-3 font-medium">
+                          {originFlag} {originCode}
+                        </p>
+                      </div>
+                      <div className="space-y-1.5">
+                        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          {t("landing.to")}
+                        </span>
+                        <p className="flex h-10 items-center rounded-md border px-3 font-medium">
+                          🇭🇹 Haïti
+                        </p>
+                      </div>
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="monto"
+                        className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                      >
+                        {t("landing.you_send")} ({originCurrency})
+                      </label>
+                      <Input
+                        id="monto"
+                        inputMode="decimal"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
+                        className="mt-1 h-14 font-display text-2xl font-bold"
+                      />
+                    </div>
+                    <div className="space-y-1.5 rounded-xl bg-secondary p-4 text-sm">
+                      <Row
+                        label={t("landing.rate")}
+                        value={
+                          cfg
+                            ? `1 ${originCurrency} = ${Number(cfg.rate).toFixed(4)} ${receiveCurrency}`
+                            : t("landing.unavailable")
+                        }
+                      />
+                      <Row label={t("landing.fee")} value={money(q.fee, originCurrency)} />
+                      <Row label={t("landing.total")} value={money(q.total, originCurrency)} strong />
+                    </div>
+                    <div className="rounded-xl bg-mint p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-warning-foreground/80">
+                        {t("landing.family_gets")}
+                      </p>
+                      <p className="font-display text-3xl font-bold text-warning-foreground">
+                        {money(q.receives, receiveCurrency)}
+                      </p>
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
           </div>
