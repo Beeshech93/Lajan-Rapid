@@ -34,3 +34,8 @@ dist-ssr
 *.sln
 *.sw?
 supabase/.temp/
+
+# Android signing keys
+*.keystore
+android-signing/
+
