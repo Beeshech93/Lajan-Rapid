@@ -146,7 +146,7 @@ export function Landing() {
   const { data: countries } = useCountries();
 
   const origins = (countries ?? []).filter((c) => c.is_origin);
-  const destinations = (countries ?? []).filter((c) => c.is_destination);
+  const destinations = (countries ?? []).filter((c) => c.is_destination && c.code !== "DO");
   const originCountry = origins.find((c) => c.code === origin);
   const destCountry = destinations.find((c) => c.code === destination);
   const sendCurrency = originCountry?.currency ?? "MXN";

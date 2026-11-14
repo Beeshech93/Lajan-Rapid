@@ -1,13 +1,22 @@
 -- Habilitar República Dominicana (DO) como país de origen activo, pero NO de destino (solo recibe Haití)
-INSERT INTO public.countries (code, name, currency, flag, is_origin, is_destination, is_active)
-VALUES ('DO', 'Rep. Dominicana', 'DOP', '🇩🇴', true, false, true)
-ON CONFLICT (code) DO UPDATE
+UPDATE public.countries
 SET is_origin = true,
     is_destination = false,
     is_active = true,
     currency = 'DOP',
     flag = '🇩🇴',
-    updated_at = now();
+    updated_at = now()
+WHERE code = 'DO';
+
+-- Asegurar que cualquier otro país que no sea Haití tenga is_destination = false
+UPDATE public.countries
+SET is_destination = false
+WHERE code <> 'HT';
+
+-- Asegurar que Haití sea el único país de destino
+UPDATE public.countries
+SET is_destination = true, is_active = true
+WHERE code = 'HT';
 
 -- Asegurar tipo de cambio activo para el corredor República Dominicana (DOP) -> Haití (HTG)
 DO $$

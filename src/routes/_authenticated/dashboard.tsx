@@ -62,7 +62,7 @@ function Dashboard() {
   const cryptoEnabled = isEnabled("crypto");
 
   const origins = (countries ?? []).filter((c) => c.is_origin);
-  const destinations = (countries ?? []).filter((c) => c.is_destination);
+  const destinations = (countries ?? []).filter((c) => c.is_destination && c.code !== "DO");
   const sendCur = origins.find((c) => c.code === origin)?.currency ?? "";
   const recvCur = destinations.find((c) => c.code === destination)?.currency ?? "";
 

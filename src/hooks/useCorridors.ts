@@ -33,11 +33,15 @@ export function useCountries() {
         .eq("is_active", true)
         .order("name");
       if (data && data.length > 0) {
-        return data.map((c) =>
-          c.code === "DO"
-            ? { ...c, is_origin: true, is_destination: false, is_active: true }
-            : c,
-        ) as Country[];
+        return data.map((c) => {
+          if (c.code === "DO") {
+            return { ...c, is_origin: true, is_destination: false, is_active: true };
+          }
+          if (c.code !== "HT") {
+            return { ...c, is_destination: false };
+          }
+          return c;
+        }) as Country[];
       }
       return FALLBACK_COUNTRIES;
     },
