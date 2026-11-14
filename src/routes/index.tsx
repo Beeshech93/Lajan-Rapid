@@ -122,17 +122,7 @@ export function Landing() {
   const topupsEnabled = isEnabled("topups");
 
   const [activeTab, setActiveTab] = useState("envios");
-  const effectiveTab = transfersEnabled
-    ? (activeTab === "recargas" && topupsEnabled ? "recargas" : "envios")
-    : (topupsEnabled ? "recargas" : "none");
-
-  useEffect(() => {
-    if (!transfersEnabled && topupsEnabled && activeTab !== "recargas") {
-      setActiveTab("recargas");
-    } else if (transfersEnabled && !topupsEnabled && activeTab !== "envios") {
-      setActiveTab("envios");
-    }
-  }, [transfersEnabled, topupsEnabled, activeTab]);
+  const effectiveTab = activeTab;
 
   const [origin, setOrigin] = useState("MX");
   const [destination, setDestination] = useState("HT");
@@ -241,48 +231,28 @@ export function Landing() {
           </div>
         </header>
 
-        <section className="mx-auto grid max-w-6xl items-center gap-10 px-5 pb-20 pt-8 lg:grid-cols-[0.95fr_1.1fr_1fr] lg:gap-12 lg:pb-28 lg:pt-16">
-          <div className="relative mx-auto flex w-full max-w-[280px] justify-center lg:max-w-none lg:justify-start">
-            <div className="relative w-full overflow-hidden rounded-[2rem] border border-primary-foreground/10 shadow-lift shadow-black/20">
-              <img
-                src={womanPhoneAsset}
-                alt="Mujer sonriendo mientras usa Lajan Rapid en su teléfono"
-                className="aspect-[3/4] w-full object-cover"
-              />
-            </div>
-          </div>
-
-          <div>
+        <section className="mx-auto grid max-w-6xl items-center gap-8 px-4 pb-16 pt-6 sm:px-6 lg:grid-cols-[1.1fr_1fr] lg:gap-10 lg:pb-24 lg:pt-10">
+          <div className="space-y-6">
             <span className="inline-flex items-center gap-2 rounded-full border border-foreground/35 bg-foreground/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-foreground">
               <TrendingUp className="size-3.5" /> {t("landing.badge")}
             </span>
-            <h1 className="mt-6 font-display text-4xl font-bold leading-[1.03] sm:text-5xl lg:text-[3.2rem]">
+            <h1 className="font-display text-3xl font-bold leading-[1.08] sm:text-4xl lg:text-[3rem]">
               {t("landing.title")}
             </h1>
-            <p className="mt-5 max-w-lg text-base text-foreground/70 sm:text-lg">
+            <p className="max-w-lg text-base text-foreground/75 sm:text-lg leading-relaxed">
               {t("landing.subtitle")}
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              {transfersEnabled || topupsEnabled ? (
-                <Button
-                  asChild
-                  size="lg"
-                  className="gap-2 bg-primary-foreground text-primary hover:bg-primary-foreground/90"
-                >
-                  <Link to="/auth" search={{ modo: "registro" }}>
-                    {effectiveTab === "recargas" ? t("topup.send_recharge") : t("landing.cta")}{" "}
-                    <ArrowRight className="size-4" />
-                  </Link>
-                </Button>
-              ) : (
-                <Button
-                  size="lg"
-                  disabled
-                  className="gap-2 bg-primary-foreground/40 text-primary/70 cursor-not-allowed"
-                >
-                  {t("services.disabled_btn")}
-                </Button>
-              )}
+            <div className="flex flex-wrap gap-3 pt-1">
+              <Button
+                asChild
+                size="lg"
+                className="gap-2 bg-primary-foreground text-primary hover:bg-primary-foreground/90 font-semibold"
+              >
+                <Link to="/auth" search={{ modo: "registro" }}>
+                  {activeTab === "recargas" ? t("topup.send_recharge") : t("landing.cta")}{" "}
+                  <ArrowRight className="size-4" />
+                </Link>
+              </Button>
               <Button
                 asChild
                 size="lg"
@@ -292,63 +262,53 @@ export function Landing() {
                 <Link to="/auth">{t("landing.have_account")}</Link>
               </Button>
             </div>
+
+            {/* Beneficios clave que completan la visión web */}
+            <div className="grid grid-cols-3 gap-3 pt-2 text-xs text-foreground/80 sm:text-sm">
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3 backdrop-blur-sm">
+                <span className="font-semibold block text-foreground">⚡ En minutos</span>
+                <span className="text-[11px] text-foreground/65">MonCash & NatCash</span>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3 backdrop-blur-sm">
+                <span className="font-semibold block text-foreground">🔒 100% Seguro</span>
+                <span className="text-[11px] text-foreground/65">Cifrado de punta a punta</span>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3 backdrop-blur-sm">
+                <span className="font-semibold block text-foreground">💸 Tasa clara</span>
+                <span className="text-[11px] text-foreground/65">Sin costos ocultos</span>
+              </div>
+            </div>
           </div>
 
           <div className="relative">
-            <div className="absolute -inset-6 rounded-[2rem] bg-accent/10 blur-2xl" aria-hidden />
-            <Card className="relative mx-auto w-full border-transparent shadow-lift">
-              <CardContent className="space-y-4 p-6">
-                {!transfersEnabled && !topupsEnabled ? (
-                  <div className="space-y-4 py-8 text-center">
-                    <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-amber-500/15 text-amber-500">
-                      <AlertTriangle className="size-7" />
-                    </div>
-                    <div className="space-y-2">
-                      <h3 className="font-display text-xl font-bold tracking-tight">
-                        {t("services.disabled_badge")}
-                      </h3>
-                      <p className="mx-auto max-w-sm text-sm leading-relaxed text-muted-foreground">
-                        {getMessage("transfers") || getMessage("topups") || t("services.disabled_alert")}
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <Tabs value={effectiveTab} onValueChange={setActiveTab} className="w-full">
-                    {transfersEnabled && topupsEnabled ? (
-                      <TabsList className="grid w-full grid-cols-2 rounded-xl bg-secondary/80 p-1 mb-4">
-                        <TabsTrigger
-                          value="envios"
-                          className="gap-2 rounded-lg py-2 font-semibold text-xs sm:text-sm data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-soft"
-                        >
-                          <Send className="size-4 text-accent" />
-                          {t("nav.send")}
-                        </TabsTrigger>
-                        <TabsTrigger
-                          value="recargas"
-                          className="gap-2 rounded-lg py-2 font-semibold text-xs sm:text-sm data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-soft"
-                        >
-                          <Smartphone className="size-4 text-accent" />
-                          {t("nav.topups")}
-                        </TabsTrigger>
-                      </TabsList>
-                    ) : (
-                      <div className="flex items-center gap-2 rounded-xl bg-secondary/80 px-4 py-2.5 mb-4 text-xs sm:text-sm font-semibold text-foreground">
-                        {transfersEnabled ? (
-                          <>
-                            <Send className="size-4 text-accent" />
-                            <span>{t("nav.send")}</span>
-                          </>
-                        ) : (
-                          <>
-                            <Smartphone className="size-4 text-accent" />
-                            <span>{t("nav.topups")}</span>
-                          </>
-                        )}
+            <div className="absolute -inset-4 rounded-[2rem] bg-accent/15 blur-2xl" aria-hidden />
+            <Card className="relative mx-auto w-full border-white/10 shadow-lift bg-card/95 backdrop-blur-xl">
+              <CardContent className="space-y-4 p-5 sm:p-6">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 rounded-xl bg-secondary/80 p-1 mb-4">
+                    <TabsTrigger
+                      value="envios"
+                      className="gap-2 rounded-lg py-2 font-semibold text-xs sm:text-sm data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-soft"
+                    >
+                      <Send className="size-4 text-accent" />
+                      {t("nav.send")}
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="recargas"
+                      className="gap-2 rounded-lg py-2 font-semibold text-xs sm:text-sm data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-soft"
+                    >
+                      <Smartphone className="size-4 text-accent" />
+                      {t("nav.topups")}
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="envios" className="space-y-4 mt-0">
+                    {!transfersEnabled && (
+                      <div className="flex items-center gap-2 rounded-lg bg-amber-500/10 border border-amber-500/20 p-2.5 text-xs text-amber-500">
+                        <AlertTriangle className="size-4 shrink-0" />
+                        <span>{getMessage("transfers") || t("services.disabled_alert")}</span>
                       </div>
                     )}
-
-                    {transfersEnabled && (
-                      <TabsContent value="envios" className="space-y-4 mt-0">
                         <div className="grid grid-cols-2 gap-3">
                           <div className="space-y-1.5">
                             <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -427,10 +387,14 @@ export function Landing() {
                           </p>
                         </div>
                       </TabsContent>
-                    )}
 
-                    {topupsEnabled && (
-                      <TabsContent value="recargas" className="space-y-4 mt-0">
+                  <TabsContent value="recargas" className="space-y-4 mt-0">
+                    {!topupsEnabled && (
+                      <div className="flex items-center gap-2 rounded-lg bg-amber-500/10 border border-amber-500/20 p-2.5 text-xs text-amber-500">
+                        <AlertTriangle className="size-4 shrink-0" />
+                        <span>{getMessage("topups") || t("services.disabled_alert")}</span>
+                      </div>
+                    )}
                         <div className="grid grid-cols-2 gap-3">
                           <div className="space-y-1.5">
                             <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -537,9 +501,7 @@ export function Landing() {
                           </p>
                         </div>
                       </TabsContent>
-                    )}
                   </Tabs>
-                )}
               </CardContent>
             </Card>
           </div>
