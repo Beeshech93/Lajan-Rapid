@@ -2,10 +2,13 @@ import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { ArrowLeft, FileText } from "lucide-react";
+import { ArrowLeft, FileText, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeInvalidate } from "@/hooks/useRealtimeInvalidate";
+import { useAdminPermissions } from "@/hooks/useAdminPermissions";
+import { getAllAdminsPermissionsMap, type AdminTabId } from "@/lib/admin-permissions.functions";
+import { AdminPermissionsModal } from "@/components/admin/AdminPermissionsModal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -97,109 +100,79 @@ export const Route = createFileRoute("/_authenticated/admin")({
 });
 
 function Admin() {
+  const { hasTabPermission, isSuperAdmin } = useAdminPermissions();
+
+  const tabDefs: { id: AdminTabId; label: string; panel: React.ReactNode }[] = [
+    { id: "resumen", label: "Resumen", panel: <Resumen /> },
+    { id: "servicios", label: "Servicios", panel: <ServicesPanel /> },
+    { id: "contabilidad", label: "Contabilidad", panel: <AccountingPanel /> },
+    { id: "soporte", label: "Soporte", panel: <SupportPanel /> },
+    { id: "banner", label: "Banner", panel: <AdBannerPanel /> },
+    { id: "mercadopago", label: "Mercado Pago", panel: <MercadoPagoPanel /> },
+    { id: "stripe", label: "Stripe", panel: <StripePanel /> },
+    { id: "resend", label: "Correo", panel: <ResendPanel /> },
+    { id: "bulk-email", label: "Correo masivo", panel: <BulkEmailPanel /> },
+    { id: "security", label: "Seguridad", panel: <SecurityPanel /> },
+    { id: "operators", label: "Operadores", panel: <OperatorReportPanel /> },
+    { id: "topup-rates", label: "Tasas Ding", panel: <TopupRatesPanel /> },
+    { id: "dingconnect", label: "Recargas (Ding)", panel: <DingConnectPanel /> },
+    { id: "cripto", label: "Cripto", panel: <CryptoPanel /> },
+    { id: "bazik", label: "Bazik API", panel: <BazikPanel /> },
+    { id: "kyc", label: "KYC", panel: <KycPanel /> },
+    { id: "tx", label: "Transacciones", panel: <TxPanel /> },
+    { id: "recargas", label: "Recargas", panel: <TopupsPanel /> },
+    { id: "usuarios", label: "Usuarios", panel: <UsersPanel /> },
+    { id: "tarifas", label: "Tarifas", panel: <RatesPanel /> },
+    { id: "migracion", label: "Migración IA", panel: <MigrationAnalysisPanel /> },
+  ];
+
+  const allowedTabs = tabDefs.filter((t) => hasTabPermission(t.id));
+  const defaultTab = allowedTabs.some((t) => t.id === "resumen")
+    ? "resumen"
+    : allowedTabs[0]?.id || "tx";
+
   return (
     <div className="mx-auto max-w-6xl space-y-5">
-      <div className="flex items-center gap-2">
-        <Button
-          asChild
-          variant="ghost"
-          size="icon"
-          className="shrink-0"
-          aria-label="Volver al inicio"
-        >
-          <Link to="/dashboard">
-            <ArrowLeft className="size-5" />
-          </Link>
-        </Button>
-        <h1 className="text-2xl font-bold">Administración</h1>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Button
+            asChild
+            variant="ghost"
+            size="icon"
+            className="shrink-0"
+            aria-label="Volver al inicio"
+          >
+            <Link to="/dashboard">
+              <ArrowLeft className="size-5" />
+            </Link>
+          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-2xl font-bold">Administración</h1>
+            {isSuperAdmin ? (
+              <Badge className="bg-amber-500/15 text-amber-500 border-amber-500/30 gap-1 text-xs">
+                <Shield className="size-3" /> Super Admin
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="border-primary/50 text-primary text-xs">
+                Admin Restringido ({allowedTabs.length} módulos)
+              </Badge>
+            )}
+          </div>
+        </div>
       </div>
-      <Tabs defaultValue="resumen">
+      <Tabs defaultValue={defaultTab}>
         <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
-          <TabsTrigger value="resumen">Resumen</TabsTrigger>
-          <TabsTrigger value="servicios">Servicios</TabsTrigger>
-          <TabsTrigger value="contabilidad">Contabilidad</TabsTrigger>
-          <TabsTrigger value="soporte">Soporte</TabsTrigger>
-          <TabsTrigger value="banner">Banner</TabsTrigger>
-          <TabsTrigger value="mercadopago">Mercado Pago</TabsTrigger>
-          <TabsTrigger value="stripe">Stripe</TabsTrigger>
-          <TabsTrigger value="resend">Correo</TabsTrigger>
-          <TabsTrigger value="bulk-email">Correo masivo</TabsTrigger>
-          <TabsTrigger value="security">Seguridad</TabsTrigger>
-          <TabsTrigger value="operators">Operadores</TabsTrigger>
-          <TabsTrigger value="topup-rates">Tasas Ding</TabsTrigger>
-          <TabsTrigger value="dingconnect">Recargas (Ding)</TabsTrigger>
-          <TabsTrigger value="cripto">Cripto</TabsTrigger>
-          <TabsTrigger value="bazik">Bazik API</TabsTrigger>
-          <TabsTrigger value="kyc">KYC</TabsTrigger>
-          <TabsTrigger value="tx">Transacciones</TabsTrigger>
-          <TabsTrigger value="recargas">Recargas</TabsTrigger>
-          <TabsTrigger value="usuarios">Usuarios</TabsTrigger>
-          <TabsTrigger value="tarifas">Tarifas</TabsTrigger>
-          <TabsTrigger value="migracion">Migración IA</TabsTrigger>
+          {allowedTabs.map((t) => (
+            <TabsTrigger key={t.id} value={t.id}>
+              {t.label}
+            </TabsTrigger>
+          ))}
         </TabsList>
-        <TabsContent value="resumen" className="mt-4">
-          <Resumen />
-        </TabsContent>
-        <TabsContent value="servicios" className="mt-4">
-          <ServicesPanel />
-        </TabsContent>
-        <TabsContent value="migracion" className="mt-4">
-          <MigrationAnalysisPanel />
-        </TabsContent>
-        <TabsContent value="contabilidad" className="mt-4">
-          <AccountingPanel />
-        </TabsContent>
-        <TabsContent value="soporte" className="mt-4">
-          <SupportPanel />
-        </TabsContent>
-        <TabsContent value="banner" className="mt-4">
-          <AdBannerPanel />
-        </TabsContent>
-        <TabsContent value="kyc" className="mt-4">
-          <KycPanel />
-        </TabsContent>
-        <TabsContent value="tx" className="mt-4">
-          <TxPanel />
-        </TabsContent>
-        <TabsContent value="recargas" className="mt-4">
-          <TopupsPanel />
-        </TabsContent>
-        <TabsContent value="usuarios" className="mt-4">
-          <UsersPanel />
-        </TabsContent>
-        <TabsContent value="tarifas" className="mt-4">
-          <RatesPanel />
-        </TabsContent>
-        <TabsContent value="cripto" className="mt-4">
-          <CryptoPanel />
-        </TabsContent>
-        <TabsContent value="bazik" className="mt-4">
-          <BazikPanel />
-        </TabsContent>
-        <TabsContent value="mercadopago" className="mt-4">
-          <MercadoPagoPanel />
-        </TabsContent>
-        <TabsContent value="stripe" className="mt-4">
-          <StripePanel />
-        </TabsContent>
-        <TabsContent value="resend" className="mt-4">
-          <ResendPanel />
-        </TabsContent>
-        <TabsContent value="bulk-email" className="mt-4">
-          <BulkEmailPanel />
-        </TabsContent>
-        <TabsContent value="security" className="mt-4">
-          <SecurityPanel />
-        </TabsContent>
-        <TabsContent value="operators" className="mt-4">
-          <OperatorReportPanel />
-        </TabsContent>
-        <TabsContent value="topup-rates" className="mt-4">
-          <TopupRatesPanel />
-        </TabsContent>
-        <TabsContent value="dingconnect" className="mt-4">
-          <DingConnectPanel />
-        </TabsContent>
+        {allowedTabs.map((t) => (
+          <TabsContent key={t.id} value={t.id} className="mt-4">
+            {t.panel}
+          </TabsContent>
+        ))}
       </Tabs>
     </div>
   );
@@ -402,6 +375,14 @@ w.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><ti
 function UsersPanel() {
   const qc = useQueryClient();
   const [userSearch, setUserSearch] = useState("");
+  const [editingUser, setEditingUser] = useState<any>(null);
+
+  const fetchAdminsMap = useServerFn(getAllAdminsPermissionsMap);
+  const { data: adminsMap } = useQuery({
+    queryKey: ["all-admins-permissions"],
+    queryFn: () => fetchAdminsMap(),
+  });
+
   const { data: profiles } = useQuery({
     queryKey: ["admin-profiles"],
     queryFn: async () => (await supabase.from("profiles").select("*")).data ?? [],
@@ -411,25 +392,23 @@ function UsersPanel() {
     queryFn: async () => (await supabase.from("user_roles").select("*")).data ?? [],
   });
 
-  const toggleAgent = async (userId: string, isAgent: boolean) => {
-    const { error } = isAgent
-      ? await supabase.from("user_roles").delete().eq("user_id", userId).eq("role", "agent")
-      : await supabase.from("user_roles").insert({ user_id: userId, role: "agent" });
-    if (error) {
-      toast.error("No se pudo cambiar el rol");
-      return;
-    }
-    toast.success("Rol actualizado");
-    qc.invalidateQueries({ queryKey: ["admin-roles"] });
-  };
-
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Usuarios y agentes</CardTitle>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Shield className="size-4 text-primary" />
+              Gestión de Usuarios, Roles y Permisos
+            </CardTitle>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Transforma cualquier usuario en Administrador con acceso total o restricciones modulares.
+            </p>
+          </div>
+        </div>
         <Input
           className="mt-3"
-          placeholder="Buscar por nombre o teléfono"
+          placeholder="Buscar por nombre o teléfono..."
           value={userSearch}
           onChange={(e) => setUserSearch(e.target.value)}
         />
@@ -445,33 +424,83 @@ function UsersPanel() {
           })
           .map((p) => {
             const mine = (roles ?? []).filter((r) => r.user_id === p.id).map((r) => r.role);
+            const isAdmin = mine.includes("admin");
             const isAgent = mine.includes("agent");
+            const adminPerms = adminsMap?.[p.id];
+            const isSuper = adminPerms ? adminPerms.isSuperAdmin : true;
+
             return (
               <div
                 key={p.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3"
+                className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3.5 transition-colors ${
+                  isAdmin ? "border-primary/30 bg-primary/5" : "border-border"
+                }`}
               >
                 <div>
-                  <p className="font-medium">{p.full_name || "Sin nombre"}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-sm">{p.full_name || "Sin nombre"}</p>
+                    {isAdmin && (
+                      <span className="size-2 rounded-full bg-primary" title="Administrador activo" />
+                    )}
+                  </div>
                   <p className="text-xs text-muted-foreground">{p.phone || "sin teléfono"}</p>
                 </div>
-                <div className="flex flex-wrap gap-1">
-                  {mine.map((r) => (
-                    <Badge key={r} variant="outline">
-                      {r}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {isAdmin && (
+                    isSuper ? (
+                      <Badge className="bg-amber-500/15 text-amber-500 border-amber-500/30 gap-1 text-xs">
+                        <Shield className="size-3" /> Super Admin
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="border-primary/50 text-primary gap-1 text-xs font-semibold">
+                        <Shield className="size-3" /> Admin ({adminPerms?.allowedTabs?.length ?? 0} módulos)
+                      </Badge>
+                    )
+                  )}
+                  {isAgent && !isAdmin && (
+                    <Badge variant="secondary" className="text-xs">
+                      Agente
                     </Badge>
-                  ))}
+                  )}
+                  {!isAdmin && !isAgent && (
+                    <Badge variant="outline" className="text-xs text-muted-foreground">
+                      Cliente
+                    </Badge>
+                  )}
                   <Badge className={KYC_TONE[p.kyc_status as KycStatus]} variant="secondary">
                     {KYC_LABEL[p.kyc_status as KycStatus]}
                   </Badge>
                 </div>
-                <Button size="sm" variant="outline" onClick={() => void toggleAgent(p.id, isAgent)}>
-                  {isAgent ? "Quitar agente" : "Hacer agente"}
+                <Button
+                  size="sm"
+                  variant={isAdmin ? "default" : "outline"}
+                  className={isAdmin ? "gap-1.5 bg-primary text-primary-foreground font-semibold" : "gap-1.5"}
+                  onClick={() => setEditingUser(p)}
+                >
+                  <Shield className="size-3.5" />
+                  {isAdmin ? "Gestionar Permisos" : "Hacer Admin / Rol"}
                 </Button>
               </div>
             );
           })}
       </CardContent>
+
+      {/* Modal de edición de roles y permisos */}
+      {editingUser && (
+        <AdminPermissionsModal
+          isOpen={Boolean(editingUser)}
+          onClose={() => setEditingUser(null)}
+          user={editingUser}
+          currentRole={
+            roles?.some((r) => r.user_id === editingUser.id && r.role === "admin")
+              ? "admin"
+              : roles?.some((r) => r.user_id === editingUser.id && r.role === "agent")
+                ? "agent"
+                : "client"
+          }
+          currentPerms={adminsMap?.[editingUser.id] ?? null}
+        />
+      )}
     </Card>
   );
 }
