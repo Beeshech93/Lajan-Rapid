@@ -9,7 +9,7 @@ export const FALLBACK_COUNTRIES: Country[] = [
   { code: "CL", name: "Chile", currency: "CLP", flag: "🇨🇱", is_origin: true, is_destination: false, is_active: true },
   { code: "BR", name: "Brasil", currency: "BRL", flag: "🇧🇷", is_origin: true, is_destination: false, is_active: true },
   { code: "HT", name: "Haití", currency: "HTG", flag: "🇭🇹", is_origin: false, is_destination: true, is_active: true },
-  { code: "DO", name: "Rep. Dominicana", currency: "DOP", flag: "🇩🇴", is_origin: true, is_destination: true, is_active: true },
+  { code: "DO", name: "Rep. Dominicana", currency: "DOP", flag: "🇩🇴", is_origin: true, is_destination: false, is_active: true },
   { code: "AR", name: "Argentina", currency: "ARS", flag: "🇦🇷", is_origin: true, is_destination: false, is_active: true },
   { code: "CO", name: "Colombia", currency: "COP", flag: "🇨🇴", is_origin: true, is_destination: false, is_active: true },
   { code: "PE", name: "Perú", currency: "PEN", flag: "🇵🇪", is_origin: true, is_destination: false, is_active: true },
@@ -34,7 +34,9 @@ export function useCountries() {
         .order("name");
       if (data && data.length > 0) {
         return data.map((c) =>
-          c.code === "DO" ? { ...c, is_origin: true, is_active: true } : c,
+          c.code === "DO"
+            ? { ...c, is_origin: true, is_destination: false, is_active: true }
+            : c,
         ) as Country[];
       }
       return FALLBACK_COUNTRIES;

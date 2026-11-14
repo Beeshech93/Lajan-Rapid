@@ -1,8 +1,9 @@
--- Habilitar República Dominicana (DO) como país de origen activo y destino
+-- Habilitar República Dominicana (DO) como país de origen activo, pero NO de destino (solo recibe Haití)
 INSERT INTO public.countries (code, name, currency, flag, is_origin, is_destination, is_active)
-VALUES ('DO', 'Rep. Dominicana', 'DOP', '🇩🇴', true, true, true)
+VALUES ('DO', 'Rep. Dominicana', 'DOP', '🇩🇴', true, false, true)
 ON CONFLICT (code) DO UPDATE
 SET is_origin = true,
+    is_destination = false,
     is_active = true,
     currency = 'DOP',
     flag = '🇩🇴',
@@ -19,3 +20,4 @@ BEGIN
     VALUES ('DOP', 'HTG', 2.20, 2.5, 50.0, 1.0, true);
   END IF;
 END $$;
+
