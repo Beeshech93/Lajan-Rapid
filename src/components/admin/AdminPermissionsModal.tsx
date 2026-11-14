@@ -366,3 +366,4 @@ export function AdminPermissionsModal({
     </Dialog>
   );
 }
+

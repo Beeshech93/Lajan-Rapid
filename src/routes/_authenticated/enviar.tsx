@@ -301,11 +301,11 @@ function Enviar() {
                 : "MonCash: máximo 75,000 HTG por transacción."}
             </p>
           )}
-          <div className="rounded-xl bg-mint p-4">
-            <p className="text-xs font-semibold text-warning-foreground/80">
+          <div className="relative overflow-hidden rounded-2xl bg-mint p-4 text-white shadow-lg shadow-emerald-950/25 border border-emerald-400/25">
+            <p className="text-xs font-semibold uppercase tracking-wider text-emerald-100/90">
               {t("send.family_gets")}
             </p>
-            <p className="font-display text-2xl font-bold text-warning-foreground">
+            <p className="mt-1 font-display text-2xl font-bold tracking-tight text-white">
               {money(q.receives, recvCur)}
             </p>
           </div>

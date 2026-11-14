@@ -418,11 +418,11 @@ export function Landing() {
                           <Row label={t("landing.fee")} value={money(q.fee, sendCurrency)} />
                           <Row label={t("landing.total")} value={money(q.total, sendCurrency)} strong />
                         </div>
-                        <div className="rounded-xl bg-mint p-4">
-                          <p className="text-xs font-semibold uppercase tracking-wide text-warning-foreground/80">
+                        <div className="relative overflow-hidden rounded-2xl bg-mint p-4 text-white shadow-lg shadow-emerald-950/25 border border-emerald-400/25">
+                          <p className="text-xs font-semibold uppercase tracking-wider text-emerald-100/90">
                             {t("landing.family_gets")}
                           </p>
-                          <p className="font-display text-3xl font-bold text-warning-foreground">
+                          <p className="mt-1 font-display text-3xl font-extrabold tracking-tight text-white">
                             {money(q.receives, receiveCurrency)}
                           </p>
                         </div>
@@ -528,11 +528,11 @@ export function Landing() {
                           />
                         </div>
 
-                        <div className="rounded-xl bg-mint p-4">
-                          <p className="text-xs font-semibold uppercase tracking-wide text-warning-foreground/80">
+                        <div className="relative overflow-hidden rounded-2xl bg-mint p-4 text-white shadow-lg shadow-emerald-950/25 border border-emerald-400/25">
+                          <p className="text-xs font-semibold uppercase tracking-wider text-emerald-100/90">
                             {t("topup.recipient_gets")}
                           </p>
-                          <p className="font-display text-3xl font-bold text-warning-foreground">
+                          <p className="mt-1 font-display text-3xl font-extrabold tracking-tight text-white">
                             {money(topupReceived, topupDestCurrency)}
                           </p>
                         </div>

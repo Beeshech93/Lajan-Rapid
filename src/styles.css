@@ -152,7 +152,7 @@
     oklch(0.6 0.18 165) 76%,
     var(--card-gradient-start)
   );
-  --gradient-mint: linear-gradient(120deg, oklch(0.6 0.18 165), oklch(0.8 0.19 145));
+  --gradient-mint: linear-gradient(135deg, oklch(0.56 0.17 158) 0%, oklch(0.50 0.16 162) 55%, oklch(0.48 0.14 175) 100%);
   --shadow-soft: 0 1px 2px oklch(0.1 0.03 262 / 0.35), 0 10px 30px -18px oklch(0.1 0.03 262 / 0.55);
   --shadow-lift: 0 2px 8px oklch(0.1 0.03 262 / 0.4), 0 32px 64px -28px oklch(0.72 0.19 155 / 0.3);
 }
