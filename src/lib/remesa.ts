@@ -88,6 +88,7 @@ const DEFAULT_PAYMENTS = ["card"];
 
 const PAYMENTS_BY_COUNTRY: Record<string, string[]> = {
   MX: ["oxxo", "spei", "mercado_pago", "card"],
+  DO: ["card", "bank_transfer", "cash_agent"],
   US: ["card"],
   CA: ["card"],
   BR: ["card"],

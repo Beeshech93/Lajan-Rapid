@@ -9,7 +9,7 @@ export const FALLBACK_COUNTRIES: Country[] = [
   { code: "CL", name: "Chile", currency: "CLP", flag: "🇨🇱", is_origin: true, is_destination: false, is_active: true },
   { code: "BR", name: "Brasil", currency: "BRL", flag: "🇧🇷", is_origin: true, is_destination: false, is_active: true },
   { code: "HT", name: "Haití", currency: "HTG", flag: "🇭🇹", is_origin: false, is_destination: true, is_active: true },
-  { code: "DO", name: "Rep. Dominicana", currency: "DOP", flag: "🇩🇴", is_origin: false, is_destination: true, is_active: true },
+  { code: "DO", name: "Rep. Dominicana", currency: "DOP", flag: "🇩🇴", is_origin: true, is_destination: true, is_active: true },
   { code: "AR", name: "Argentina", currency: "ARS", flag: "🇦🇷", is_origin: true, is_destination: false, is_active: true },
   { code: "CO", name: "Colombia", currency: "COP", flag: "🇨🇴", is_origin: true, is_destination: false, is_active: true },
   { code: "PE", name: "Perú", currency: "PEN", flag: "🇵🇪", is_origin: true, is_destination: false, is_active: true },
@@ -32,7 +32,11 @@ export function useCountries() {
         .select("*")
         .eq("is_active", true)
         .order("name");
-      if (data && data.length > 0) return data as Country[];
+      if (data && data.length > 0) {
+        return data.map((c) =>
+          c.code === "DO" ? { ...c, is_origin: true, is_active: true } : c,
+        ) as Country[];
+      }
       return FALLBACK_COUNTRIES;
     },
   });
@@ -46,6 +50,7 @@ export function useCountries() {
 export const FALLBACK_RATES: Record<string, RateConfig> = {
   "MXN→HTG": { rate: 7.20,    fee_percent: 1.5, fee_fixed: 15,   agent_commission_percent: 0.8 },
   "MXN→DOP": { rate: 3.35,    fee_percent: 2.5, fee_fixed: 25,   agent_commission_percent: 1 },
+  "DOP→HTG": { rate: 2.20,    fee_percent: 2.5, fee_fixed: 50,   agent_commission_percent: 1 },
   "USD→HTG": { rate: 131.00,  fee_percent: 2.5, fee_fixed: 1.5,  agent_commission_percent: 1 },
   "USD→DOP": { rate: 62.00,   fee_percent: 2.5, fee_fixed: 1.5,  agent_commission_percent: 1 },
   "CAD→HTG": { rate: 95.60,   fee_percent: 2.5, fee_fixed: 2,    agent_commission_percent: 1 },
