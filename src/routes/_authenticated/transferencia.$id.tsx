@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Check, Circle, Copy, Landmark, Loader2, Store, FileText } from "lucide-react";
+import { ArrowLeft, Check, Circle, Copy, Landmark, Loader2, Store, FileText, Banknote } from "lucide-react";
 import { toast } from "sonner";
 import { celebrateLogo } from "@/components/LogoAnimation";
 import { useServerFn } from "@tanstack/react-start";
@@ -44,7 +44,7 @@ export const Route = createFileRoute("/_authenticated/transferencia/$id")({
 function Detalle() {
   const { id } = Route.useParams();
   const qc = useQueryClient();
-  const { isAdmin } = useProfile();
+  const { isAdmin, isAgent } = useProfile();
   const { t: t2 } = useI18n();
   const STATUS_LABEL_T: Record<TransferStatus, string> = {
     created: t2("history.status_created"),
@@ -114,15 +114,16 @@ function Detalle() {
   }, [id, qc]);
 
   const status = t?.status as TransferStatus | undefined;
-  const isCardPayment = t
+  const isAgentPayment = t ? t.payment_method === "cash_agent" || Boolean(t.agent_id) : false;
+  const isCardPayment = t && !isAgentPayment
     ? ["mercado_pago", "mercadopago", "card", "tarjeta"].includes(t.payment_method)
     : false;
   const isStripePayment = isCardPayment && t?.origin_country !== "MX";
-  const isOxxo = t?.payment_method === "oxxo";
-  const isSpei = t?.payment_method === "spei";
+  const isOxxo = !isAgentPayment && t?.payment_method === "oxxo";
+  const isSpei = !isAgentPayment && t?.payment_method === "spei";
   const isDirectCashDelivery = t ? ["moncash", "natcash"].includes(t.delivery_method) : false;
   const shouldAutoFinalizeUser =
-    !isAdmin && isDirectCashDelivery && !isCardPayment && !isOxxo && !isSpei;
+    !isAdmin && isDirectCashDelivery && !isCardPayment && !isOxxo && !isSpei && !isAgentPayment;
 
   const effectiveRate = t && Number(t.rate) > 0 ? Number(t.rate) : 7.20;
   const effectiveAmountReceive =
@@ -206,28 +207,63 @@ w.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><ti
         </CardContent>
       </Card>
 
+      {isAgentPayment && (
+        <div className="flex items-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-2.5 text-xs text-emerald-300 font-medium">
+          <Banknote className="size-4 text-emerald-400 shrink-0" />
+          <span>Transacción de Agente Autorizado: Operación directa en efectivo sin intermediarios ni pasarelas de pago externas.</span>
+        </div>
+      )}
+
       {status !== "completed" && status !== "cancelled" && !isOxxo && !isSpei && (
-        <Card className="border-warning/40 bg-warning/10">
+        <Card className={isAgentPayment ? "border-emerald-500/40 bg-emerald-950/20" : "border-warning/40 bg-warning/10"}>
           <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
             <div>
               <p className="font-semibold">
-                {isCardPayment
-                  ? `${t2("detail.complete_payment")} ${paymentName}`
-                  : isDirectCashDelivery && !isAdmin
-                    ? `${t2("detail.processing_to")} ${deliveryName}...`
-                    : `${t2("detail.finalize_to")} ${deliveryName}`}
+                {isAgentPayment
+                  ? status === "awaiting_payment"
+                    ? "Cobro en Efectivo con Agente Pendiente"
+                    : `Pago en Efectivo Confirmado · Entrega a ${deliveryName}`
+                  : isCardPayment
+                    ? `${t2("detail.complete_payment")} ${paymentName}`
+                    : isDirectCashDelivery && !isAdmin
+                      ? `${t2("detail.processing_to")} ${deliveryName}...`
+                      : `${t2("detail.finalize_to")} ${deliveryName}`}
               </p>
               <p className="text-sm text-muted-foreground">
-                {isCardPayment
-                  ? isStripePayment
-                    ? t2("detail.stripe_note")
-                    : t2("detail.mp_note")
-                  : isDirectCashDelivery && !isAdmin
-                    ? t2("detail.processing_note")
-                    : `${t.recipient_name} · ${t.recipient_phone} · ${money(effectiveAmountReceive, t.receive_currency)}`}
+                {isAgentPayment
+                  ? status === "awaiting_payment"
+                    ? `Presenta la referencia ${t.reference} y entrega ${money(Number(t.total_send), t.send_currency)} en efectivo al agente autorizado.`
+                    : `Transacción enviada directamente por agente en efectivo (sin pasarelas de pago externas). Destinatario: ${t.recipient_name} · ${t.recipient_phone} · ${money(effectiveAmountReceive, t.receive_currency)}.`
+                  : isCardPayment
+                    ? isStripePayment
+                      ? t2("detail.stripe_note")
+                      : t2("detail.mp_note")
+                    : isDirectCashDelivery && !isAdmin
+                      ? t2("detail.processing_note")
+                      : `${t.recipient_name} · ${t.recipient_phone} · ${money(effectiveAmountReceive, t.receive_currency)}`}
               </p>
             </div>
-            {isCardPayment ? (
+            {isAgentPayment ? (
+              status === "awaiting_payment" ? (
+                <Badge variant="outline" className="border-amber-500/40 bg-amber-500/10 text-amber-300">
+                  Esperando efectivo en ventanilla
+                </Badge>
+              ) : isDirectCashDelivery && (isAdmin || isAgent) ? (
+                <Button
+                  size="sm"
+                  className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+                  disabled={finalize.isPending}
+                  onClick={() => finalize.mutate()}
+                >
+                  {finalize.isPending && <Loader2 className="size-4 animate-spin" />}
+                  {finalize.isPending ? t2("detail.sending") : `${t2("detail.send_to")} ${deliveryName}`}
+                </Button>
+              ) : (
+                <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/10 text-emerald-300">
+                  En proceso de entrega
+                </Badge>
+              )
+            ) : isCardPayment ? (
               checkoutUrl ? (
                 <Button size="sm" className="gap-2" asChild>
                   <a href={checkoutUrl} target="_blank" rel="noreferrer">

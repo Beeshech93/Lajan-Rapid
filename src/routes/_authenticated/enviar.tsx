@@ -1,13 +1,16 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { toast } from "sonner";
-import { ArrowLeft, AlertTriangle } from "lucide-react";
+import { ArrowLeft, AlertTriangle, Banknote, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { useCountries, useRate, fallbackRate } from "@/hooks/useCorridors";
 import { useServicesConfig } from "@/hooks/useServicesConfig";
+import { agentCreateCashTransfer } from "@/lib/transfers.functions";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,7 +46,8 @@ export const Route = createFileRoute("/_authenticated/enviar")({
 
 function Enviar() {
   const router = useRouter();
-  const { user, profile, isAdmin } = useProfile();
+  const { user, profile, isAdmin, isAgent } = useProfile();
+  const createCashTransfer = useServerFn(agentCreateCashTransfer);
   const { t } = useI18n();
   const { data: countries } = useCountries();
 
@@ -69,6 +73,12 @@ function Enviar() {
   const [delivery, setDelivery] = useState("moncash");
   const [city, setCity] = useState("Port-au-Prince");
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (isAgent) {
+      setPayment("cash_agent");
+    }
+  }, [isAgent]);
 
   const { isEnabled, getMessage, isLoading: isServicesLoading } = useServicesConfig();
   const transfersEnabled = isEnabled("transfers");
@@ -158,6 +168,35 @@ function Enviar() {
       }
       if (!Number.isInteger(amountReceiveHtg)) {
         toast.error("Para NatCash, el monto recibido debe ser un número entero en HTG. Ajusta el monto enviado.");
+        return;
+      }
+    }
+
+    // Las cuentas de agente envían directamente sin pasar por pasarelas externas (Stripe, Mercado Pago)
+    if (isAgent) {
+      setSaving(true);
+      try {
+        const res = await createCashTransfer({
+          data: {
+            originCountry: origin,
+            destinationCountry: destination,
+            recipientName: parsed.data.recipient_name,
+            recipientPhone: parsed.data.recipient_phone,
+            recipientCity: city,
+            deliveryMethod: delivery,
+            amountSend: parsed.data.amount,
+            note: parsed.data.note || undefined,
+          },
+        });
+        setSaving(false);
+        if (res.ok) {
+          toast.success("¡Transacción enviada directamente por agente en efectivo!");
+          router.navigate({ to: "/transferencia/$id", params: { id: res.transferId } });
+          return;
+        }
+      } catch (err) {
+        setSaving(false);
+        toast.error(err instanceof Error ? err.message : t("send.error_create"));
         return;
       }
     }
@@ -364,38 +403,69 @@ function Enviar() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">{t("send.step3")}</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-3 sm:grid-cols-2">
-          {payments.map((m) => (
-            <button
-              key={m.value}
-              type="button"
-              onClick={() => setPayment(m.value)}
-              className={`rounded-xl border p-4 text-left transition-colors ${
-                payment === m.value ? "border-accent bg-accent/10" : "hover:bg-secondary"
-              }`}
-            >
-              <p className="font-medium">{m.label}</p>
-              <p className="text-xs text-muted-foreground">{m.hint}</p>
-            </button>
-          ))}
-        </CardContent>
-      </Card>
+      {isAgent ? (
+        <Card className="border-emerald-500/30 bg-emerald-950/20">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2 text-white">
+              <Banknote className="size-5 text-emerald-400" />
+              Envío Directo de Agente (Solo Efectivo)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="rounded-xl border border-emerald-500/30 bg-card/60 p-4 space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="size-4 text-emerald-400" />
+                  <span className="font-semibold text-white text-sm sm:text-base">
+                    Efectivo en Ventanilla (Directo)
+                  </span>
+                </div>
+                <Badge variant="outline" className="border-emerald-500/40 text-emerald-300 bg-emerald-500/10 text-xs font-semibold">
+                  Sin Stripe ni Mercado Pago
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Como cuenta de agente, esta operación se envía directamente sin pasar por pasarelas externas. El cobro físico en efectivo queda registrado bajo tu agencia y pasa a entrega inmediata.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{t("send.step3")}</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-3 sm:grid-cols-2">
+            {payments.map((m) => (
+              <button
+                key={m.value}
+                type="button"
+                onClick={() => setPayment(m.value)}
+                className={`rounded-xl border p-4 text-left transition-colors ${
+                  payment === m.value ? "border-accent bg-accent/10" : "hover:bg-secondary"
+                }`}
+              >
+                <p className="font-medium">{m.label}</p>
+                <p className="text-xs text-muted-foreground">{m.hint}</p>
+              </button>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       <Button
         type="submit"
         size="lg"
-        className="w-full"
+        className="w-full text-base font-semibold"
         disabled={saving || !cfg || profile?.kyc_status !== "approved" || !transfersEnabled}
       >
         {!transfersEnabled
           ? t("services.disabled_btn")
           : saving
             ? t("send.creating")
-            : `${t("send.confirm")} ${money(q.total, sendCur)}`}
+            : isAgent
+              ? `Enviar Directo en Efectivo (${money(q.total, sendCur)})`
+              : `${t("send.confirm")} ${money(q.total, sendCur)}`}
       </Button>
     </form>
   );
