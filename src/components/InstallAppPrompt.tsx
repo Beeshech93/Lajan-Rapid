@@ -40,6 +40,11 @@ export function InstallAppPrompt() {
     }
 
     const ua = navigator.userAgent || "";
+    const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
+
+    // En formato web normal (escritorio), no mostrar el banner flotante de instalación
+    if (!isMobile) return;
+
     const iosDevice = /iPhone|iPad|iPod/.test(ua);
     setIsIos(iosDevice);
 
@@ -53,11 +58,8 @@ export function InstallAppPrompt() {
 
     // En dispositivos móviles (iOS o Android) donde beforeinstallprompt no se dispare de inmediato,
     // mostrar el banner después de una breve pausa (1.5s)
-    const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
     const timer = setTimeout(() => {
-      if (isMobile) {
-        setIsVisible(true);
-      }
+      setIsVisible(true);
     }, 1500);
 
     return () => {
@@ -97,7 +99,7 @@ export function InstallAppPrompt() {
     <aside
       role="region"
       aria-label="Instalación de aplicación"
-      className="fixed bottom-4 inset-x-4 max-w-md mx-auto z-50 animate-in fade-in slide-in-from-bottom-5 duration-300 pointer-events-auto"
+      className="md:hidden fixed bottom-4 inset-x-4 max-w-md mx-auto z-50 animate-in fade-in slide-in-from-bottom-5 duration-300 pointer-events-auto"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
       <div className="relative overflow-hidden rounded-[1.75rem] bg-surface-elevated/95 backdrop-blur-2xl p-5 shadow-[0_20px_60px_-10px_rgba(0,0,0,0.7)] border border-white/10 text-white ring-1 ring-white/10 before:absolute before:inset-x-8 before:top-0 before:h-[2px] before:bg-gradient-to-r before:from-transparent before:via-primary/80 before:to-transparent">
