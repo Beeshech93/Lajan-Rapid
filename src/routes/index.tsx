@@ -5,6 +5,7 @@ import { ArrowRight, ShieldCheck, Timer, Wallet, TrendingUp, Send, Smartphone, A
 import logoAsset from "@/assets/lajan-rapid-logo.png";
 import womanPhoneAsset from "@/assets/woman-phone-navy.png";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -123,6 +124,14 @@ export function Landing() {
 
   const [activeTab, setActiveTab] = useState("envios");
   const effectiveTab = activeTab;
+
+  useEffect(() => {
+    if (!transfersEnabled && topupsEnabled && activeTab === "envios") {
+      setActiveTab("recargas");
+    } else if (transfersEnabled && !topupsEnabled && activeTab === "recargas") {
+      setActiveTab("envios");
+    }
+  }, [transfersEnabled, topupsEnabled, activeTab]);
 
   const [origin, setOrigin] = useState("MX");
   const [destination, setDestination] = useState("HT");
@@ -243,16 +252,34 @@ export function Landing() {
               {t("landing.subtitle")}
             </p>
             <div className="flex flex-wrap gap-3 pt-1">
-              <Button
-                asChild
-                size="lg"
-                className="gap-2 bg-primary-foreground text-primary hover:bg-primary-foreground/90 font-semibold"
-              >
-                <Link to="/auth" search={{ modo: "registro" }}>
-                  {activeTab === "recargas" ? t("topup.send_recharge") : t("landing.cta")}{" "}
-                  <ArrowRight className="size-4" />
-                </Link>
-              </Button>
+              {activeTab === "envios" && !transfersEnabled ? (
+                <Button
+                  size="lg"
+                  disabled
+                  className="gap-2 bg-primary-foreground/30 text-primary-foreground/70 cursor-not-allowed font-semibold"
+                >
+                  {t("services.disabled_btn")}
+                </Button>
+              ) : activeTab === "recargas" && !topupsEnabled ? (
+                <Button
+                  size="lg"
+                  disabled
+                  className="gap-2 bg-primary-foreground/30 text-primary-foreground/70 cursor-not-allowed font-semibold"
+                >
+                  {t("services.disabled_btn")}
+                </Button>
+              ) : (
+                <Button
+                  asChild
+                  size="lg"
+                  className="gap-2 bg-primary-foreground text-primary hover:bg-primary-foreground/90 font-semibold"
+                >
+                  <Link to="/auth" search={{ modo: "registro" }}>
+                    {activeTab === "recargas" ? t("topup.send_recharge") : t("landing.cta")}{" "}
+                    <ArrowRight className="size-4" />
+                  </Link>
+                </Button>
+              )}
               <Button
                 asChild
                 size="lg"
@@ -291,24 +318,47 @@ export function Landing() {
                       className="gap-2 rounded-lg py-2 font-semibold text-xs sm:text-sm data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-soft"
                     >
                       <Send className="size-4 text-accent" />
-                      {t("nav.send")}
+                      <span>{t("nav.send")}</span>
+                      {!transfersEnabled && (
+                        <Badge variant="outline" className="border-amber-500/40 bg-amber-500/10 text-amber-400 text-[10px] px-1.5 py-0 leading-none">
+                          {t("services.disabled_badge")}
+                        </Badge>
+                      )}
                     </TabsTrigger>
                     <TabsTrigger
                       value="recargas"
                       className="gap-2 rounded-lg py-2 font-semibold text-xs sm:text-sm data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-soft"
                     >
                       <Smartphone className="size-4 text-accent" />
-                      {t("nav.topups")}
+                      <span>{t("nav.topups")}</span>
+                      {!topupsEnabled && (
+                        <Badge variant="outline" className="border-amber-500/40 bg-amber-500/10 text-amber-400 text-[10px] px-1.5 py-0 leading-none">
+                          {t("services.disabled_badge")}
+                        </Badge>
+                      )}
                     </TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="envios" className="space-y-4 mt-0">
-                    {!transfersEnabled && (
-                      <div className="flex items-center gap-2 rounded-lg bg-amber-500/10 border border-amber-500/20 p-2.5 text-xs text-amber-500">
-                        <AlertTriangle className="size-4 shrink-0" />
-                        <span>{getMessage("transfers") || t("services.disabled_alert")}</span>
+                    {!transfersEnabled ? (
+                      <div className="space-y-4 py-8 text-center animate-in fade-in duration-200">
+                        <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-amber-500/15 text-amber-500">
+                          <AlertTriangle className="size-7" />
+                        </div>
+                        <div className="space-y-2">
+                          <h3 className="font-display text-xl font-bold tracking-tight text-foreground">
+                            {t("services.disabled_badge")}
+                          </h3>
+                          <p className="mx-auto max-w-sm text-sm leading-relaxed text-muted-foreground">
+                            {getMessage("transfers") || t("services.disabled_alert")}
+                          </p>
+                        </div>
+                        <Button disabled className="w-full bg-muted text-muted-foreground cursor-not-allowed">
+                          {t("services.disabled_btn")}
+                        </Button>
                       </div>
-                    )}
+                    ) : (
+                      <>
                         <div className="grid grid-cols-2 gap-3">
                           <div className="space-y-1.5">
                             <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -386,15 +436,30 @@ export function Landing() {
                             {money(q.receives, receiveCurrency)}
                           </p>
                         </div>
-                      </TabsContent>
+                      </>
+                    )}
+                  </TabsContent>
 
                   <TabsContent value="recargas" className="space-y-4 mt-0">
-                    {!topupsEnabled && (
-                      <div className="flex items-center gap-2 rounded-lg bg-amber-500/10 border border-amber-500/20 p-2.5 text-xs text-amber-500">
-                        <AlertTriangle className="size-4 shrink-0" />
-                        <span>{getMessage("topups") || t("services.disabled_alert")}</span>
+                    {!topupsEnabled ? (
+                      <div className="space-y-4 py-8 text-center animate-in fade-in duration-200">
+                        <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-amber-500/15 text-amber-500">
+                          <AlertTriangle className="size-7" />
+                        </div>
+                        <div className="space-y-2">
+                          <h3 className="font-display text-xl font-bold tracking-tight text-foreground">
+                            {t("services.disabled_badge")}
+                          </h3>
+                          <p className="mx-auto max-w-sm text-sm leading-relaxed text-muted-foreground">
+                            {getMessage("topups") || t("services.disabled_alert")}
+                          </p>
+                        </div>
+                        <Button disabled className="w-full bg-muted text-muted-foreground cursor-not-allowed">
+                          {t("services.disabled_btn")}
+                        </Button>
                       </div>
-                    )}
+                    ) : (
+                      <>
                         <div className="grid grid-cols-2 gap-3">
                           <div className="space-y-1.5">
                             <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -500,7 +565,9 @@ export function Landing() {
                             {money(topupReceived, topupDestCurrency)}
                           </p>
                         </div>
-                      </TabsContent>
+                      </>
+                    )}
+                  </TabsContent>
                   </Tabs>
               </CardContent>
             </Card>
