@@ -92,34 +92,36 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen bg-background md:flex">
-      <aside className="hidden w-64 shrink-0 flex-col bg-sidebar p-5 text-sidebar-foreground md:flex">
-        <div className="mb-8 flex items-center justify-between gap-2">
-          <Link to="/dashboard" className="flex min-w-0 items-center gap-2">
-            <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-xl bg-logo-surface p-1">
-              <img src={logoAsset} alt="Lajan Rapid" className="h-full w-full object-contain" />
-            </span>
-            <span className="truncate font-display text-lg font-semibold">Lajan Rapid</span>
-          </Link>
-          <NotificationBell triggerClassName="text-sidebar-foreground/70 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/60" />
-        </div>
-        <nav className="flex flex-1 flex-col gap-1">
-          {nav.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                pathname === item.to
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
-              )}
-            >
-              <item.icon className="size-4" />
-              {t(item.key)}
+      <aside className="hidden w-64 shrink-0 flex-col justify-between bg-sidebar p-5 text-sidebar-foreground md:sticky md:top-0 md:flex md:h-screen md:overflow-y-auto">
+        <div className="flex flex-1 flex-col">
+          <div className="mb-8 flex items-center justify-between gap-2">
+            <Link to="/dashboard" className="flex min-w-0 items-center gap-2">
+              <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-xl bg-logo-surface p-1">
+                <img src={logoAsset} alt="Lajan Rapid" className="h-full w-full object-contain" />
+              </span>
+              <span className="truncate font-display text-lg font-semibold">Lajan Rapid</span>
             </Link>
-          ))}
-        </nav>
-        <div className="mt-4 space-y-2 border-t border-sidebar-border pt-4">
+            <NotificationBell triggerClassName="text-sidebar-foreground/70 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/60" />
+          </div>
+          <nav className="flex flex-1 flex-col gap-1">
+            {nav.map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                  pathname === item.to
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
+                )}
+              >
+                <item.icon className="size-4" />
+                {t(item.key)}
+              </Link>
+            ))}
+          </nav>
+        </div>
+        <div className="mt-4 shrink-0 space-y-2 border-t border-sidebar-border pt-4">
           <LanguageSwitcher className="w-full bg-sidebar-accent/40 text-sidebar-foreground" />
           <p className="truncate text-sm font-medium">{profile?.full_name || t("nav.account")}</p>
           <Button
