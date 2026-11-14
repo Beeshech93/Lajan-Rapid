@@ -27,8 +27,8 @@ export type AdminTabId =
 export interface AdminPermissionsConfig {
   isSuperAdmin: boolean;
   allowedTabs: AdminTabId[];
-  updatedAt?: string;
-  updatedBy?: string;
+  updatedAt?: string | undefined;
+  updatedBy?: string | undefined;
 }
 
 export const ALL_ADMIN_TAB_IDS: AdminTabId[] = [

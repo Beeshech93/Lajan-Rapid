@@ -43,7 +43,7 @@ export const Route = createFileRoute("/_authenticated/enviar")({
 
 function Enviar() {
   const router = useRouter();
-  const { user, profile } = useProfile();
+  const { user, profile, isAdmin } = useProfile();
   const { t } = useI18n();
   const { data: countries } = useCountries();
 
