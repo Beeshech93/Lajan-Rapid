@@ -12,8 +12,8 @@ interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
 }
 
-const DISMISS_KEY = "pwa_install_prompt_dismissed_until";
-const DISMISS_DURATION_MS = 3 * 24 * 60 * 60 * 1000; // 3 días
+const DISMISS_KEY = "pwa_install_prompt_dismissed_v2";
+const DISMISS_DURATION_MS = 24 * 60 * 60 * 1000; // 1 día
 
 export function InstallAppPrompt() {
   const { t } = useI18n();
@@ -40,7 +40,7 @@ export function InstallAppPrompt() {
     }
 
     const ua = navigator.userAgent || "";
-    const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
+    const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua) || window.innerWidth < 768;
 
     // En formato web normal (escritorio), no mostrar el banner flotante de instalación
     if (!isMobile) return;
@@ -57,10 +57,10 @@ export function InstallAppPrompt() {
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
 
     // En dispositivos móviles (iOS o Android) donde beforeinstallprompt no se dispare de inmediato,
-    // mostrar el banner después de una breve pausa (1.5s)
+    // mostrar el banner después de una breve pausa (1.2s)
     const timer = setTimeout(() => {
       setIsVisible(true);
-    }, 1500);
+    }, 1200);
 
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
@@ -96,86 +96,97 @@ export function InstallAppPrompt() {
   if (!isVisible) return null;
 
   return (
-    <aside
-      role="region"
-      aria-label="Instalación de aplicación"
-      className="md:hidden fixed bottom-4 inset-x-4 max-w-md mx-auto z-50 animate-in fade-in slide-in-from-bottom-5 duration-300 pointer-events-auto"
-      style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
-    >
-      <div className="relative overflow-hidden rounded-[1.75rem] bg-surface-elevated/95 backdrop-blur-2xl p-5 shadow-[0_20px_60px_-10px_rgba(0,0,0,0.7)] border border-white/10 text-white ring-1 ring-white/10 before:absolute before:inset-x-8 before:top-0 before:h-[2px] before:bg-gradient-to-r before:from-transparent before:via-primary/80 before:to-transparent">
-        {/* Cabecera: Icono + Título/Descripción + Botón Cerrar */}
-        <div className="flex items-start gap-3.5">
-          {/* Icono de la App (superficie blanca limpia con el logo nítido) */}
-          <div className="size-13 shrink-0 rounded-2xl bg-white p-2 shadow-soft ring-1 ring-white/20 flex items-center justify-center">
-            <img
-              src={logoAsset}
-              alt="Lajan Rapid"
-              className="h-full w-full object-contain"
-            />
+    <div className="md:hidden fixed inset-0 z-50 flex items-end justify-center p-4 pb-6 pointer-events-none">
+      {/* Fondo semitransparente con desenfoque suave */}
+      <div
+        className="fixed inset-0 bg-black/60 backdrop-blur-[2px] pointer-events-auto transition-opacity duration-300 animate-in fade-in"
+        onClick={handleDismiss}
+        aria-hidden="true"
+      />
+
+      {/* Tarjeta flotante estilo modal inferior idéntico al diseño */}
+      <aside
+        role="dialog"
+        aria-modal="true"
+        aria-label="Instalación de aplicación"
+        className="relative w-full max-w-md pointer-events-auto animate-in fade-in slide-in-from-bottom-6 duration-300"
+        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+      >
+        <div className="relative overflow-hidden rounded-[28px] bg-white p-5 sm:p-6 shadow-2xl text-slate-900 border border-slate-100">
+          {/* Cabecera: Icono Squircle Negro + Título/Descripción + Botón X */}
+          <div className="flex items-start gap-3.5">
+            {/* Logo en squircle negro elegante */}
+            <div className="size-13 sm:size-14 shrink-0 rounded-2xl bg-black p-2 flex items-center justify-center shadow-sm">
+              <img
+                src={logoAsset}
+                alt="Lajan Rapid"
+                className="h-full w-full object-contain"
+              />
+            </div>
+
+            {/* Título y descripción con tipografía limpia y de alto contraste */}
+            <div className="flex-1 min-w-0 pr-1 pt-0.5">
+              <h3 className="font-semibold text-base sm:text-lg text-slate-900 leading-snug tracking-tight">
+                {t("install.prompt_title")}
+              </h3>
+              <p className="mt-1 text-xs sm:text-sm text-slate-500 leading-snug font-normal">
+                {t("install.prompt_desc")}
+              </p>
+            </div>
+
+            {/* Botón X Cerrar */}
+            <button
+              type="button"
+              onClick={handleDismiss}
+              className="text-slate-400 hover:text-slate-700 p-1 -mr-1 -mt-1 rounded-full transition-colors active:scale-95 cursor-pointer"
+              aria-label="Cerrar"
+            >
+              <X className="size-5 stroke-[2]" />
+            </button>
           </div>
 
-          {/* Textos de alto contraste y legibilidad */}
-          <div className="flex-1 min-w-0 pr-1">
-            <h3 className="font-display font-bold text-base sm:text-lg text-white tracking-tight leading-snug">
-              {t("install.prompt_title")}
-            </h3>
-            <p className="mt-1 text-xs sm:text-sm text-slate-300 leading-snug">
-              {t("install.prompt_desc")}
-            </p>
-          </div>
+          {/* Instrucciones desplegables si se requiere en iOS / navegadores sin prompt automático */}
+          {showInstructions && (
+            <div className="mt-3.5 rounded-xl bg-slate-50 border border-slate-200/80 p-3.5 text-xs sm:text-sm text-slate-700 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
+              {isIos ? (
+                <div className="space-y-1.5">
+                  <p className="font-semibold flex items-center gap-1.5 text-slate-900">
+                    <Smartphone className="size-4 text-primary" /> Para iPhone / iPad (Safari):
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <Share className="size-4 shrink-0 text-primary" />
+                    <span>1. {t("install.ios_step1")}</span>
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <PlusSquare className="size-4 shrink-0 text-primary" />
+                    <span>2. {t("install.ios_step2")}</span>
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  <p className="font-semibold flex items-center gap-1.5 text-slate-900">
+                    <Smartphone className="size-4 text-primary" /> Para Android (Chrome):
+                  </p>
+                  <p className="text-slate-600 leading-relaxed">
+                    {t("install.android_instructions")}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
-          {/* Botón X Cerrar */}
+          {/* Botón principal negro: Instalar App */}
           <button
             type="button"
-            onClick={handleDismiss}
-            className="text-slate-400 hover:text-white hover:bg-white/10 p-1.5 -mr-1 -mt-1 rounded-full transition-colors active:scale-95 cursor-pointer"
-            aria-label="Cerrar"
+            onClick={handleInstallClick}
+            className="mt-4 w-full rounded-2xl bg-[#121212] hover:bg-black text-white font-medium py-3.5 px-4 text-sm sm:text-base flex items-center justify-center gap-2 shadow-sm active:scale-[0.99] transition-all cursor-pointer"
           >
-            <X className="size-4 sm:size-5" />
+            <Download className="size-4.5 stroke-[2.2]" />
+            <span>{t("install.prompt_btn")}</span>
           </button>
         </div>
-
-        {/* Instrucciones desplegables si se requiere en iOS / navegadores sin prompt automático */}
-        {showInstructions && (
-          <div className="mt-3.5 rounded-2xl bg-surface-secondary/90 border border-white/10 p-3.5 text-xs sm:text-sm text-slate-200 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
-            {isIos ? (
-              <div className="space-y-1.5">
-                <p className="font-semibold flex items-center gap-1.5 text-primary">
-                  <Smartphone className="size-4" /> Para iPhone / iPad (Safari):
-                </p>
-                <p className="flex items-center gap-2">
-                  <Share className="size-4 shrink-0 text-primary" />
-                  <span>1. {t("install.ios_step1")}</span>
-                </p>
-                <p className="flex items-center gap-2">
-                  <PlusSquare className="size-4 shrink-0 text-primary" />
-                  <span>2. {t("install.ios_step2")}</span>
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-1.5">
-                <p className="font-semibold flex items-center gap-1.5 text-primary">
-                  <Smartphone className="size-4" /> Para Android (Chrome):
-                </p>
-                <p className="text-slate-300 leading-relaxed">
-                  {t("install.android_instructions")}
-                </p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Botón principal: Verde vibrante característico de Lajan Rapid */}
-        <button
-          type="button"
-          onClick={handleInstallClick}
-          className="mt-4 w-full rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 font-display font-bold py-3.5 px-4 text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg shadow-primary/25 active:scale-[0.99] transition-all cursor-pointer"
-        >
-          <Download className="size-4.5 stroke-[2.5]" />
-          <span>{t("install.prompt_btn")}</span>
-        </button>
-      </div>
-    </aside>
+      </aside>
+    </div>
   );
 }
 
