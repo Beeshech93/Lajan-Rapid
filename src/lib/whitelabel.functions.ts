@@ -6,6 +6,7 @@ import {
   type TenantContent,
   type TenantSettings,
   DEFAULT_LAJAN_RAPID_TENANT,
+  INITIAL_WHITE_LABEL_TENANTS,
 } from "./whitelabel.types";
 
 const CREDENTIALS_BACKUP_KEY = "white_label_tenants_data";
@@ -74,13 +75,19 @@ async function loadFromFallback(supabaseAdmin: any): Promise<Tenant[]> {
     if (data?.value) {
       const parsed = JSON.parse(data.value);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
+        const list: Tenant[] = [...parsed];
+        for (const init of INITIAL_WHITE_LABEL_TENANTS) {
+          if (!list.some((t) => t.slug === init.slug || t.id === init.id)) {
+            list.push(init);
+          }
+        }
+        return list;
       }
     }
   } catch (err) {
     console.error("Error reading white label from credentials fallback:", err);
   }
-  return [DEFAULT_LAJAN_RAPID_TENANT];
+  return INITIAL_WHITE_LABEL_TENANTS;
 }
 
 // Fallback saver to integration_credentials
@@ -114,9 +121,11 @@ export const getWhiteLabelTenants = createServerFn({ method: "GET" }).handler(
 
       if (!error && data && data.length > 0) {
         const tenants = data.map(rowToTenant);
-        // Asegurar que exista la marca principal Lajan Rapid
-        if (!tenants.some((t: Tenant) => t.isDefault || t.slug === "default")) {
-          tenants.unshift(DEFAULT_LAJAN_RAPID_TENANT);
+        // Asegurar que existan la marca principal Lajan Rapid y las empresas piloto
+        for (const init of INITIAL_WHITE_LABEL_TENANTS) {
+          if (!tenants.some((t: Tenant) => t.slug === init.slug || t.id === init.id)) {
+            tenants.push(init);
+          }
         }
         return tenants;
       }
@@ -126,7 +135,7 @@ export const getWhiteLabelTenants = createServerFn({ method: "GET" }).handler(
       return fallbackList;
     } catch (e: any) {
       console.error("Error in getWhiteLabelTenants:", e?.message || e);
-      return [DEFAULT_LAJAN_RAPID_TENANT];
+      return INITIAL_WHITE_LABEL_TENANTS;
     }
   }
 );

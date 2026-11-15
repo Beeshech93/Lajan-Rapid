@@ -60,6 +60,96 @@ VALUES (
 ON CONFLICT (slug) DO UPDATE
 SET is_default = true, name = 'Lajan Rapid';
 
+-- Seed Empresa Piloto 1: VipPip Express
+INSERT INTO public.tenants (id, slug, name, legal_name, is_default, is_active, domain, subdomain, branding, content, settings)
+VALUES (
+  '00000000-0000-0000-0000-000000000002',
+  'vippip',
+  'VipPip Express',
+  'VipPip Global Remittance S.A.',
+  false,
+  true,
+  'vippip.lajanrapid.app',
+  'vippip',
+  '{
+    "primaryColor": "#2563eb",
+    "primaryDarkColor": "#1d4ed8",
+    "accentColor": "#60a5fa",
+    "backgroundColor": "#0a0f1d",
+    "surfaceColor": "#111827",
+    "textColor": "#f9fafb",
+    "fontFamily": "Sora, sans-serif",
+    "borderRadius": "1rem"
+  }'::jsonb,
+  '{
+    "slogan": "Transferencias directas y seguras a Haití",
+    "tagline": "Tu aliado confiable para enviar a MonCash y NatCash sin intermediarios",
+    "supportEmail": "soporte@vippip.com",
+    "supportPhone": "+1 (800) 847-7470",
+    "supportWhatsapp": "18008477470",
+    "address": "Miami, FL & Santo Domingo, RD"
+  }'::jsonb,
+  '{
+    "allowedOrigins": ["DO", "MX", "US", "CA", "BR", "CL", "ES", "FR"],
+    "allowedDestinations": ["HT"],
+    "feeMarkupPercent": 0.5,
+    "feeMarkupFixed": 0,
+    "enabledServices": {
+      "transfers": true,
+      "topups": true,
+      "crypto": true,
+      "virtualCards": true
+    }
+  }'::jsonb
+)
+ON CONFLICT (slug) DO UPDATE
+SET name = 'VipPip Express', is_active = true;
+
+-- Seed Empresa Piloto 2: Kash Ayiti
+INSERT INTO public.tenants (id, slug, name, legal_name, is_default, is_active, domain, subdomain, branding, content, settings)
+VALUES (
+  '00000000-0000-0000-0000-000000000003',
+  'kash-ayiti',
+  'Kash Ayiti',
+  'Kash Ayiti Financial Services Ltd.',
+  false,
+  true,
+  'kashayiti.lajanrapid.app',
+  'kashayiti',
+  '{
+    "primaryColor": "#f59e0b",
+    "primaryDarkColor": "#d97706",
+    "accentColor": "#fbbf24",
+    "backgroundColor": "#120e09",
+    "surfaceColor": "#1c160e",
+    "textColor": "#fffbeb",
+    "fontFamily": "Sora, sans-serif",
+    "borderRadius": "1.25rem"
+  }'::jsonb,
+  '{
+    "slogan": "Voye lajan bay fanmi w an sekirite",
+    "tagline": "Sèvis transfè lajan ki pi rapid pou Ayiti depi tout peyi",
+    "supportEmail": "contact@kashayiti.com",
+    "supportPhone": "+1 (829) 555-0199",
+    "supportWhatsapp": "18295550199",
+    "address": "Pétion-Ville, Haïti & Santiago, RD"
+  }'::jsonb,
+  '{
+    "allowedOrigins": ["DO", "MX", "US", "CA", "BR", "CL", "ES", "FR"],
+    "allowedDestinations": ["HT"],
+    "feeMarkupPercent": 0.75,
+    "feeMarkupFixed": 1.0,
+    "enabledServices": {
+      "transfers": true,
+      "topups": true,
+      "crypto": true,
+      "virtualCards": true
+    }
+  }'::jsonb
+)
+ON CONFLICT (slug) DO UPDATE
+SET name = 'Kash Ayiti', is_active = true;
+
 -- Add tenant_id to transfers and profiles if not already present
 DO $$
 BEGIN

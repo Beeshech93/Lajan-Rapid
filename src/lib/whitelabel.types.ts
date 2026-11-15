@@ -190,3 +190,97 @@ export const DEFAULT_LAJAN_RAPID_TENANT: Tenant = {
   createdAt: "2026-01-01T00:00:00Z",
   updatedAt: "2026-11-14T00:00:00Z",
 };
+
+// Empresa Piloto 1: VipPip Express (Fintech Azul Real)
+export const PILOT_VIPPIP_TENANT: Tenant = {
+  id: "00000000-0000-0000-0000-000000000002",
+  slug: "vippip",
+  name: "VipPip Express",
+  legalName: "VipPip Global Remittance S.A.",
+  isDefault: false,
+  isActive: true,
+  domain: "vippip.lajanrapid.app",
+  subdomain: "vippip",
+  branding: {
+    primaryColor: "#2563eb",
+    primaryDarkColor: "#1d4ed8",
+    accentColor: "#60a5fa",
+    backgroundColor: "#0a0f1d",
+    surfaceColor: "#111827",
+    textColor: "#f9fafb",
+    fontFamily: "Sora, sans-serif",
+    borderRadius: "1rem",
+  },
+  content: {
+    slogan: "Transferencias directas y seguras a Haití",
+    tagline: "Tu aliado confiable para enviar a MonCash y NatCash sin intermediarios",
+    supportEmail: "soporte@vippip.com",
+    supportPhone: "+1 (800) 847-7470",
+    supportWhatsapp: "18008477470",
+    address: "Miami, FL & Santo Domingo, RD",
+  },
+  settings: {
+    allowedOrigins: ["DO", "MX", "US", "CA", "BR", "CL", "ES", "FR"],
+    allowedDestinations: ["HT"],
+    feeMarkupPercent: 0.5,
+    feeMarkupFixed: 0,
+    enabledServices: {
+      transfers: true,
+      topups: true,
+      crypto: true,
+      virtualCards: true,
+    },
+  },
+  createdAt: "2026-11-15T00:00:00Z",
+  updatedAt: "2026-11-15T00:00:00Z",
+};
+
+// Empresa Piloto 2: Kash Ayiti (Fintech Ámbar y Oro)
+export const PILOT_KASH_AYITI_TENANT: Tenant = {
+  id: "00000000-0000-0000-0000-000000000003",
+  slug: "kash-ayiti",
+  name: "Kash Ayiti",
+  legalName: "Kash Ayiti Financial Services Ltd.",
+  isDefault: false,
+  isActive: true,
+  domain: "kashayiti.lajanrapid.app",
+  subdomain: "kashayiti",
+  branding: {
+    primaryColor: "#f59e0b",
+    primaryDarkColor: "#d97706",
+    accentColor: "#fbbf24",
+    backgroundColor: "#120e09",
+    surfaceColor: "#1c160e",
+    textColor: "#fffbeb",
+    fontFamily: "Sora, sans-serif",
+    borderRadius: "1.25rem",
+  },
+  content: {
+    slogan: "Voye lajan bay fanmi w an sekirite",
+    tagline: "Sèvis transfè lajan ki pi rapid pou Ayiti depi tout peyi",
+    supportEmail: "contact@kashayiti.com",
+    supportPhone: "+1 (829) 555-0199",
+    supportWhatsapp: "18295550199",
+    address: "Pétion-Ville, Haïti & Santiago, RD",
+  },
+  settings: {
+    allowedOrigins: ["DO", "MX", "US", "CA", "BR", "CL", "ES", "FR"],
+    allowedDestinations: ["HT"],
+    feeMarkupPercent: 0.75,
+    feeMarkupFixed: 1.0,
+    enabledServices: {
+      transfers: true,
+      topups: true,
+      crypto: true,
+      virtualCards: true,
+    },
+  },
+  createdAt: "2026-11-15T00:00:00Z",
+  updatedAt: "2026-11-15T00:00:00Z",
+};
+
+export const INITIAL_WHITE_LABEL_TENANTS: Tenant[] = [
+  DEFAULT_LAJAN_RAPID_TENANT,
+  PILOT_VIPPIP_TENANT,
+  PILOT_KASH_AYITI_TENANT,
+];

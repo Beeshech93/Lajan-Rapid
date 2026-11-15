@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   type Tenant,
   DEFAULT_LAJAN_RAPID_TENANT,
+  INITIAL_WHITE_LABEL_TENANTS,
 } from "./whitelabel.types";
 import { getWhiteLabelTenants } from "./whitelabel.functions";
 import logoAsset from "@/assets/lajan-rapid-logo.png";
@@ -30,11 +31,11 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
     queryKey: ["white-label-tenants"],
     queryFn: () => getWhiteLabelTenants(),
     staleTime: 1000 * 60 * 5, // 5 min
-    initialData: [DEFAULT_LAJAN_RAPID_TENANT],
+    initialData: INITIAL_WHITE_LABEL_TENANTS,
   });
 
   const allBrands = useMemo(() => {
-    const list = serverTenants && serverTenants.length > 0 ? serverTenants : [DEFAULT_LAJAN_RAPID_TENANT];
+    const list = serverTenants && serverTenants.length > 0 ? serverTenants : INITIAL_WHITE_LABEL_TENANTS;
     if (!list.some((t) => t.isDefault || t.slug === "default")) {
       return [DEFAULT_LAJAN_RAPID_TENANT, ...list];
     }

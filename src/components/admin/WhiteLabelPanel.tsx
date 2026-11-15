@@ -361,9 +361,16 @@ export function WhiteLabelPanel() {
                           <ShieldCheck className="mr-1 size-3" /> Marca Principal (Root)
                         </Badge>
                       ) : (
-                        <Badge variant={t.isActive ? "default" : "secondary"}>
-                          {t.isActive ? "Activa" : "Inactiva"}
-                        </Badge>
+                        <>
+                          <Badge variant={t.isActive ? "default" : "secondary"}>
+                            {t.isActive ? "Activa" : "Inactiva"}
+                          </Badge>
+                          {(t.slug === "vippip" || t.slug === "kash-ayiti") && (
+                            <Badge className="bg-blue-500/15 text-blue-400 border-blue-500/30 text-[10px]">
+                              Piloto Oficial
+                            </Badge>
+                          )}
+                        </>
                       )}
                       {isCurrentlyActiveInSession && (
                         <Badge className="bg-accent/20 text-accent border-accent/30">
