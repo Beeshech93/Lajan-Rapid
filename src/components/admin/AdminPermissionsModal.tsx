@@ -60,6 +60,7 @@ const TAB_METAS: TabMeta[] = [
   // Configuración
   { id: "servicios", label: "Control de Servicios", desc: "Habilitar/deshabilitar envíos, recargas o cripto", category: "configuracion" },
   { id: "banner", label: "Banner Promocional", desc: "Gestionar anuncios y avisos en la web", category: "configuracion" },
+  { id: "whitelabel", label: "White Label Multiempresa", desc: "Crear y personalizar marcas aliadas, dominios, temas y comisiones", category: "configuracion" },
 
   // Integraciones
   { id: "mercadopago", label: "Mercado Pago", desc: "Credenciales y cobros en México", category: "integraciones" },

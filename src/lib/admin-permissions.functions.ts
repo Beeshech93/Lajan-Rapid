@@ -22,6 +22,7 @@ export type AdminTabId =
   | "recargas"
   | "usuarios"
   | "tarifas"
+  | "whitelabel"
   | "migracion";
 
 export interface AdminPermissionsConfig {
@@ -52,6 +53,7 @@ export const ALL_ADMIN_TAB_IDS: AdminTabId[] = [
   "recargas",
   "usuarios",
   "tarifas",
+  "whitelabel",
   "migracion",
 ];
 

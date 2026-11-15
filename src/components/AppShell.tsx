@@ -22,6 +22,7 @@ import { NotificationBell } from "@/components/NotificationBell";
 import { AdBanner } from "@/components/AdBanner";
 import { useServicesConfig } from "@/hooks/useServicesConfig";
 import { useI18n } from "@/lib/i18n";
+import { useBrand } from "@/hooks/useBrand";
 
 const baseNav = [
   { to: "/dashboard", key: "nav.home", icon: Home },
@@ -67,6 +68,7 @@ function NavItem({ item, active, label }: { item: NavEntry; active: boolean; lab
 export function AppShell({ children }: { children: ReactNode }) {
   const { profile, isAdmin, isAgent } = useProfile();
   const { t } = useI18n();
+  const { currentBrand, logoSrc } = useBrand();
   const router = useRouter();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
@@ -97,9 +99,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="mb-8 flex items-center justify-between gap-2">
             <Link to="/dashboard" className="flex min-w-0 items-center gap-2">
               <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-xl bg-logo-surface p-1">
-                <img src={logoAsset} alt="Lajan Rapid" className="h-full w-full object-contain" />
+                <img src={logoSrc} alt={currentBrand.name} className="h-full w-full object-contain" />
               </span>
-              <span className="truncate font-display text-lg font-semibold">Lajan Rapid</span>
+              <span className="truncate font-display text-lg font-semibold">{currentBrand.name}</span>
             </Link>
             <NotificationBell triggerClassName="text-sidebar-foreground/70 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/60" />
           </div>
@@ -139,9 +141,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         <header className="sticky top-0 z-30 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b bg-card/90 px-4 py-3 pt-[calc(0.75rem+env(safe-area-inset-top))] backdrop-blur-md md:hidden">
           <Link to="/dashboard" className="flex min-w-0 items-center gap-2">
             <span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-lg bg-logo-surface p-0.5">
-              <img src={logoAsset} alt="Lajan Rapid" className="h-full w-full object-contain" />
+              <img src={logoSrc} alt={currentBrand.name} className="h-full w-full object-contain" />
             </span>
-            <span className="truncate font-display font-semibold">Lajan Rapid</span>
+            <span className="truncate font-display font-semibold">{currentBrand.name}</span>
           </Link>
           <div className="flex shrink-0 items-center gap-1">
             <Button variant="ghost" size="icon" asChild aria-label={t("nav.support")}>

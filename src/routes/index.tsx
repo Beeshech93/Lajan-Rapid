@@ -21,6 +21,7 @@ import { useCountries, useRate, useTopupRate, fallbackRate } from "@/hooks/useCo
 import { TOPUP_COUNTRIES, findTopupCountry } from "@/lib/topup-operators";
 import { useI18n } from "@/lib/i18n";
 import { useServicesConfig } from "@/hooks/useServicesConfig";
+import { useBrand } from "@/hooks/useBrand";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { InstallAppCard } from "@/components/InstallAppCard";
 import { AdBanner } from "@/components/AdBanner";
@@ -118,6 +119,7 @@ export const Route = createFileRoute("/")({
 
 export function Landing() {
   const { t } = useI18n();
+  const { currentBrand, logoSrc, isCustomBrand } = useBrand();
   const { isEnabled, getMessage } = useServicesConfig();
   const transfersEnabled = isEnabled("transfers");
   const topupsEnabled = isEnabled("topups");
@@ -160,7 +162,10 @@ export function Landing() {
   };
   const effectiveCfg = cfg && Number(cfg.rate) > 0 ? cfg : fbRate;
 
-  const q = quote(Number(amount), effectiveCfg);
+  const q = quote(Number(amount), effectiveCfg, {
+    percent: currentBrand.settings?.feeMarkupPercent,
+    fixed: currentBrand.settings?.feeMarkupFixed,
+  });
 
   // Recargas
   const topupOriginCountry = origins.find((c) => c.code === topupOrigin);
@@ -209,13 +214,13 @@ export function Landing() {
           <Link
             to="/"
             className="flex min-w-0 items-center gap-2 transition-opacity hover:opacity-90 sm:gap-2.5"
-            aria-label="Lajan Rapid"
+            aria-label={currentBrand.name}
           >
             <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-xl bg-logo-surface p-1 shadow-soft">
-              <img src={logoAsset} alt="Lajan Rapid" className="h-full w-full object-contain" />
+              <img src={logoSrc} alt={currentBrand.name} className="h-full w-full object-contain" />
             </span>
             <span className="truncate font-display text-base font-semibold tracking-tight sm:text-lg">
-              Lajan Rapid
+              {currentBrand.name}
             </span>
           </Link>
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
@@ -246,10 +251,14 @@ export function Landing() {
               <TrendingUp className="size-3.5" /> {t("landing.badge")}
             </span>
             <h1 className="font-display text-3xl font-bold leading-[1.08] sm:text-4xl lg:text-[3rem]">
-              {t("landing.title")}
+              {isCustomBrand && currentBrand.content.slogan
+                ? currentBrand.content.slogan
+                : t("landing.title")}
             </h1>
             <p className="max-w-lg text-base text-foreground/75 sm:text-lg leading-relaxed">
-              {t("landing.subtitle")}
+              {isCustomBrand && currentBrand.content.tagline
+                ? currentBrand.content.tagline
+                : t("landing.subtitle")}
             </p>
             <div className="flex flex-wrap gap-3 pt-1">
               {activeTab === "envios" && !transfersEnabled ? (

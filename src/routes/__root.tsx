@@ -14,6 +14,7 @@ import appCss from "../styles.css?url";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { I18nProvider } from "@/lib/i18n";
+import { BrandProvider } from "@/lib/brand-context";
 import { LogoIntro, LogoCelebration } from "@/components/LogoAnimation";
 import { InstallAppPrompt } from "@/components/InstallAppPrompt";
 
@@ -201,12 +202,14 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <I18nProvider>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <LogoIntro />
-        <LogoCelebration />
-        <Outlet />
-        <InstallAppPrompt />
-        <Toaster position="top-center" richColors />
+        <BrandProvider>
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+          <LogoIntro />
+          <LogoCelebration />
+          <Outlet />
+          <InstallAppPrompt />
+          <Toaster position="top-center" richColors />
+        </BrandProvider>
       </I18nProvider>
     </QueryClientProvider>
   );

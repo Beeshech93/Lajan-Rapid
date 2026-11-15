@@ -39,6 +39,7 @@ import { AdBannerPanel } from "@/components/admin/AdBannerPanel";
 import { ServicesPanel } from "@/components/admin/ServicesPanel";
 import { KycPanel } from "@/components/admin/KycPanel";
 import { TopupsPanel } from "@/components/admin/TopupsPanel";
+import { WhiteLabelPanel } from "@/components/admin/WhiteLabelPanel";
 import { MigrationAnalysisPanel } from "@/components/admin/MigrationAnalysisPanel";
 import { adminCancelTransfer, adminSetTransferStatus } from "@/lib/transfers.functions";
 import {
@@ -123,6 +124,7 @@ function Admin() {
     { id: "recargas", label: "Recargas", panel: <TopupsPanel /> },
     { id: "usuarios", label: "Usuarios", panel: <UsersPanel /> },
     { id: "tarifas", label: "Tarifas", panel: <RatesPanel /> },
+    { id: "whitelabel", label: "White Label", panel: <WhiteLabelPanel /> },
     { id: "migracion", label: "Migración IA", panel: <MigrationAnalysisPanel /> },
   ];
 
