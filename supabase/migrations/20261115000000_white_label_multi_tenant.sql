@@ -11,9 +11,13 @@ CREATE TABLE IF NOT EXISTS public.tenants (
   branding JSONB NOT NULL DEFAULT '{}'::jsonb,
   content JSONB NOT NULL DEFAULT '{}'::jsonb,
   settings JSONB NOT NULL DEFAULT '{}'::jsonb,
+  apis JSONB NOT NULL DEFAULT '{}'::jsonb,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Ensure column apis exists if table was already created
+ALTER TABLE public.tenants ADD COLUMN IF NOT EXISTS apis JSONB NOT NULL DEFAULT '{}'::jsonb;
 
 -- Seed default Lajan Rapid primary tenant
 INSERT INTO public.tenants (id, slug, name, legal_name, is_default, is_active, domain, subdomain, branding, content, settings)

@@ -37,6 +37,41 @@ export interface TenantSettings {
   };
 }
 
+export interface TenantApis {
+  mercadoPago?: {
+    enabled?: boolean | undefined;
+    publicKey?: string | undefined;
+    accessToken?: string | undefined;
+    webhookSecret?: string | undefined;
+  } | undefined;
+  stripe?: {
+    enabled?: boolean | undefined;
+    publishableKey?: string | undefined;
+    secretKey?: string | undefined;
+    webhookSecret?: string | undefined;
+  } | undefined;
+  bazik?: {
+    enabled?: boolean | undefined;
+    apiKey?: string | undefined;
+    apiSecret?: string | undefined;
+    endpoint?: string | undefined;
+  } | undefined;
+  dingConnect?: {
+    enabled?: boolean | undefined;
+    apiKey?: string | undefined;
+  } | undefined;
+  resend?: {
+    enabled?: boolean | undefined;
+    apiKey?: string | undefined;
+    fromEmail?: string | undefined;
+  } | undefined;
+  webhooks?: {
+    enabled?: boolean | undefined;
+    url?: string | undefined;
+    secretKey?: string | undefined;
+  } | undefined;
+}
+
 export interface Tenant {
   id: string;
   slug: string;
@@ -49,6 +84,7 @@ export interface Tenant {
   branding: TenantBranding;
   content: TenantContent;
   settings: TenantSettings;
+  apis?: TenantApis | undefined;
   createdAt: string;
   updatedAt: string;
 }

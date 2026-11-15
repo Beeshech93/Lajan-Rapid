@@ -26,6 +26,10 @@ import {
   RefreshCw,
   Users,
   UserPlus,
+  Key,
+  Lock,
+  CheckCircle2,
+  AlertCircle,
 } from "lucide-react";
 
 import {
@@ -33,6 +37,7 @@ import {
   type TenantBranding,
   type TenantContent,
   type TenantSettings,
+  type TenantApis,
   THEME_PRESETS,
   DEFAULT_LAJAN_RAPID_TENANT,
 } from "@/lib/whitelabel.types";
@@ -136,6 +141,19 @@ export function WhiteLabelPanel() {
     ...DEFAULT_LAJAN_RAPID_TENANT.settings,
   });
 
+  // Pestaña activa del editor
+  const [activeEditTab, setActiveEditTab] = useState<string>("theming");
+
+  // APIs propias de la empresa
+  const [formApis, setFormApis] = useState<TenantApis>({
+    mercadoPago: { enabled: false, publicKey: "", accessToken: "", webhookSecret: "" },
+    stripe: { enabled: false, publishableKey: "", secretKey: "", webhookSecret: "" },
+    bazik: { enabled: false, apiKey: "", apiSecret: "", endpoint: "" },
+    dingConnect: { enabled: false, apiKey: "" },
+    resend: { enabled: false, apiKey: "", fromEmail: "" },
+    webhooks: { enabled: false, url: "", secretKey: "" },
+  });
+
   // Consulta de tenants
   const { data: tenants = [], isLoading, refetch } = useQuery({
     queryKey: ["white-label-tenants"],
@@ -156,6 +174,7 @@ export function WhiteLabelPanel() {
       branding: TenantBranding;
       content: TenantContent;
       settings: TenantSettings;
+      apis?: TenantApis | undefined;
     }) => {
       return await saveWhiteLabelTenant({ data: payload });
     },
@@ -224,10 +243,19 @@ export function WhiteLabelPanel() {
         virtualCards: true,
       },
     });
+    setFormApis({
+      mercadoPago: { enabled: false, publicKey: "", accessToken: "", webhookSecret: "" },
+      stripe: { enabled: false, publishableKey: "", secretKey: "", webhookSecret: "" },
+      bazik: { enabled: false, apiKey: "", apiSecret: "", endpoint: "" },
+      dingConnect: { enabled: false, apiKey: "" },
+      resend: { enabled: false, apiKey: "", fromEmail: "" },
+      webhooks: { enabled: false, url: "", secretKey: "" },
+    });
+    setActiveEditTab("theming");
     setIsEditorOpen(true);
   };
 
-  const handleOpenEdit = (tenant: Tenant) => {
+  const handleOpenEdit = (tenant: Tenant, tab: string = "theming") => {
     setEditingTenant(tenant);
     setFormSlug(tenant.slug);
     setFormName(tenant.name);
@@ -238,6 +266,41 @@ export function WhiteLabelPanel() {
     setFormBranding({ ...tenant.branding });
     setFormContent({ ...tenant.content });
     setFormSettings({ ...tenant.settings });
+    setFormApis({
+      mercadoPago: {
+        enabled: tenant.apis?.mercadoPago?.enabled ?? false,
+        publicKey: tenant.apis?.mercadoPago?.publicKey || "",
+        accessToken: tenant.apis?.mercadoPago?.accessToken || "",
+        webhookSecret: tenant.apis?.mercadoPago?.webhookSecret || "",
+      },
+      stripe: {
+        enabled: tenant.apis?.stripe?.enabled ?? false,
+        publishableKey: tenant.apis?.stripe?.publishableKey || "",
+        secretKey: tenant.apis?.stripe?.secretKey || "",
+        webhookSecret: tenant.apis?.stripe?.webhookSecret || "",
+      },
+      bazik: {
+        enabled: tenant.apis?.bazik?.enabled ?? false,
+        apiKey: tenant.apis?.bazik?.apiKey || "",
+        apiSecret: tenant.apis?.bazik?.apiSecret || "",
+        endpoint: tenant.apis?.bazik?.endpoint || "",
+      },
+      dingConnect: {
+        enabled: tenant.apis?.dingConnect?.enabled ?? false,
+        apiKey: tenant.apis?.dingConnect?.apiKey || "",
+      },
+      resend: {
+        enabled: tenant.apis?.resend?.enabled ?? false,
+        apiKey: tenant.apis?.resend?.apiKey || "",
+        fromEmail: tenant.apis?.resend?.fromEmail || "",
+      },
+      webhooks: {
+        enabled: tenant.apis?.webhooks?.enabled ?? false,
+        url: tenant.apis?.webhooks?.url || "",
+        secretKey: tenant.apis?.webhooks?.secretKey || "",
+      },
+    });
+    setActiveEditTab(tab);
     setIsEditorOpen(true);
   };
 
@@ -280,6 +343,7 @@ export function WhiteLabelPanel() {
       branding: TenantBranding;
       content: TenantContent;
       settings: TenantSettings;
+      apis?: TenantApis | undefined;
     } = {
       slug: cleanSlug,
       name: formName.trim(),
@@ -291,6 +355,7 @@ export function WhiteLabelPanel() {
       branding: formBranding,
       content: formContent,
       settings: formSettings,
+      apis: formApis,
     };
     if (editingTenant?.id) {
       payload.id = editingTenant.id;
@@ -449,6 +514,11 @@ export function WhiteLabelPanel() {
                       <span className="flex items-center gap-1 font-semibold text-primary">
                         <Users className="size-3" /> {getTenantAdmins(t).length} {getTenantAdmins(t).length === 1 ? "admin" : "admins"}
                       </span>
+                      {t.apis && Object.values(t.apis).some((api: any) => api?.enabled) && (
+                        <span className="flex items-center gap-1 font-semibold text-amber-400">
+                          <Key className="size-3" /> APIs Propias
+                        </span>
+                      )}
                     </div>
 
                     {/* Paleta de Colores */}
@@ -517,7 +587,17 @@ export function WhiteLabelPanel() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleOpenEdit(t)}
+                    onClick={() => handleOpenEdit(t, "apis")}
+                    className="gap-1.5 text-xs text-amber-400 border-amber-500/40 hover:bg-amber-500/10 hover:text-amber-300"
+                    title={`Configurar APIs y pasarelas de ${t.name}`}
+                  >
+                    <Key className="size-3.5" /> APIs
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleOpenEdit(t, "theming")}
                     className="gap-1.5 text-xs"
                   >
                     <Edit className="size-3.5" /> Editar
@@ -554,10 +634,10 @@ export function WhiteLabelPanel() {
             </DialogDescription>
           </DialogHeader>
 
-          <Tabs defaultValue="theming" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 mb-4">
+          <Tabs value={activeEditTab} onValueChange={setActiveEditTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-5 mb-4">
               <TabsTrigger value="theming" className="gap-1.5 text-xs">
-                <Palette className="size-3.5" /> Diseño & Colores
+                <Palette className="size-3.5" /> Diseño
               </TabsTrigger>
               <TabsTrigger value="identity" className="gap-1.5 text-xs">
                 <Building2 className="size-3.5" /> Identidad
@@ -567,6 +647,9 @@ export function WhiteLabelPanel() {
               </TabsTrigger>
               <TabsTrigger value="business" className="gap-1.5 text-xs">
                 <DollarSign className="size-3.5" /> Negocio
+              </TabsTrigger>
+              <TabsTrigger value="apis" className="gap-1.5 text-xs text-amber-400 data-[state=active]:text-amber-300">
+                <Key className="size-3.5" /> APIs
               </TabsTrigger>
             </TabsList>
 
@@ -1001,6 +1084,396 @@ export function WhiteLabelPanel() {
                     />
                   </div>
                 </div>
+              </div>
+            </TabsContent>
+
+            {/* TAB 5: APIs & Pasarelas Propias */}
+            <TabsContent value="apis" className="space-y-4">
+              <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5 space-y-1">
+                <div className="flex items-center gap-2 text-sm font-semibold text-amber-300">
+                  <Key className="size-4" /> Pasarelas & APIs Propias de la Marca
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Cada empresa aliada puede conectar sus propias credenciales para cobrar y dispersar directamente a sus cuentas bancarias. Si un servicio se mantiene deshabilitado, el sistema utilizará automáticamente las pasarelas compartidas de Lajan Rapid como respaldo.
+                </p>
+              </div>
+
+              {/* Mercado Pago (México) */}
+              <div className="rounded-xl border border-border/60 bg-surface/30 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <span className="grid size-8 place-items-center rounded-lg bg-sky-500/15 text-sky-400 font-bold text-xs">
+                      MP
+                    </span>
+                    <div>
+                      <h4 className="text-sm font-semibold">Mercado Pago (México)</h4>
+                      <p className="text-xs text-muted-foreground">Cobro con tarjetas, SPEI y tiendas OXXO en México</p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={formApis.mercadoPago?.enabled ?? false}
+                    onCheckedChange={(checked) =>
+                      setFormApis((prev) => ({
+                        ...prev,
+                        mercadoPago: { ...(prev.mercadoPago || {}), enabled: checked },
+                      }))
+                    }
+                  />
+                </div>
+
+                {formApis.mercadoPago?.enabled && (
+                  <div className="grid grid-cols-1 gap-3 pt-2 sm:grid-cols-2 border-t border-border/40">
+                    <div className="space-y-1 sm:col-span-2">
+                      <Label className="text-xs font-medium">Public Key (Clave Pública)</Label>
+                      <Input
+                        placeholder="APP_USR-xxxx-xxxx..."
+                        value={formApis.mercadoPago?.publicKey || ""}
+                        onChange={(e) =>
+                          setFormApis((prev) => ({
+                            ...prev,
+                            mercadoPago: { ...(prev.mercadoPago || {}), publicKey: e.target.value },
+                          }))
+                        }
+                        className="font-mono text-xs"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs font-medium">Access Token (Producción)</Label>
+                      <Input
+                        type="password"
+                        placeholder="APP_USR-xxxx..."
+                        value={formApis.mercadoPago?.accessToken || ""}
+                        onChange={(e) =>
+                          setFormApis((prev) => ({
+                            ...prev,
+                            mercadoPago: { ...(prev.mercadoPago || {}), accessToken: e.target.value },
+                          }))
+                        }
+                        className="font-mono text-xs"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs font-medium">Webhook Secret</Label>
+                      <Input
+                        type="password"
+                        placeholder="Firma secreta del webhook"
+                        value={formApis.mercadoPago?.webhookSecret || ""}
+                        onChange={(e) =>
+                          setFormApis((prev) => ({
+                            ...prev,
+                            mercadoPago: { ...(prev.mercadoPago || {}), webhookSecret: e.target.value },
+                          }))
+                        }
+                        className="font-mono text-xs"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Stripe (Internacional) */}
+              <div className="rounded-xl border border-border/60 bg-surface/30 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <span className="grid size-8 place-items-center rounded-lg bg-indigo-500/15 text-indigo-400 font-bold text-xs">
+                      ST
+                    </span>
+                    <div>
+                      <h4 className="text-sm font-semibold">Stripe (Cobros Globales)</h4>
+                      <p className="text-xs text-muted-foreground">Tarjetas de crédito/débito internacionales y Apple/Google Pay</p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={formApis.stripe?.enabled ?? false}
+                    onCheckedChange={(checked) =>
+                      setFormApis((prev) => ({
+                        ...prev,
+                        stripe: { ...(prev.stripe || {}), enabled: checked },
+                      }))
+                    }
+                  />
+                </div>
+
+                {formApis.stripe?.enabled && (
+                  <div className="grid grid-cols-1 gap-3 pt-2 sm:grid-cols-2 border-t border-border/40">
+                    <div className="space-y-1 sm:col-span-2">
+                      <Label className="text-xs font-medium">Publishable Key</Label>
+                      <Input
+                        placeholder="pk_live_... o pk_test_..."
+                        value={formApis.stripe?.publishableKey || ""}
+                        onChange={(e) =>
+                          setFormApis((prev) => ({
+                            ...prev,
+                            stripe: { ...(prev.stripe || {}), publishableKey: e.target.value },
+                          }))
+                        }
+                        className="font-mono text-xs"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs font-medium">Secret Key</Label>
+                      <Input
+                        type="password"
+                        placeholder="sk_live_..."
+                        value={formApis.stripe?.secretKey || ""}
+                        onChange={(e) =>
+                          setFormApis((prev) => ({
+                            ...prev,
+                            stripe: { ...(prev.stripe || {}), secretKey: e.target.value },
+                          }))
+                        }
+                        className="font-mono text-xs"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs font-medium">Webhook Signing Secret</Label>
+                      <Input
+                        type="password"
+                        placeholder="whsec_..."
+                        value={formApis.stripe?.webhookSecret || ""}
+                        onChange={(e) =>
+                          setFormApis((prev) => ({
+                            ...prev,
+                            stripe: { ...(prev.stripe || {}), webhookSecret: e.target.value },
+                          }))
+                        }
+                        className="font-mono text-xs"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Bazik API (Haití) */}
+              <div className="rounded-xl border border-border/60 bg-surface/30 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <span className="grid size-8 place-items-center rounded-lg bg-emerald-500/15 text-emerald-400 font-bold text-xs">
+                      BZ
+                    </span>
+                    <div>
+                      <h4 className="text-sm font-semibold">Bazik API (Dispersión MonCash & NatCash)</h4>
+                      <p className="text-xs text-muted-foreground">Pago automático directo a billeteras móviles en Haití</p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={formApis.bazik?.enabled ?? false}
+                    onCheckedChange={(checked) =>
+                      setFormApis((prev) => ({
+                        ...prev,
+                        bazik: { ...(prev.bazik || {}), enabled: checked },
+                      }))
+                    }
+                  />
+                </div>
+
+                {formApis.bazik?.enabled && (
+                  <div className="grid grid-cols-1 gap-3 pt-2 sm:grid-cols-2 border-t border-border/40">
+                    <div className="space-y-1 sm:col-span-2">
+                      <Label className="text-xs font-medium">API Endpoint (Opcional)</Label>
+                      <Input
+                        placeholder="https://api.bazik.io/v1"
+                        value={formApis.bazik?.endpoint || ""}
+                        onChange={(e) =>
+                          setFormApis((prev) => ({
+                            ...prev,
+                            bazik: { ...(prev.bazik || {}), endpoint: e.target.value },
+                          }))
+                        }
+                        className="font-mono text-xs"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs font-medium">API Key</Label>
+                      <Input
+                        placeholder="bzk_live_..."
+                        value={formApis.bazik?.apiKey || ""}
+                        onChange={(e) =>
+                          setFormApis((prev) => ({
+                            ...prev,
+                            bazik: { ...(prev.bazik || {}), apiKey: e.target.value },
+                          }))
+                        }
+                        className="font-mono text-xs"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs font-medium">API Secret</Label>
+                      <Input
+                        type="password"
+                        placeholder="Clave secreta Bazik"
+                        value={formApis.bazik?.apiSecret || ""}
+                        onChange={(e) =>
+                          setFormApis((prev) => ({
+                            ...prev,
+                            bazik: { ...(prev.bazik || {}), apiSecret: e.target.value },
+                          }))
+                        }
+                        className="font-mono text-xs"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* DingConnect (Recargas Móviles) */}
+              <div className="rounded-xl border border-border/60 bg-surface/30 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <span className="grid size-8 place-items-center rounded-lg bg-orange-500/15 text-orange-400 font-bold text-xs">
+                      DC
+                    </span>
+                    <div>
+                      <h4 className="text-sm font-semibold">DingConnect (Recargas Móviles)</h4>
+                      <p className="text-xs text-muted-foreground">Recargas telefónicas instantáneas para Digicel y Natcom</p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={formApis.dingConnect?.enabled ?? false}
+                    onCheckedChange={(checked) =>
+                      setFormApis((prev) => ({
+                        ...prev,
+                        dingConnect: { ...(prev.dingConnect || {}), enabled: checked },
+                      }))
+                    }
+                  />
+                </div>
+
+                {formApis.dingConnect?.enabled && (
+                  <div className="space-y-2 pt-2 border-t border-border/40">
+                    <div className="space-y-1">
+                      <Label className="text-xs font-medium">DingConnect API Key</Label>
+                      <Input
+                        type="password"
+                        placeholder="Clave de API DingConnect"
+                        value={formApis.dingConnect?.apiKey || ""}
+                        onChange={(e) =>
+                          setFormApis((prev) => ({
+                            ...prev,
+                            dingConnect: { ...(prev.dingConnect || {}), apiKey: e.target.value },
+                          }))
+                        }
+                        className="font-mono text-xs"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Resend (Emails & Notificaciones) */}
+              <div className="rounded-xl border border-border/60 bg-surface/30 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <span className="grid size-8 place-items-center rounded-lg bg-rose-500/15 text-rose-400 font-bold text-xs">
+                      RS
+                    </span>
+                    <div>
+                      <h4 className="text-sm font-semibold">Resend (Notificaciones & Recibos por Email)</h4>
+                      <p className="text-xs text-muted-foreground">Envío de comprobantes de remesas desde el dominio propio de la marca</p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={formApis.resend?.enabled ?? false}
+                    onCheckedChange={(checked) =>
+                      setFormApis((prev) => ({
+                        ...prev,
+                        resend: { ...(prev.resend || {}), enabled: checked },
+                      }))
+                    }
+                  />
+                </div>
+
+                {formApis.resend?.enabled && (
+                  <div className="grid grid-cols-1 gap-3 pt-2 sm:grid-cols-2 border-t border-border/40">
+                    <div className="space-y-1">
+                      <Label className="text-xs font-medium">Resend API Key</Label>
+                      <Input
+                        type="password"
+                        placeholder="re_xxxxxxxx..."
+                        value={formApis.resend?.apiKey || ""}
+                        onChange={(e) =>
+                          setFormApis((prev) => ({
+                            ...prev,
+                            resend: { ...(prev.resend || {}), apiKey: e.target.value },
+                          }))
+                        }
+                        className="font-mono text-xs"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs font-medium">Email Remitente (From)</Label>
+                      <Input
+                        placeholder="notificaciones@tuempresa.com"
+                        value={formApis.resend?.fromEmail || ""}
+                        onChange={(e) =>
+                          setFormApis((prev) => ({
+                            ...prev,
+                            resend: { ...(prev.resend || {}), fromEmail: e.target.value },
+                          }))
+                        }
+                        className="text-xs"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Webhooks Salientes */}
+              <div className="rounded-xl border border-border/60 bg-surface/30 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <span className="grid size-8 place-items-center rounded-lg bg-purple-500/15 text-purple-400 font-bold text-xs">
+                      WH
+                    </span>
+                    <div>
+                      <h4 className="text-sm font-semibold">Webhooks Salientes (Eventos en Tiempo Real)</h4>
+                      <p className="text-xs text-muted-foreground">Notifica al backend externo de la empresa cuando una orden cambie de estado</p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={formApis.webhooks?.enabled ?? false}
+                    onCheckedChange={(checked) =>
+                      setFormApis((prev) => ({
+                        ...prev,
+                        webhooks: { ...(prev.webhooks || {}), enabled: checked },
+                      }))
+                    }
+                  />
+                </div>
+
+                {formApis.webhooks?.enabled && (
+                  <div className="grid grid-cols-1 gap-3 pt-2 sm:grid-cols-2 border-t border-border/40">
+                    <div className="space-y-1 sm:col-span-2">
+                      <Label className="text-xs font-medium">URL de Webhook (Endpoint Receptor)</Label>
+                      <Input
+                        placeholder="https://api.tuempresa.com/webhooks/lajan"
+                        value={formApis.webhooks?.url || ""}
+                        onChange={(e) =>
+                          setFormApis((prev) => ({
+                            ...prev,
+                            webhooks: { ...(prev.webhooks || {}), url: e.target.value },
+                          }))
+                        }
+                        className="font-mono text-xs"
+                      />
+                    </div>
+                    <div className="space-y-1 sm:col-span-2">
+                      <Label className="text-xs font-medium">Clave Secreta para Validación de Firma</Label>
+                      <Input
+                        type="password"
+                        placeholder="whsec_xxxxxxxx..."
+                        value={formApis.webhooks?.secretKey || ""}
+                        onChange={(e) =>
+                          setFormApis((prev) => ({
+                            ...prev,
+                            webhooks: { ...(prev.webhooks || {}), secretKey: e.target.value },
+                          }))
+                        }
+                        className="font-mono text-xs"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             </TabsContent>
           </Tabs>

@@ -5,6 +5,7 @@ import {
   type TenantBranding,
   type TenantContent,
   type TenantSettings,
+  type TenantApis,
   DEFAULT_LAJAN_RAPID_TENANT,
   INITIAL_WHITE_LABEL_TENANTS,
 } from "./whitelabel.types";
@@ -56,6 +57,40 @@ function rowToTenant(row: any): Tenant {
         topups: row.settings?.enabledServices?.topups ?? true,
         crypto: row.settings?.enabledServices?.crypto ?? true,
         virtualCards: row.settings?.enabledServices?.virtualCards ?? true,
+      },
+    },
+    apis: {
+      mercadoPago: {
+        enabled: Boolean(row.apis?.mercadoPago?.enabled),
+        publicKey: row.apis?.mercadoPago?.publicKey || "",
+        accessToken: row.apis?.mercadoPago?.accessToken || "",
+        webhookSecret: row.apis?.mercadoPago?.webhookSecret || "",
+      },
+      stripe: {
+        enabled: Boolean(row.apis?.stripe?.enabled),
+        publishableKey: row.apis?.stripe?.publishableKey || "",
+        secretKey: row.apis?.stripe?.secretKey || "",
+        webhookSecret: row.apis?.stripe?.webhookSecret || "",
+      },
+      bazik: {
+        enabled: Boolean(row.apis?.bazik?.enabled),
+        apiKey: row.apis?.bazik?.apiKey || "",
+        apiSecret: row.apis?.bazik?.apiSecret || "",
+        endpoint: row.apis?.bazik?.endpoint || "",
+      },
+      dingConnect: {
+        enabled: Boolean(row.apis?.dingConnect?.enabled),
+        apiKey: row.apis?.dingConnect?.apiKey || "",
+      },
+      resend: {
+        enabled: Boolean(row.apis?.resend?.enabled),
+        apiKey: row.apis?.resend?.apiKey || "",
+        fromEmail: row.apis?.resend?.fromEmail || "",
+      },
+      webhooks: {
+        enabled: Boolean(row.apis?.webhooks?.enabled),
+        url: row.apis?.webhooks?.url || "",
+        secretKey: row.apis?.webhooks?.secretKey || "",
       },
     },
     createdAt: row.created_at || row.createdAt || new Date().toISOString(),
@@ -190,6 +225,7 @@ export type SaveTenantInput = {
   branding?: TenantBranding | undefined;
   content?: TenantContent | undefined;
   settings?: TenantSettings | undefined;
+  apis?: TenantApis | undefined;
   createdAt?: string | undefined;
   updatedAt?: string | undefined;
 };
@@ -259,6 +295,40 @@ export const saveWhiteLabelTenant = createServerFn({ method: "POST" })
           virtualCards: data.settings?.enabledServices?.virtualCards ?? true,
         },
       },
+      apis: {
+        mercadoPago: {
+          enabled: Boolean(data.apis?.mercadoPago?.enabled),
+          publicKey: data.apis?.mercadoPago?.publicKey || "",
+          accessToken: data.apis?.mercadoPago?.accessToken || "",
+          webhookSecret: data.apis?.mercadoPago?.webhookSecret || "",
+        },
+        stripe: {
+          enabled: Boolean(data.apis?.stripe?.enabled),
+          publishableKey: data.apis?.stripe?.publishableKey || "",
+          secretKey: data.apis?.stripe?.secretKey || "",
+          webhookSecret: data.apis?.stripe?.webhookSecret || "",
+        },
+        bazik: {
+          enabled: Boolean(data.apis?.bazik?.enabled),
+          apiKey: data.apis?.bazik?.apiKey || "",
+          apiSecret: data.apis?.bazik?.apiSecret || "",
+          endpoint: data.apis?.bazik?.endpoint || "",
+        },
+        dingConnect: {
+          enabled: Boolean(data.apis?.dingConnect?.enabled),
+          apiKey: data.apis?.dingConnect?.apiKey || "",
+        },
+        resend: {
+          enabled: Boolean(data.apis?.resend?.enabled),
+          apiKey: data.apis?.resend?.apiKey || "",
+          fromEmail: data.apis?.resend?.fromEmail || "",
+        },
+        webhooks: {
+          enabled: Boolean(data.apis?.webhooks?.enabled),
+          url: data.apis?.webhooks?.url || "",
+          secretKey: data.apis?.webhooks?.secretKey || "",
+        },
+      },
       createdAt: data.createdAt || now,
       updatedAt: now,
     };
@@ -278,6 +348,7 @@ export const saveWhiteLabelTenant = createServerFn({ method: "POST" })
         branding: tenantToSave.branding,
         content: tenantToSave.content,
         settings: tenantToSave.settings,
+        apis: tenantToSave.apis,
         updated_at: now,
       };
 
