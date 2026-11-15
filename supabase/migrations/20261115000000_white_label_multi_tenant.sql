@@ -89,3 +89,4 @@ CREATE POLICY "tenants_admin_manage" ON public.tenants
   FOR ALL TO authenticated
   USING (public.has_role(auth.uid(), 'admin'::public.app_role))
   WITH CHECK (public.has_role(auth.uid(), 'admin'::public.app_role));
+

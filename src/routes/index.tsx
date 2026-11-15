@@ -608,8 +608,21 @@ export function Landing() {
         <InstallAppCard />
       </section>
 
-      <footer className="border-t py-8 text-center text-sm text-muted-foreground">
-        <p>{t("landing.footer")}</p>
+      <footer className="border-t py-8 text-center text-sm text-muted-foreground space-y-3">
+        {isCustomBrand && (
+          <div className="pb-1">
+            <a
+              href="https://lajanrapid.app"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-1.5 rounded-full border border-border/60 bg-card px-4 py-1.5 text-xs text-muted-foreground transition hover:border-primary/50 hover:text-foreground shadow-sm"
+            >
+              <span>Creado por</span>
+              <strong className="font-semibold text-primary underline underline-offset-2">lajanrapid.app</strong>
+            </a>
+          </div>
+        )}
+        <p>{isCustomBrand ? `© ${new Date().getFullYear()} ${currentBrand.name}. Operado con la infraestructura de Lajan Rapid.` : t("landing.footer")}</p>
         <p className="mt-2">
           <Link to="/privacidad" className="underline hover:text-foreground">
             Política de Privacidad

@@ -674,6 +674,13 @@ export function WhiteLabelPanel() {
                     Enviar Dinero
                   </button>
                 </div>
+
+                <div className="pt-2 text-center">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] text-white/60">
+                    <span>Firma obligatoria: Creado por</span>
+                    <strong className="text-white underline underline-offset-2">lajanrapid.app</strong>
+                  </span>
+                </div>
               </div>
             </TabsContent>
 

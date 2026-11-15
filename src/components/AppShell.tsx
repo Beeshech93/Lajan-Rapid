@@ -68,7 +68,7 @@ function NavItem({ item, active, label }: { item: NavEntry; active: boolean; lab
 export function AppShell({ children }: { children: ReactNode }) {
   const { profile, isAdmin, isAgent } = useProfile();
   const { t } = useI18n();
-  const { currentBrand, logoSrc } = useBrand();
+  const { currentBrand, logoSrc, isCustomBrand } = useBrand();
   const router = useRouter();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
@@ -134,6 +134,19 @@ export function AppShell({ children }: { children: ReactNode }) {
           >
             <LogOut className="size-4" /> {t("nav.signout")}
           </Button>
+          {isCustomBrand && (
+            <div className="pt-3 text-center border-t border-sidebar-border/40">
+              <a
+                href="https://lajanrapid.app"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-1 text-[11px] text-sidebar-foreground/60 transition hover:text-sidebar-foreground"
+              >
+                <span>Creado por</span>
+                <span className="font-semibold text-primary underline underline-offset-2">lajanrapid.app</span>
+              </a>
+            </div>
+          )}
         </div>
       </aside>
 
@@ -165,6 +178,20 @@ export function AppShell({ children }: { children: ReactNode }) {
         >
           <AdBanner className="mb-5" />
           {children}
+
+          {isCustomBrand && (
+            <footer className="mt-12 pb-6 text-center">
+              <a
+                href="https://lajanrapid.app"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-1.5 rounded-full border border-border/50 bg-card/60 px-3.5 py-1 text-xs text-muted-foreground transition hover:border-primary/50 hover:text-foreground shadow-sm"
+              >
+                <span>Tecnología y motor creado por</span>
+                <span className="font-semibold text-primary">lajanrapid.app</span>
+              </a>
+            </footer>
+          )}
         </main>
 
         <nav
