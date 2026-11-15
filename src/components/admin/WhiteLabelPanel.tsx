@@ -60,6 +60,7 @@ export function WhiteLabelPanel() {
 
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
+  const [tenantToDelete, setTenantToDelete] = useState<Tenant | null>(null);
 
   // Formulario local
   const [formSlug, setFormSlug] = useState("");
@@ -123,6 +124,7 @@ export function WhiteLabelPanel() {
       return await deleteWhiteLabelTenant({ data: { tenantId } });
     },
     onSuccess: () => {
+      setTenantToDelete(null);
       toast.success("Marca eliminada correctamente.");
       queryClient.invalidateQueries({ queryKey: ["white-label-tenants"] });
     },
@@ -458,12 +460,9 @@ export function WhiteLabelPanel() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => {
-                        if (confirm(`¿Eliminar permanentemente la marca aliada "${t.name}"?`)) {
-                          deleteMutation.mutate(t.id);
-                        }
-                      }}
-                      className="gap-1.5 text-xs text-destructive hover:bg-destructive/10"
+                      onClick={() => setTenantToDelete(t)}
+                      className="gap-1.5 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      title="Eliminar esta marca"
                     >
                       <Trash2 className="size-3.5" />
                     </Button>
@@ -949,6 +948,47 @@ export function WhiteLabelPanel() {
               className="gap-2 bg-primary text-primary-foreground"
             >
               {saveMutation.isPending ? "Guardando..." : "Guardar Marca"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Confirmación para Eliminar Marca */}
+      <Dialog open={!!tenantToDelete} onOpenChange={(open) => !open && setTenantToDelete(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive font-display text-lg">
+              <Trash2 className="size-5" /> Eliminar Marca Aliada
+            </DialogTitle>
+            <DialogDescription className="pt-2 text-sm">
+              ¿Estás seguro de que deseas eliminar permanentemente la marca aliada{" "}
+              <strong className="text-foreground">{tenantToDelete?.name}</strong> (
+              <code>{tenantToDelete?.slug}</code>)?
+              <br />
+              <span className="mt-2 block text-xs text-muted-foreground">
+                Esta acción removerá su acceso, personalización y configuración por completo.
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4 flex items-center justify-between">
+            <Button
+              variant="ghost"
+              onClick={() => setTenantToDelete(null)}
+              disabled={deleteMutation.isPending}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (tenantToDelete) {
+                  deleteMutation.mutate(tenantToDelete.id);
+                }
+              }}
+              disabled={deleteMutation.isPending}
+              className="gap-2"
+            >
+              {deleteMutation.isPending ? "Eliminando..." : "Eliminar Definitivamente"}
             </Button>
           </DialogFooter>
         </DialogContent>

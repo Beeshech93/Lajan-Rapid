@@ -35,7 +35,7 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
   });
 
   const allBrands = useMemo(() => {
-    const list = serverTenants && serverTenants.length > 0 ? serverTenants : INITIAL_WHITE_LABEL_TENANTS;
+    const list = serverTenants && serverTenants.length > 0 ? serverTenants : [DEFAULT_LAJAN_RAPID_TENANT];
     if (!list.some((t) => t.isDefault || t.slug === "default")) {
       return [DEFAULT_LAJAN_RAPID_TENANT, ...list];
     }

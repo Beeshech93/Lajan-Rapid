@@ -75,13 +75,11 @@ async function loadFromFallback(supabaseAdmin: any): Promise<Tenant[]> {
     if (data?.value) {
       const parsed = JSON.parse(data.value);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        const list: Tenant[] = [...parsed];
-        for (const init of INITIAL_WHITE_LABEL_TENANTS) {
-          if (!list.some((t) => t.slug === init.slug || t.id === init.id)) {
-            list.push(init);
-          }
+        // Respetar exactamente las marcas existentes (incluyendo eliminaciones del usuario)
+        if (!parsed.some((t: Tenant) => t.isDefault || t.slug === "default")) {
+          parsed.unshift(DEFAULT_LAJAN_RAPID_TENANT);
         }
-        return list;
+        return parsed;
       }
     }
   } catch (err) {
@@ -121,11 +119,8 @@ export const getWhiteLabelTenants = createServerFn({ method: "GET" }).handler(
 
       if (!error && data && data.length > 0) {
         const tenants = data.map(rowToTenant);
-        // Asegurar que existan la marca principal Lajan Rapid y las empresas piloto
-        for (const init of INITIAL_WHITE_LABEL_TENANTS) {
-          if (!tenants.some((t: Tenant) => t.slug === init.slug || t.id === init.id)) {
-            tenants.push(init);
-          }
+        if (!tenants.some((t: Tenant) => t.isDefault || t.slug === "default")) {
+          tenants.unshift(DEFAULT_LAJAN_RAPID_TENANT);
         }
         return tenants;
       }
@@ -135,7 +130,7 @@ export const getWhiteLabelTenants = createServerFn({ method: "GET" }).handler(
       return fallbackList;
     } catch (e: any) {
       console.error("Error in getWhiteLabelTenants:", e?.message || e);
-      return INITIAL_WHITE_LABEL_TENANTS;
+      return [DEFAULT_LAJAN_RAPID_TENANT];
     }
   }
 );
@@ -320,25 +315,34 @@ export const deleteWhiteLabelTenant = createServerFn({ method: "POST" })
     const { verifyIsAdmin } = await import("@/lib/admin.server");
     const isAdmin = await verifyIsAdmin(context);
     if (!isAdmin) {
-      throw new Error("No autorizado");
+      throw new Error("No tienes permisos de administrador para eliminar marcas.");
     }
 
-    if (data.tenantId === DEFAULT_LAJAN_RAPID_TENANT.id) {
+    const target = data.tenantId?.trim();
+    if (!target || target === DEFAULT_LAJAN_RAPID_TENANT.id || target === "default" || target === "lajan-rapid") {
       throw new Error("No es posible eliminar la marca principal Lajan Rapid.");
     }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    // 1. Eliminar de la base de datos Supabase (por id o por slug)
     try {
-      await (supabaseAdmin as any).from("tenants").delete().eq("id", data.tenantId).eq("is_default", false);
-    } catch {
-      // ignore
+      await (supabaseAdmin as any)
+        .from("tenants")
+        .delete()
+        .or(`id.eq.${target},slug.eq.${target}`)
+        .eq("is_default", false);
+    } catch (err) {
+      console.warn("Could not delete from tenants table:", err);
     }
 
+    // 2. Eliminar del almacenamiento fallback
     try {
       const currentList = await loadFromFallback(supabaseAdmin);
-      const updated = currentList.filter((t) => t.id !== data.tenantId && !t.isDefault);
-      if (!updated.some((t) => t.isDefault)) {
+      const updated = currentList.filter(
+        (t) => t.id !== target && t.slug !== target && !t.isDefault && t.slug !== "default"
+      );
+      if (!updated.some((t) => t.isDefault || t.slug === "default")) {
         updated.unshift(DEFAULT_LAJAN_RAPID_TENANT);
       }
       await saveToFallback(supabaseAdmin, updated);
