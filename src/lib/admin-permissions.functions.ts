@@ -28,6 +28,9 @@ export type AdminTabId =
 export interface AdminPermissionsConfig {
   isSuperAdmin: boolean;
   allowedTabs: AdminTabId[];
+  tenantId?: string | undefined;
+  tenantSlug?: string | undefined;
+  tenantName?: string | undefined;
   updatedAt?: string | undefined;
   updatedBy?: string | undefined;
 }
@@ -113,6 +116,9 @@ export const getMyPermissions = createServerFn({ method: "GET" })
       return {
         isSuperAdmin: false,
         allowedTabs: allowed,
+        tenantId: parsed.tenantId,
+        tenantSlug: parsed.tenantSlug,
+        tenantName: parsed.tenantName,
         updatedAt: parsed.updatedAt,
         updatedBy: parsed.updatedBy,
       };
@@ -144,6 +150,9 @@ export const getAllAdminsPermissionsMap = createServerFn({ method: "GET" })
         result[userId] = {
           isSuperAdmin: Boolean(parsed.isSuperAdmin),
           allowedTabs: Array.isArray(parsed.allowedTabs) ? parsed.allowedTabs : [],
+          tenantId: parsed.tenantId,
+          tenantSlug: parsed.tenantSlug,
+          tenantName: parsed.tenantName,
           updatedAt: parsed.updatedAt,
           updatedBy: parsed.updatedBy,
         };
@@ -157,8 +166,11 @@ export const getAllAdminsPermissionsMap = createServerFn({ method: "GET" })
 export interface SetUserRoleAndPermissionsInput {
   targetUserId: string;
   role: "admin" | "agent" | "client";
-  isSuperAdmin?: boolean;
-  allowedTabs?: AdminTabId[];
+  isSuperAdmin?: boolean | undefined;
+  allowedTabs?: AdminTabId[] | undefined;
+  tenantId?: string | undefined;
+  tenantSlug?: string | undefined;
+  tenantName?: string | undefined;
 }
 
 /**
@@ -246,6 +258,9 @@ export const setUserRoleAndPermissions = createServerFn({ method: "POST" })
       const permConfig: AdminPermissionsConfig = {
         isSuperAdmin: isSuper,
         allowedTabs: tabs,
+        tenantId: input.tenantId?.trim() && input.tenantId !== "global" ? input.tenantId.trim() : undefined,
+        tenantSlug: input.tenantSlug?.trim() && input.tenantSlug !== "global" ? input.tenantSlug.trim() : undefined,
+        tenantName: input.tenantName?.trim() ? input.tenantName.trim() : undefined,
         updatedAt: now,
         updatedBy: context.userId,
       };
@@ -261,6 +276,20 @@ export const setUserRoleAndPermissions = createServerFn({ method: "POST" })
           },
           { onConflict: "name" },
         );
+
+      // 3. Asociar tenant_id en profiles para consistencia multiempresa
+      try {
+        const assignedTenantId =
+          input.tenantId && input.tenantId !== "global" && input.tenantId !== "default"
+            ? input.tenantId
+            : null;
+        await (supabaseAdmin as any)
+          .from("profiles")
+          .update({ tenant_id: assignedTenantId })
+          .eq("id", input.targetUserId);
+      } catch {
+        // ignore
+      }
     }
 
     return { ok: true };

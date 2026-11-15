@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   Shield,
@@ -13,6 +13,7 @@ import {
   Square,
   Lock,
   Sparkles,
+  Building2,
 } from "lucide-react";
 
 import {
@@ -28,11 +29,19 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   setUserRoleAndPermissions,
   type AdminTabId,
   type AdminPermissionsConfig,
   ALL_ADMIN_TAB_IDS,
 } from "@/lib/admin-permissions.functions";
+import { getWhiteLabelTenants } from "@/lib/whitelabel.functions";
 
 interface TabMeta {
   id: AdminTabId;
@@ -107,7 +116,13 @@ export function AdminPermissionsModal({
   const qc = useQueryClient();
   const saveRoleAndPerms = useServerFn(setUserRoleAndPermissions);
 
+  const { data: tenants = [] } = useQuery({
+    queryKey: ["white-label-tenants"],
+    queryFn: () => getWhiteLabelTenants(),
+  });
+
   const [role, setRole] = useState<"admin" | "agent" | "client">(currentRole);
+  const [selectedTenantId, setSelectedTenantId] = useState<string>("global");
   const [isSuperAdmin, setIsSuperAdmin] = useState(true);
   const [selectedTabs, setSelectedTabs] = useState<AdminTabId[]>(ALL_ADMIN_TAB_IDS);
   const [isSaving, setIsSaving] = useState(false);
@@ -119,9 +134,11 @@ export function AdminPermissionsModal({
         const isSuper = currentPerms ? currentPerms.isSuperAdmin : true;
         setIsSuperAdmin(isSuper);
         setSelectedTabs(currentPerms?.allowedTabs?.length ? currentPerms.allowedTabs : ALL_ADMIN_TAB_IDS);
+        setSelectedTenantId(currentPerms?.tenantId || "global");
       } else {
         setIsSuperAdmin(false);
         setSelectedTabs(OPERATIONAL_TABS);
+        setSelectedTenantId("global");
       }
     }
   }, [user, currentRole, currentPerms]);
@@ -141,12 +158,18 @@ export function AdminPermissionsModal({
   const handleSave = async () => {
     setIsSaving(true);
     try {
+      const chosenTenant = tenants.find((t) => t.id === selectedTenantId);
+      const isGlobal = selectedTenantId === "global";
+
       await saveRoleAndPerms({
         data: {
           targetUserId: user.id,
           role,
-          isSuperAdmin: role === "admin" ? isSuperAdmin : false,
-          allowedTabs: role === "admin" ? (isSuperAdmin ? ALL_ADMIN_TAB_IDS : selectedTabs) : [],
+          isSuperAdmin: role === "admin" ? (isGlobal ? isSuperAdmin : false) : false,
+          allowedTabs: role === "admin" ? (isSuperAdmin && isGlobal ? ALL_ADMIN_TAB_IDS : selectedTabs) : [],
+          tenantId: !isGlobal ? selectedTenantId : undefined,
+          tenantSlug: !isGlobal ? chosenTenant?.slug : undefined,
+          tenantName: !isGlobal ? chosenTenant?.name : undefined,
         },
       });
 
@@ -249,33 +272,80 @@ export function AdminPermissionsModal({
             </div>
           </div>
 
-          {/* 2. Opciones de Administrador (Super Admin vs Restringido) */}
+          {/* 2. Opciones de Administrador (Empresa White Label y Privilegios) */}
           {role === "admin" && (
             <div className="space-y-4 rounded-2xl bg-secondary/30 p-4 border border-border/50 animate-in fade-in duration-200">
-              <div className="flex items-center justify-between gap-3">
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="super-admin-switch" className="font-bold text-base cursor-pointer">
-                      Super Administrador (Acceso Total)
-                    </Label>
-                    {isSuperAdmin && (
-                      <Badge className="bg-amber-500/15 text-amber-500 hover:bg-amber-500/20 border-amber-500/30 gap-1 text-[11px]">
-                        <Sparkles className="size-3" /> Sin límites
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {isSuperAdmin
-                      ? "Tiene acceso irrestricto a todos los módulos y herramientas del panel."
-                      : "Restringido: solo tendrá acceso a los módulos seleccionados abajo."}
-                  </p>
+              {/* Asignación de Empresa White Label */}
+              <div className="space-y-2 rounded-xl bg-card/60 p-3.5 border border-border/60">
+                <div className="flex items-center gap-2">
+                  <Building2 className="size-4 text-primary" />
+                  <Label htmlFor="tenant-select" className="font-bold text-sm">
+                    Empresa o Marca Asignada (White Label)
+                  </Label>
                 </div>
-                <Switch
-                  id="super-admin-switch"
-                  checked={isSuperAdmin}
-                  onCheckedChange={setIsSuperAdmin}
-                />
+                <p className="text-xs text-muted-foreground">
+                  Define si este administrador tiene control global o si opera exclusivamente dentro de una marca aliada.
+                </p>
+                <Select
+                  value={selectedTenantId}
+                  onValueChange={(val) => {
+                    setSelectedTenantId(val);
+                    if (val !== "global") {
+                      setIsSuperAdmin(false);
+                    }
+                  }}
+                >
+                  <SelectTrigger id="tenant-select" className="w-full bg-background">
+                    <SelectValue placeholder="Seleccionar empresa..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="global">
+                      🌐 Todas las Empresas (Super Administrador Global)
+                    </SelectItem>
+                    {tenants.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        🏢 {t.name} ({t.slug}) {t.isDefault ? "— Marca Raíz" : "— Marca Aliada"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedTenantId !== "global" && (
+                  <div className="mt-2 rounded-lg bg-primary/10 border border-primary/20 p-2.5 text-xs text-primary flex items-center gap-2">
+                    <ShieldCheck className="size-4 shrink-0" />
+                    <span>
+                      Este administrador operará únicamente dentro de{" "}
+                      <strong>{tenants.find((t) => t.id === selectedTenantId)?.name}</strong> con los permisos seleccionados.
+                    </span>
+                  </div>
+                )}
               </div>
+
+              {selectedTenantId === "global" && (
+                <div className="flex items-center justify-between gap-3 pt-2">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="super-admin-switch" className="font-bold text-base cursor-pointer">
+                        Super Administrador (Acceso Total)
+                      </Label>
+                      {isSuperAdmin && (
+                        <Badge className="bg-amber-500/15 text-amber-500 hover:bg-amber-500/20 border-amber-500/30 gap-1 text-[11px]">
+                          <Sparkles className="size-3" /> Sin límites
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {isSuperAdmin
+                        ? "Tiene acceso irrestricto a todos los módulos y herramientas del panel."
+                        : "Restringido: solo tendrá acceso a los módulos seleccionados abajo."}
+                    </p>
+                  </div>
+                  <Switch
+                    id="super-admin-switch"
+                    checked={isSuperAdmin}
+                    onCheckedChange={setIsSuperAdmin}
+                  />
+                </div>
+              )}
 
               {/* Selector de permisos granulares si NO es Super Admin */}
               {!isSuperAdmin && (

@@ -449,15 +449,22 @@ function UsersPanel() {
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5">
                   {isAdmin && (
-                    isSuper ? (
-                      <Badge className="bg-amber-500/15 text-amber-500 border-amber-500/30 gap-1 text-xs">
-                        <Shield className="size-3" /> Super Admin
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="border-primary/50 text-primary gap-1 text-xs font-semibold">
-                        <Shield className="size-3" /> Admin ({adminPerms?.allowedTabs?.length ?? 0} módulos)
-                      </Badge>
-                    )
+                    <>
+                      {adminPerms?.tenantName && (
+                        <Badge className="bg-blue-500/15 text-blue-400 border-blue-500/30 gap-1 text-xs font-semibold">
+                          🏢 {adminPerms.tenantName}
+                        </Badge>
+                      )}
+                      {isSuper ? (
+                        <Badge className="bg-amber-500/15 text-amber-500 border-amber-500/30 gap-1 text-xs">
+                          <Shield className="size-3" /> Super Admin
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="border-primary/50 text-primary gap-1 text-xs font-semibold">
+                          <Shield className="size-3" /> Admin ({adminPerms?.allowedTabs?.length ?? 0} módulos)
+                        </Badge>
+                      )}
+                    </>
                   )}
                   {isAgent && !isAdmin && (
                     <Badge variant="secondary" className="text-xs">

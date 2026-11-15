@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
   Building2,
@@ -7,6 +8,7 @@ import {
   Palette,
   Globe,
   Settings,
+  Shield,
   ShieldCheck,
   Copy,
   ExternalLink,
@@ -22,6 +24,8 @@ import {
   Smartphone,
   Eye,
   RefreshCw,
+  Users,
+  UserPlus,
 } from "lucide-react";
 
 import {
@@ -37,6 +41,9 @@ import {
   saveWhiteLabelTenant,
   deleteWhiteLabelTenant,
 } from "@/lib/whitelabel.functions";
+import { getAllAdminsPermissionsMap } from "@/lib/admin-permissions.functions";
+import { AdminPermissionsModal } from "./AdminPermissionsModal";
+import { supabase } from "@/integrations/supabase/client";
 import { useBrand } from "@/hooks/useBrand";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -61,6 +68,50 @@ export function WhiteLabelPanel() {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
   const [tenantToDelete, setTenantToDelete] = useState<Tenant | null>(null);
+  const [managingAdminsTenant, setManagingAdminsTenant] = useState<Tenant | null>(null);
+  const [adminUserToEdit, setAdminUserToEdit] = useState<{
+    id: string;
+    full_name?: string | null;
+    phone?: string | null;
+  } | null>(null);
+  const [selectedUserToAssign, setSelectedUserToAssign] = useState<string>("");
+
+  const fetchAdminsMap = useServerFn(getAllAdminsPermissionsMap);
+  const { data: adminsMap = {} } = useQuery({
+    queryKey: ["all-admins-permissions"],
+    queryFn: () => fetchAdminsMap(),
+  });
+
+  const { data: allProfiles = [] } = useQuery({
+    queryKey: ["admin-profiles"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, full_name, phone, kyc_status, created_at")
+        .order("created_at", { ascending: false });
+      return data ?? [];
+    },
+  });
+
+  const { data: userRoles = [] } = useQuery({
+    queryKey: ["admin-roles"],
+    queryFn: async () => {
+      const { data } = await supabase.from("user_roles").select("user_id, role");
+      return data ?? [];
+    },
+  });
+
+  const getTenantAdmins = (tenant: Tenant) => {
+    return allProfiles.filter((p) => {
+      const isUserAdmin = userRoles.some((r) => r.user_id === p.id && r.role === "admin");
+      if (!isUserAdmin) return false;
+      const perms = adminsMap[p.id];
+      if (tenant.isDefault || tenant.slug === "default") {
+        return !perms?.tenantId || perms?.tenantId === tenant.id || perms?.isSuperAdmin;
+      }
+      return perms?.tenantId === tenant.id || perms?.tenantSlug === tenant.slug;
+    });
+  };
 
   // Formulario local
   const [formSlug, setFormSlug] = useState("");
@@ -395,6 +446,9 @@ export function WhiteLabelPanel() {
                           +{t.settings.feeMarkupPercent}% markup
                         </span>
                       )}
+                      <span className="flex items-center gap-1 font-semibold text-primary">
+                        <Users className="size-3" /> {getTenantAdmins(t).length} {getTenantAdmins(t).length === 1 ? "admin" : "admins"}
+                      </span>
                     </div>
 
                     {/* Paleta de Colores */}
@@ -445,6 +499,19 @@ export function WhiteLabelPanel() {
                     title="Copiar link de acceso directo (?brand=...)"
                   >
                     <Copy className="size-3.5" /> Copiar Enlace
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedUserToAssign("");
+                      setManagingAdminsTenant(t);
+                    }}
+                    className="gap-1.5 text-xs text-primary border-primary/40 hover:bg-primary/10"
+                    title={`Ver y gestionar administradores para ${t.name}`}
+                  >
+                    <Users className="size-3.5" /> Admins ({getTenantAdmins(t).length})
                   </Button>
 
                   <Button
@@ -993,6 +1060,149 @@ export function WhiteLabelPanel() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de Gestión de Administradores por Marca White Label */}
+      <Dialog open={!!managingAdminsTenant} onOpenChange={(open) => !open && setManagingAdminsTenant(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 font-display text-lg">
+              <Users className="size-5 text-primary" />
+              Administradores de {managingAdminsTenant?.name}
+            </DialogTitle>
+            <DialogDescription>
+              Asigna qué usuarios pueden administrar esta marca y define sus permisos específicos de acceso.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-5 py-2">
+            {/* Lista de Administradores Actuales de esta Marca */}
+            <div className="space-y-2">
+              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                Administradores Asignados ({managingAdminsTenant ? getTenantAdmins(managingAdminsTenant).length : 0})
+              </Label>
+
+              {managingAdminsTenant && getTenantAdmins(managingAdminsTenant).length === 0 ? (
+                <div className="rounded-xl border border-dashed border-border/80 p-5 text-center bg-surface/30">
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Esta marca aún no tiene administradores dedicados.
+                  </p>
+                  <p className="text-xs text-muted-foreground/80 mt-1">
+                    Los Super Administradores globales gestionan esta empresa por defecto. Puedes asignar uno abajo.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {managingAdminsTenant &&
+                    getTenantAdmins(managingAdminsTenant).map((adminUser) => {
+                      const perms = adminsMap[adminUser.id];
+                      return (
+                        <div
+                          key={adminUser.id}
+                          className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/60 bg-card p-3"
+                        >
+                          <div>
+                            <p className="font-semibold text-sm text-foreground">
+                              {adminUser.full_name || "Sin nombre"}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {adminUser.phone || "Sin teléfono"}
+                            </p>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <Badge className="bg-primary/15 text-primary border-primary/30 text-xs">
+                              <ShieldCheck className="size-3 mr-1" />
+                              {perms?.isSuperAdmin
+                                ? "Acceso Total a la Marca"
+                                : `${perms?.allowedTabs?.length ?? 0} módulos permitidos`}
+                            </Badge>
+
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-xs gap-1"
+                              onClick={() => {
+                                setAdminUserToEdit(adminUser);
+                              }}
+                            >
+                              <Edit className="size-3" /> Permisos
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              )}
+            </div>
+
+            {/* Asignar Nuevo Administrador a esta Empresa */}
+            <div className="rounded-xl border border-border/60 bg-surface/40 p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <UserPlus className="size-4 text-primary" />
+                <Label className="font-bold text-sm">Asignar Nuevo Administrador a {managingAdminsTenant?.name}</Label>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Selecciona un usuario registrado para convertirlo en administrador de esta marca aliada con permisos específicos.
+              </p>
+
+              <div className="flex flex-col sm:flex-row items-center gap-2">
+                <div className="w-full">
+                  <select
+                    value={selectedUserToAssign}
+                    onChange={(e) => setSelectedUserToAssign(e.target.value)}
+                    className="w-full h-10 rounded-md border border-input bg-card px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  >
+                    <option value="">Seleccionar usuario de la plataforma...</option>
+                    {allProfiles.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.full_name || "Sin nombre"} ({p.phone || p.id.slice(0, 8)})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <Button
+                  disabled={!selectedUserToAssign}
+                  onClick={() => {
+                    const foundUser = allProfiles.find((p) => p.id === selectedUserToAssign);
+                    if (foundUser) {
+                      setAdminUserToEdit(foundUser);
+                    }
+                  }}
+                  className="w-full sm:w-auto shrink-0 gap-1.5 bg-primary text-primary-foreground text-xs font-semibold"
+                >
+                  <ShieldCheck className="size-3.5" /> Configurar Permisos
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setManagingAdminsTenant(null)}>
+              Cerrar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de edición de roles y permisos activado desde WhiteLabelPanel */}
+      {adminUserToEdit && (
+        <AdminPermissionsModal
+          isOpen={Boolean(adminUserToEdit)}
+          onClose={() => setAdminUserToEdit(null)}
+          user={adminUserToEdit}
+          currentRole="admin"
+          currentPerms={
+            adminsMap[adminUserToEdit.id] || {
+              isSuperAdmin: false,
+              allowedTabs: ["tx", "recargas", "kyc", "soporte"],
+              tenantId: managingAdminsTenant?.id,
+              tenantSlug: managingAdminsTenant?.slug,
+              tenantName: managingAdminsTenant?.name,
+            }
+          }
+        />
+      )}
     </div>
   );
 }
