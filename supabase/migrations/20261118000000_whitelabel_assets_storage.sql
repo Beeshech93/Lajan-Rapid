@@ -15,3 +15,4 @@ CREATE POLICY "whitelabel_assets_delete_staff" ON storage.objects FOR DELETE TO 
 -- Bucket público: lectura libre para mostrar logos y favicons en la web y PWA
 CREATE POLICY "whitelabel_assets_select_public" ON storage.objects FOR SELECT TO authenticated, anon
   USING (bucket_id = 'whitelabel-assets');
+

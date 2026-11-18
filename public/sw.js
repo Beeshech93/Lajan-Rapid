@@ -1,4 +1,4 @@
-const CACHE_NAME = "lajan-rapid-v1";
+const CACHE_NAME = "lajan-rapid-v2";
 const OFFLINE_URLS = ["/", "/manifest.webmanifest", "/icon-192.png", "/icon-512.png"];
 
 self.addEventListener("install", (event) => {
@@ -22,8 +22,8 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-// Solo cachea GET de assets estáticos (JS/CSS/imágenes); todo lo demás
-// (API, autenticación, datos) siempre va a la red, nunca a caché.
+// Network-First para assets estáticos: siempre intenta obtener la versión más
+// reciente desde el servidor/red, y solo si no hay conexión usa el caché offline.
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   if (request.method !== "GET") return;
@@ -36,14 +36,14 @@ self.addEventListener("fetch", (event) => {
   if (!isStaticAsset) return;
 
   event.respondWith(
-    caches.match(request).then(
-      (cached) =>
-        cached ||
-        fetch(request).then((response) => {
+    fetch(request)
+      .then((response) => {
+        if (response && response.status === 200) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-          return response;
-        }),
-    ),
+        }
+        return response;
+      })
+      .catch(() => caches.match(request))
   );
 });
