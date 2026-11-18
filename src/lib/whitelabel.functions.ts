@@ -423,3 +423,86 @@ export const deleteWhiteLabelTenant = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
+
+export type UploadWhiteLabelAssetInput = {
+  fileName: string;
+  fileBase64: string;
+  contentType?: string | undefined;
+  assetType: "logo" | "favicon" | "logoDark" | "appIcon";
+};
+
+/**
+ * Subir logotipo, favicon o ícono de aplicación para una marca White Label.
+ * Almacena en Supabase Storage (bucket público 'whitelabel-assets' con fallback a 'ad-banner').
+ */
+export const uploadWhiteLabelAsset = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: UploadWhiteLabelAssetInput) => input)
+  .handler(async ({ data, context }) => {
+    const { verifyIsAdmin } = await import("@/lib/admin.server");
+    const isAdmin = await verifyIsAdmin(context);
+    if (!isAdmin) {
+      throw new Error("No tienes permisos de administrador para subir recursos.");
+    }
+
+    if (!data.fileBase64 || !data.fileName) {
+      throw new Error("El archivo de imagen es obligatorio.");
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Limpiar base64
+    const base64Content = data.fileBase64.replace(/^data:[^;]+;base64,/, "");
+    const buffer = Buffer.from(base64Content, "base64");
+    const ext = data.fileName.split(".").pop()?.toLowerCase() || "png";
+    const safeExt = ["png", "jpg", "jpeg", "svg", "webp", "ico"].includes(ext) ? ext : "png";
+    const path = `${data.assetType || "asset"}-${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${safeExt}`;
+    const contentType =
+      data.contentType ||
+      (safeExt === "svg"
+        ? "image/svg+xml"
+        : safeExt === "ico"
+        ? "image/x-icon"
+        : `image/${safeExt}`);
+
+    // Asegurar existencia del bucket whitelabel-assets si es posible
+    try {
+      await supabaseAdmin.storage.createBucket("whitelabel-assets", { public: true });
+    } catch {
+      // Ignorar si ya existe
+    }
+
+    // 1. Intentar subir al bucket whitelabel-assets
+    let publicUrl = "";
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from("whitelabel-assets")
+      .upload(path, buffer, {
+        contentType,
+        upsert: true,
+      });
+
+    if (!uploadError) {
+      const { data: pubData } = supabaseAdmin.storage.from("whitelabel-assets").getPublicUrl(path);
+      publicUrl = pubData.publicUrl;
+    } else {
+      console.warn("whitelabel-assets bucket upload failed, trying ad-banner bucket:", uploadError);
+      // 2. Fallback al bucket público ad-banner
+      const { error: fbError } = await supabaseAdmin.storage
+        .from("ad-banner")
+        .upload(`wl-${path}`, buffer, {
+          contentType,
+          upsert: true,
+        });
+
+      if (fbError) {
+        throw new Error(
+          "Error al subir la imagen al almacenamiento: " + (uploadError.message || fbError.message)
+        );
+      }
+
+      const { data: pubData } = supabaseAdmin.storage.from("ad-banner").getPublicUrl(`wl-${path}`);
+      publicUrl = pubData.publicUrl;
+    }
+
+    return { publicUrl };
+  });

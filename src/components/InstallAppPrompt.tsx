@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { X, Download, Share, PlusSquare, Smartphone } from "lucide-react";
 import logoAsset from "@/assets/lajan-rapid-logo.png";
 import { useI18n } from "@/lib/i18n";
+import { useBrand } from "@/lib/brand-context";
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
@@ -17,10 +18,14 @@ const DISMISS_DURATION_MS = 24 * 60 * 60 * 1000; // 1 día
 
 export function InstallAppPrompt() {
   const { t } = useI18n();
+  const { currentBrand, isCustomBrand } = useBrand();
   const [isVisible, setIsVisible] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isIos, setIsIos] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
+
+  const appLogo = currentBrand.branding.appIconUrl || currentBrand.branding.logoUrl || logoAsset;
+  const appName = isCustomBrand ? currentBrand.name : "Lajan Rapid";
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -115,11 +120,17 @@ export function InstallAppPrompt() {
         <div className="relative overflow-hidden rounded-[28px] bg-white p-5 sm:p-6 shadow-2xl text-slate-900 border border-slate-100">
           {/* Cabecera: Icono Squircle Negro + Título/Descripción + Botón X */}
           <div className="flex items-start gap-3.5">
-            {/* Logo en squircle negro elegante */}
-            <div className="size-13 sm:size-14 shrink-0 rounded-2xl bg-black p-2 flex items-center justify-center shadow-sm">
+            {/* Logo en squircle elegante adaptado a la marca */}
+            <div
+              className="size-13 sm:size-14 shrink-0 rounded-2xl p-2 flex items-center justify-center shadow-sm overflow-hidden"
+              style={{
+                backgroundColor: currentBrand.branding.surfaceColor || "#000000",
+                border: `1px solid ${currentBrand.branding.primaryColor}30`,
+              }}
+            >
               <img
-                src={logoAsset}
-                alt="Lajan Rapid"
+                src={appLogo}
+                alt={appName}
                 className="h-full w-full object-contain"
               />
             </div>
@@ -127,10 +138,12 @@ export function InstallAppPrompt() {
             {/* Título y descripción con tipografía limpia y de alto contraste */}
             <div className="flex-1 min-w-0 pr-1 pt-0.5">
               <h3 className="font-semibold text-base sm:text-lg text-slate-900 leading-snug tracking-tight">
-                {t("install.prompt_title")}
+                {isCustomBrand ? `Instalar ${appName}` : t("install.prompt_title")}
               </h3>
               <p className="mt-1 text-xs sm:text-sm text-slate-500 leading-snug font-normal">
-                {t("install.prompt_desc")}
+                {isCustomBrand
+                  ? `Agrega ${appName} a tu pantalla de inicio para acceso rápido.`
+                  : t("install.prompt_desc")}
               </p>
             </div>
 

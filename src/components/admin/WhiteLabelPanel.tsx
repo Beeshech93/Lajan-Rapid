@@ -30,6 +30,10 @@ import {
   Lock,
   CheckCircle2,
   AlertCircle,
+  Upload,
+  Image as ImageIcon,
+  Loader2,
+  X,
 } from "lucide-react";
 
 import {
@@ -45,6 +49,7 @@ import {
   getWhiteLabelTenants,
   saveWhiteLabelTenant,
   deleteWhiteLabelTenant,
+  uploadWhiteLabelAsset,
 } from "@/lib/whitelabel.functions";
 import { getAllAdminsPermissionsMap } from "@/lib/admin-permissions.functions";
 import { AdminPermissionsModal } from "./AdminPermissionsModal";
@@ -153,6 +158,64 @@ export function WhiteLabelPanel() {
     resend: { enabled: false, apiKey: "", fromEmail: "" },
     webhooks: { enabled: false, url: "", secretKey: "" },
   });
+
+  // Estados de subida de imágenes (Logo, Favicon, App Icon)
+  const [uploadingField, setUploadingField] = useState<string | null>(null);
+  const [manualUrlInputs, setManualUrlInputs] = useState<{
+    logoUrl?: boolean;
+    faviconUrl?: boolean;
+    appIconUrl?: boolean;
+    logoDarkUrl?: boolean;
+  }>({});
+  const uploadAssetFn = useServerFn(uploadWhiteLabelAsset);
+
+  const handleImageUpload = async (
+    file: File,
+    field: "logoUrl" | "faviconUrl" | "logoDarkUrl" | "appIconUrl",
+    assetType: "logo" | "favicon" | "logoDark" | "appIcon"
+  ) => {
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("La imagen no puede pesar más de 5 MB.");
+      return;
+    }
+
+    setUploadingField(field);
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const res = await uploadAssetFn({
+        data: {
+          fileName: file.name,
+          fileBase64: base64,
+          contentType: file.type || "image/png",
+          assetType,
+        },
+      });
+
+      if (res?.publicUrl) {
+        setFormBranding((b) => ({ ...b, [field]: res.publicUrl }));
+        toast.success(
+          field === "logoUrl"
+            ? "Logotipo subido y aplicado exitosamente."
+            : field === "faviconUrl"
+            ? "Favicon subido y aplicado exitosamente."
+            : "Imagen subida exitosamente."
+        );
+      }
+    } catch (err: any) {
+      console.error("Error al subir archivo:", err);
+      toast.error("Error al subir imagen: " + (err.message || "Error desconocido"));
+    } finally {
+      setUploadingField(null);
+    }
+  };
 
   // Consulta de tenants
   const { data: tenants = [], isLoading, refetch } = useQuery({
@@ -760,33 +823,450 @@ export function WhiteLabelPanel() {
                 </div>
               </div>
 
-              {/* Logotipos y Assets */}
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="logoUrl">URL del Logotipo (PNG / SVG transparente)</Label>
-                  <Input
-                    id="logoUrl"
-                    value={formBranding.logoUrl || ""}
-                    onChange={(e) =>
-                      setFormBranding((b) => ({ ...b, logoUrl: e.target.value }))
-                    }
-                    placeholder="https://tu-dominio.com/logo.png"
-                  />
-                  <p className="text-[11px] text-muted-foreground">
-                    Si se deja vacío, se mostrará el ícono generado con el nombre.
+              {/* Sección de Recursos Gráficos / Subida de Imágenes */}
+              <div className="space-y-4 pt-2">
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <ImageIcon className="size-4 text-primary" /> Imágenes, Logotipo y Favicon
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Sube directamente tus archivos de imagen en formato PNG, SVG, JPG, WebP o ICO. Se almacenarán automáticamente en la nube de tu marca.
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="faviconUrl">URL del Favicon (.ico / .png)</Label>
-                  <Input
-                    id="faviconUrl"
-                    value={formBranding.faviconUrl || ""}
-                    onChange={(e) =>
-                      setFormBranding((b) => ({ ...b, faviconUrl: e.target.value }))
-                    }
-                    placeholder="https://tu-dominio.com/favicon.png"
-                  />
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {/* 1. Logotipo Principal */}
+                  <div className="rounded-xl border border-border/70 bg-surface/40 p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="text-xs font-semibold flex items-center gap-1.5">
+                          Logotipo Principal (PNG / SVG)
+                        </Label>
+                        <p className="text-[11px] text-muted-foreground">
+                          Aparece en la barra de navegación y comprobantes
+                        </p>
+                      </div>
+                      {formBranding.logoUrl && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setFormBranding((b) => ({ ...b, logoUrl: "" }))}
+                          className="h-7 px-2 text-xs text-destructive hover:bg-destructive/10"
+                          title="Quitar logotipo"
+                        >
+                          <Trash2 className="size-3.5 mr-1" /> Quitar
+                        </Button>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-border/80 bg-background/50 p-4 transition-colors hover:border-primary/50">
+                      {formBranding.logoUrl ? (
+                        <div className="relative flex flex-col items-center gap-2">
+                          <div
+                            className="flex h-20 w-44 items-center justify-center rounded-lg border border-border/60 p-2 overflow-hidden"
+                            style={{
+                              backgroundColor: formBranding.backgroundColor || "#0b1426",
+                            }}
+                          >
+                            <img
+                              src={formBranding.logoUrl}
+                              alt="Logo preview"
+                              className="max-h-full max-w-full object-contain"
+                            />
+                          </div>
+                          <span className="text-[11px] text-muted-foreground truncate max-w-[200px]">
+                            {formBranding.logoUrl.split("/").pop()}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center text-center p-2">
+                          <div className="rounded-full bg-primary/10 p-2.5 text-primary mb-2">
+                            <Upload className="size-5" />
+                          </div>
+                          <p className="text-xs font-medium">Sube el Logotipo de tu marca</p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">
+                            PNG transparente, SVG, WebP o JPG (Recomendado 512x512)
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-2 pt-1">
+                        <label className="cursor-pointer">
+                          <input
+                            type="file"
+                            accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                            className="hidden"
+                            disabled={uploadingField === "logoUrl"}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleImageUpload(file, "logoUrl", "logo");
+                            }}
+                          />
+                          <span className="inline-flex items-center gap-1.5 rounded-lg border border-primary/40 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/20 transition-colors">
+                            {uploadingField === "logoUrl" ? (
+                              <>
+                                <Loader2 className="size-3.5 animate-spin" /> Subiendo...
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="size-3.5" />
+                                {formBranding.logoUrl ? "Cambiar Imagen" : "Subir Logotipo"}
+                              </>
+                            )}
+                          </span>
+                        </label>
+
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            setManualUrlInputs((prev) => ({ ...prev, logoUrl: !prev.logoUrl }))
+                          }
+                          className="h-7 text-[11px] text-muted-foreground hover:text-foreground"
+                        >
+                          {manualUrlInputs.logoUrl ? "Ocultar URL" : "Pegar URL"}
+                        </Button>
+                      </div>
+
+                      {manualUrlInputs.logoUrl && (
+                        <div className="w-full pt-2">
+                          <Input
+                            value={formBranding.logoUrl || ""}
+                            onChange={(e) =>
+                              setFormBranding((b) => ({ ...b, logoUrl: e.target.value }))
+                            }
+                            placeholder="https://ejemplo.com/logo.png"
+                            className="text-xs font-mono h-8"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 2. Favicon del Navegador */}
+                  <div className="rounded-xl border border-border/70 bg-surface/40 p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="text-xs font-semibold flex items-center gap-1.5">
+                          Favicon (.ico / .png / .svg)
+                        </Label>
+                        <p className="text-[11px] text-muted-foreground">
+                          Ícono visible en la pestaña del navegador web
+                        </p>
+                      </div>
+                      {formBranding.faviconUrl && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setFormBranding((b) => ({ ...b, faviconUrl: "" }))}
+                          className="h-7 px-2 text-xs text-destructive hover:bg-destructive/10"
+                          title="Quitar favicon"
+                        >
+                          <Trash2 className="size-3.5 mr-1" /> Quitar
+                        </Button>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-border/80 bg-background/50 p-4 transition-colors hover:border-primary/50">
+                      {formBranding.faviconUrl ? (
+                        <div className="flex flex-col items-center gap-2">
+                          {/* Simulación pestaña de navegador */}
+                          <div className="flex items-center gap-2 rounded-t-lg border border-b-0 border-border/60 bg-surface px-3 py-1.5 text-xs text-foreground shadow-sm">
+                            <img
+                              src={formBranding.faviconUrl}
+                              alt="Favicon preview"
+                              className="size-4 object-contain rounded-sm"
+                            />
+                            <span className="font-medium text-[11px] max-w-[120px] truncate">
+                              {formName || "Mi Empresa"}
+                            </span>
+                            <X className="size-3 text-muted-foreground ml-1 opacity-60" />
+                          </div>
+                          <span className="text-[11px] text-muted-foreground truncate max-w-[200px]">
+                            {formBranding.faviconUrl.split("/").pop()}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center text-center p-2">
+                          <div className="rounded-full bg-primary/10 p-2.5 text-primary mb-2">
+                            <Upload className="size-5" />
+                          </div>
+                          <p className="text-xs font-medium">Sube el Favicon de la pestaña</p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">
+                            Formatos .ico, .png o .svg (Recomendado 32x32 o 64x64)
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-2 pt-1">
+                        <label className="cursor-pointer">
+                          <input
+                            type="file"
+                            accept="image/x-icon,image/png,image/svg+xml,image/vnd.microsoft.icon,image/webp"
+                            className="hidden"
+                            disabled={uploadingField === "faviconUrl"}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleImageUpload(file, "faviconUrl", "favicon");
+                            }}
+                          />
+                          <span className="inline-flex items-center gap-1.5 rounded-lg border border-primary/40 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/20 transition-colors">
+                            {uploadingField === "faviconUrl" ? (
+                              <>
+                                <Loader2 className="size-3.5 animate-spin" /> Subiendo...
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="size-3.5" />
+                                {formBranding.faviconUrl ? "Cambiar Favicon" : "Subir Favicon"}
+                              </>
+                            )}
+                          </span>
+                        </label>
+
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            setManualUrlInputs((prev) => ({ ...prev, faviconUrl: !prev.faviconUrl }))
+                          }
+                          className="h-7 text-[11px] text-muted-foreground hover:text-foreground"
+                        >
+                          {manualUrlInputs.faviconUrl ? "Ocultar URL" : "Pegar URL"}
+                        </Button>
+                      </div>
+
+                      {manualUrlInputs.faviconUrl && (
+                        <div className="w-full pt-2">
+                          <Input
+                            value={formBranding.faviconUrl || ""}
+                            onChange={(e) =>
+                              setFormBranding((b) => ({ ...b, faviconUrl: e.target.value }))
+                            }
+                            placeholder="https://ejemplo.com/favicon.ico"
+                            className="text-xs font-mono h-8"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 3. Ícono de la App Móvil / PWA */}
+                  <div className="rounded-xl border border-border/70 bg-surface/40 p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="text-xs font-semibold flex items-center gap-1.5">
+                          Ícono de App Móvil / PWA (512x512)
+                        </Label>
+                        <p className="text-[11px] text-muted-foreground">
+                          Ícono para cuando los clientes instalan la App en su celular
+                        </p>
+                      </div>
+                      {formBranding.appIconUrl && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setFormBranding((b) => ({ ...b, appIconUrl: "" }))}
+                          className="h-7 px-2 text-xs text-destructive hover:bg-destructive/10"
+                          title="Quitar ícono PWA"
+                        >
+                          <Trash2 className="size-3.5 mr-1" /> Quitar
+                        </Button>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-border/80 bg-background/50 p-4 transition-colors hover:border-primary/50">
+                      {formBranding.appIconUrl ? (
+                        <div className="flex flex-col items-center gap-2">
+                          <div
+                            className="size-16 rounded-2xl p-2.5 flex items-center justify-center shadow-lg border border-border/60 overflow-hidden"
+                            style={{ backgroundColor: formBranding.surfaceColor || "#000000" }}
+                          >
+                            <img
+                              src={formBranding.appIconUrl}
+                              alt="App Icon preview"
+                              className="h-full w-full object-contain"
+                            />
+                          </div>
+                          <span className="text-[11px] text-muted-foreground truncate max-w-[200px]">
+                            {formBranding.appIconUrl.split("/").pop()}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center text-center p-2">
+                          <div className="rounded-full bg-primary/10 p-2.5 text-primary mb-2">
+                            <Smartphone className="size-5" />
+                          </div>
+                          <p className="text-xs font-medium">Sube el Ícono de la App Móvil</p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">
+                            PNG cuadrado 512x512px recomendado
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-2 pt-1">
+                        <label className="cursor-pointer">
+                          <input
+                            type="file"
+                            accept="image/png,image/webp,image/jpeg"
+                            className="hidden"
+                            disabled={uploadingField === "appIconUrl"}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleImageUpload(file, "appIconUrl", "appIcon");
+                            }}
+                          />
+                          <span className="inline-flex items-center gap-1.5 rounded-lg border border-primary/40 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/20 transition-colors">
+                            {uploadingField === "appIconUrl" ? (
+                              <>
+                                <Loader2 className="size-3.5 animate-spin" /> Subiendo...
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="size-3.5" />
+                                {formBranding.appIconUrl ? "Cambiar Ícono" : "Subir Ícono Móvil"}
+                              </>
+                            )}
+                          </span>
+                        </label>
+
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            setManualUrlInputs((prev) => ({ ...prev, appIconUrl: !prev.appIconUrl }))
+                          }
+                          className="h-7 text-[11px] text-muted-foreground hover:text-foreground"
+                        >
+                          {manualUrlInputs.appIconUrl ? "Ocultar URL" : "Pegar URL"}
+                        </Button>
+                      </div>
+
+                      {manualUrlInputs.appIconUrl && (
+                        <div className="w-full pt-2">
+                          <Input
+                            value={formBranding.appIconUrl || ""}
+                            onChange={(e) =>
+                              setFormBranding((b) => ({ ...b, appIconUrl: e.target.value }))
+                            }
+                            placeholder="https://ejemplo.com/icon-512.png"
+                            className="text-xs font-mono h-8"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 4. Logotipo Modo Oscuro (Opcional) */}
+                  <div className="rounded-xl border border-border/70 bg-surface/40 p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="text-xs font-semibold flex items-center gap-1.5">
+                          Logotipo Modo Oscuro (Opcional)
+                        </Label>
+                        <p className="text-[11px] text-muted-foreground">
+                          Variante con tipografía clara para fondos oscuros
+                        </p>
+                      </div>
+                      {formBranding.logoDarkUrl && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setFormBranding((b) => ({ ...b, logoDarkUrl: "" }))}
+                          className="h-7 px-2 text-xs text-destructive hover:bg-destructive/10"
+                          title="Quitar logotipo oscuro"
+                        >
+                          <Trash2 className="size-3.5 mr-1" /> Quitar
+                        </Button>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-border/80 bg-background/50 p-4 transition-colors hover:border-primary/50">
+                      {formBranding.logoDarkUrl ? (
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="flex h-20 w-44 items-center justify-center rounded-lg border border-white/20 bg-slate-950 p-2 overflow-hidden">
+                            <img
+                              src={formBranding.logoDarkUrl}
+                              alt="Dark logo preview"
+                              className="max-h-full max-w-full object-contain"
+                            />
+                          </div>
+                          <span className="text-[11px] text-muted-foreground truncate max-w-[200px]">
+                            {formBranding.logoDarkUrl.split("/").pop()}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center text-center p-2">
+                          <div className="rounded-full bg-primary/10 p-2.5 text-primary mb-2">
+                            <ImageIcon className="size-5" />
+                          </div>
+                          <p className="text-xs font-medium">Logotipo para fondo oscuro</p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">
+                            Si se omite, se usa el logotipo principal
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-2 pt-1">
+                        <label className="cursor-pointer">
+                          <input
+                            type="file"
+                            accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                            className="hidden"
+                            disabled={uploadingField === "logoDarkUrl"}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleImageUpload(file, "logoDarkUrl", "logoDark");
+                            }}
+                          />
+                          <span className="inline-flex items-center gap-1.5 rounded-lg border border-primary/40 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/20 transition-colors">
+                            {uploadingField === "logoDarkUrl" ? (
+                              <>
+                                <Loader2 className="size-3.5 animate-spin" /> Subiendo...
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="size-3.5" />
+                                {formBranding.logoDarkUrl ? "Cambiar Imagen" : "Subir Logo Oscuro"}
+                              </>
+                            )}
+                          </span>
+                        </label>
+
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            setManualUrlInputs((prev) => ({ ...prev, logoDarkUrl: !prev.logoDarkUrl }))
+                          }
+                          className="h-7 text-[11px] text-muted-foreground hover:text-foreground"
+                        >
+                          {manualUrlInputs.logoDarkUrl ? "Ocultar URL" : "Pegar URL"}
+                        </Button>
+                      </div>
+
+                      {manualUrlInputs.logoDarkUrl && (
+                        <div className="w-full pt-2">
+                          <Input
+                            value={formBranding.logoDarkUrl || ""}
+                            onChange={(e) =>
+                              setFormBranding((b) => ({ ...b, logoDarkUrl: e.target.value }))
+                            }
+                            placeholder="https://ejemplo.com/logo-dark.png"
+                            className="text-xs font-mono h-8"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
 
