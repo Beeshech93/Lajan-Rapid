@@ -1381,7 +1381,11 @@ export function WhiteLabelPanel() {
                     disabled={editingTenant?.isDefault}
                   />
                   <p className="text-[11px] text-muted-foreground">
-                    Enlace de acceso: <code>lajanrapid.app/?brand={formSlug || "..."}</code>
+                    {editingTenant?.isDefault ? (
+                      <>Identificador del sistema: <code>{formSlug || "default"}</code></>
+                    ) : (
+                      <>Identificador único: <code>{formSlug || "..."}</code> (tu portal opera en su propio dominio)</>
+                    )}
                   </p>
                 </div>
               </div>
@@ -1406,7 +1410,7 @@ export function WhiteLabelPanel() {
                         Dominio Propio & SEO en Google (Obligatorio)
                       </h4>
                       <p className="text-xs text-muted-foreground">
-                        Cada marca requiere su propio dominio para no mostrar el dominio nativo de Lajan Rapid y posicionarse en Google.
+                        Cada marca opera de forma 100% independiente con su propio dominio web para posicionarse en Google.
                       </p>
                     </div>
                   </div>
@@ -1440,7 +1444,7 @@ export function WhiteLabelPanel() {
                     />
                   </div>
                   <p className="text-[11px] text-muted-foreground">
-                    Tus clientes accederán directamente a través de este dominio sin ver referencias a lajanrapid.app.
+                    Tus clientes accederán directamente a través de tu propio dominio web sin intermediarios.
                   </p>
                 </div>
 
@@ -1453,7 +1457,7 @@ export function WhiteLabelPanel() {
                     <div className="rounded border border-border/50 bg-surface/50 p-2 space-y-0.5">
                       <span className="text-muted-foreground block text-[10px] uppercase font-sans font-semibold">Registro CNAME (Recomendado)</span>
                       <div><strong>Nombre/Host:</strong> <code>@ o www</code></div>
-                      <div><strong>Apunta a:</strong> <code>cname.lajanrapid.app</code></div>
+                      <div><strong>Apunta a:</strong> <code>cname.whitelabeldns.com</code></div>
                     </div>
                     <div className="rounded border border-border/50 bg-surface/50 p-2 space-y-0.5">
                       <span className="text-muted-foreground block text-[10px] uppercase font-sans font-semibold">Google SEO & Metadatos</span>
@@ -1468,7 +1472,7 @@ export function WhiteLabelPanel() {
                 <div className="space-y-0.5">
                   <Label htmlFor="formIsActive">Estado de la Marca</Label>
                   <p className="text-xs text-muted-foreground">
-                    Si se desactiva, los usuarios que entren por su enlace verán Lajan Rapid por defecto.
+                    Si se desactiva, el portal quedará fuera de servicio temporalmente.
                   </p>
                 </div>
                 <Switch
