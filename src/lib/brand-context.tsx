@@ -64,6 +64,8 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
           t.isActive &&
           !t.isDefault &&
           (t.domain?.toLowerCase() === currentHost ||
+            t.domain?.toLowerCase() === currentHost.replace(/^www\./, "") ||
+            `www.${t.domain?.toLowerCase()}` === currentHost ||
             (t.subdomain && `${t.subdomain.toLowerCase()}.${window.location.host}`.includes(currentHost)))
       );
 
@@ -162,10 +164,71 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
       link.href = b.faviconUrl;
     }
 
-    // Actualizar título de la pestaña
+    // Actualizar título, SEO y Meta Tags para Google si es marca personalizada
     if (isCustomBrand) {
       const slogan = tenant.content.slogan ? ` — ${tenant.content.slogan}` : "";
-      document.title = `${tenant.name}${slogan}`;
+      const pageTitle = `${tenant.name}${slogan}`;
+      document.title = pageTitle;
+
+      const descText =
+        tenant.content.tagline ||
+        tenant.content.slogan ||
+        `Envía dinero y realiza recargas con ${tenant.name}. Tipo de cambio transparente y comisiones claras.`;
+
+      // Meta Description
+      let metaDesc = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
+      if (!metaDesc) {
+        metaDesc = document.createElement("meta");
+        metaDesc.name = "description";
+        document.head.appendChild(metaDesc);
+      }
+      metaDesc.content = descText;
+
+      // Canonical Link propio para posicionamiento SEO independiente
+      let canonicalLink = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+      if (!canonicalLink) {
+        canonicalLink = document.createElement("link");
+        canonicalLink.rel = "canonical";
+        document.head.appendChild(canonicalLink);
+      }
+      const baseDomain = tenant.domain ? `https://${tenant.domain}` : window.location.origin;
+      canonicalLink.href = `${baseDomain}${window.location.pathname}`;
+
+      // Open Graph Tags
+      const setOgMeta = (prop: string, content: string) => {
+        let meta = document.querySelector(`meta[property="${prop}"]`) as HTMLMetaElement | null;
+        if (!meta) {
+          meta = document.createElement("meta");
+          meta.setAttribute("property", prop);
+          document.head.appendChild(meta);
+        }
+        meta.content = content;
+      };
+
+      setOgMeta("og:site_name", tenant.name);
+      setOgMeta("og:title", pageTitle);
+      setOgMeta("og:description", descText);
+      setOgMeta("og:url", `${baseDomain}${window.location.pathname}`);
+      if (b.logoUrl) {
+        setOgMeta("og:image", b.logoUrl);
+      }
+
+      // Twitter Meta Tags
+      const setTwitterMeta = (name: string, content: string) => {
+        let meta = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
+        if (!meta) {
+          meta = document.createElement("meta");
+          meta.name = name;
+          document.head.appendChild(meta);
+        }
+        meta.content = content;
+      };
+
+      setTwitterMeta("twitter:title", pageTitle);
+      setTwitterMeta("twitter:description", descText);
+      if (b.logoUrl) {
+        setTwitterMeta("twitter:image", b.logoUrl);
+      }
     }
   };
 

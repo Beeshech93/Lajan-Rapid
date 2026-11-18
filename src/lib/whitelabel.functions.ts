@@ -248,6 +248,16 @@ export const saveWhiteLabelTenant = createServerFn({ method: "POST" })
     const now = new Date().toISOString();
 
     const isLajanDefault = data.slug === "default" || data.isDefault === true;
+    const cleanDomain = data.domain?.trim()
+      ? data.domain.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/+$/, "")
+      : null;
+
+    if (!isLajanDefault && !cleanDomain) {
+      throw new Error(
+        "El dominio personalizado es OBLIGATORIO para cada marca White Label para conectar su propio portal y posicionar en Google SEO sin mostrar el dominio nativo."
+      );
+    }
+
     const tenantId = data.id || (isLajanDefault ? DEFAULT_LAJAN_RAPID_TENANT.id : crypto.randomUUID());
 
     const tenantToSave: Tenant = {
@@ -257,7 +267,7 @@ export const saveWhiteLabelTenant = createServerFn({ method: "POST" })
       legalName: data.legalName?.trim() || "",
       isDefault: isLajanDefault,
       isActive: data.isActive ?? true,
-      domain: data.domain?.trim() ? data.domain.trim().toLowerCase() : null,
+      domain: cleanDomain,
       subdomain: data.subdomain?.trim() ? data.subdomain.trim().toLowerCase() : null,
       branding: {
         primaryColor: data.branding?.primaryColor || "#10b981",

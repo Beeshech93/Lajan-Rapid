@@ -394,6 +394,22 @@ export function WhiteLabelPanel() {
       return;
     }
 
+    const isDefaultBrand = editingTenant?.isDefault || cleanSlug === "default";
+    const cleanDomain = formDomain
+      .trim()
+      .toLowerCase()
+      .replace(/^https?:\/\//, "")
+      .replace(/\/+$/, "");
+
+    // El dominio es obligatorio para marcas aliadas (para SEO y no mostrar dominio nativo)
+    if (!isDefaultBrand && !cleanDomain) {
+      toast.error(
+        "El dominio personalizado es OBLIGATORIO para cada White Label (necesario para conectar su marca y posicionar en Google SEO sin mostrar el dominio nativo)."
+      );
+      setActiveEditTab("identity");
+      return;
+    }
+
     const payload: {
       id?: string | undefined;
       slug: string;
@@ -411,9 +427,9 @@ export function WhiteLabelPanel() {
       slug: cleanSlug,
       name: formName.trim(),
       legalName: formLegalName.trim(),
-      isDefault: editingTenant?.isDefault || false,
+      isDefault: isDefaultBrand,
       isActive: formIsActive,
-      domain: formDomain.trim() || null,
+      domain: cleanDomain || null,
       subdomain: formSubdomain.trim() || null,
       branding: formBranding,
       content: formContent,
@@ -427,11 +443,11 @@ export function WhiteLabelPanel() {
     saveMutation.mutate(payload);
   };
 
-  const copyBrandUrl = (slug: string) => {
+  const copyBrandUrl = (tenant: { slug: string; domain?: string | null | undefined; name: string }) => {
     const origin = typeof window !== "undefined" ? window.location.origin : "https://lajanrapid.app";
-    const url = `${origin}/?brand=${slug}`;
+    const url = tenant.domain ? `https://${tenant.domain}` : `${origin}/?brand=${tenant.slug}`;
     navigator.clipboard.writeText(url);
-    toast.success("Enlace de la marca copiado al portapapeles.");
+    toast.success(`Enlace de ${tenant.name} (${url}) copiado.`);
   };
 
   return (
@@ -551,6 +567,11 @@ export function WhiteLabelPanel() {
                               Piloto Oficial
                             </Badge>
                           )}
+                          {t.domain && (
+                            <Badge className="bg-emerald-500/15 text-emerald-400 border-emerald-500/30 text-[10px] gap-1">
+                              <Globe className="size-2.5" /> SEO Activo
+                            </Badge>
+                          )}
                         </>
                       )}
                       {isCurrentlyActiveInSession && (
@@ -564,11 +585,15 @@ export function WhiteLabelPanel() {
                       <span>
                         Slug: <strong className="text-foreground">{t.slug}</strong>
                       </span>
-                      {t.domain && (
-                        <span className="flex items-center gap-1">
-                          <Globe className="size-3" /> {t.domain}
+                      {t.domain ? (
+                        <span className="flex items-center gap-1 font-semibold text-emerald-400">
+                          <Globe className="size-3" /> https://{t.domain}
                         </span>
-                      )}
+                      ) : !isLajan ? (
+                        <span className="flex items-center gap-1 font-semibold text-amber-400">
+                          <AlertCircle className="size-3" /> Requiere Dominio Propio
+                        </span>
+                      ) : null}
                       {(t.settings.feeMarkupPercent ?? 0) > 0 && (
                         <span className="text-emerald-400">
                           +{t.settings.feeMarkupPercent}% markup
@@ -611,6 +636,18 @@ export function WhiteLabelPanel() {
 
                 {/* Acciones */}
                 <div className="flex flex-wrap items-center gap-2 pt-2 lg:pt-0">
+                  {t.domain && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.open(`https://${t.domain}`, "_blank")}
+                      className="gap-1.5 text-xs text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/10"
+                      title={`Abrir https://${t.domain} en nueva pestaña`}
+                    >
+                      <ExternalLink className="size-3.5" /> Visitar Dominio
+                    </Button>
+                  )}
+
                   <Button
                     variant="outline"
                     size="sm"
@@ -627,9 +664,9 @@ export function WhiteLabelPanel() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => copyBrandUrl(t.slug)}
+                    onClick={() => copyBrandUrl(t)}
                     className="gap-1.5 text-xs"
-                    title="Copiar link de acceso directo (?brand=...)"
+                    title="Copiar link oficial de la marca"
                   >
                     <Copy className="size-3.5" /> Copiar Enlace
                   </Button>
@@ -1349,25 +1386,81 @@ export function WhiteLabelPanel() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="formLegalName">Razón Social o Nombre Legal</Label>
-                  <Input
-                    id="formLegalName"
-                    value={formLegalName}
-                    onChange={(e) => setFormLegalName(e.target.value)}
-                    placeholder="Ej. VipPip Payments S.A."
-                  />
+              <div className="space-y-2">
+                <Label htmlFor="formLegalName">Razón Social o Nombre Legal</Label>
+                <Input
+                  id="formLegalName"
+                  value={formLegalName}
+                  onChange={(e) => setFormLegalName(e.target.value)}
+                  placeholder="Ej. VipPip Payments S.A."
+                />
+              </div>
+
+              {/* Dominio Propio & SEO en Google (Obligatorio) */}
+              <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-4 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Globe className="size-5 text-emerald-400 shrink-0" />
+                    <div>
+                      <h4 className="text-sm font-semibold text-emerald-300">
+                        Dominio Propio & SEO en Google (Obligatorio)
+                      </h4>
+                      <p className="text-xs text-muted-foreground">
+                        Cada marca requiere su propio dominio para no mostrar el dominio nativo de Lajan Rapid y posicionarse en Google.
+                      </p>
+                    </div>
+                  </div>
+                  <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/40 text-[11px] self-start sm:self-auto">
+                    Obligatorio
+                  </Badge>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="formDomain">Dominio Personalizado (opcional)</Label>
-                  <Input
-                    id="formDomain"
-                    value={formDomain}
-                    onChange={(e) => setFormDomain(e.target.value)}
-                    placeholder="remesasvippip.com"
-                  />
+                <div className="space-y-1.5 pt-1">
+                  <Label htmlFor="formDomain" className="text-xs font-semibold text-foreground">
+                    Dominio Web Oficial (ej. vippip.com o remesas.vippip.com) *
+                  </Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-2.5 text-xs text-muted-foreground font-mono select-none">
+                      https://
+                    </span>
+                    <Input
+                      id="formDomain"
+                      value={formDomain}
+                      onChange={(e) => {
+                        const clean = e.target.value
+                          .trim()
+                          .toLowerCase()
+                          .replace(/^https?:\/\//, "")
+                          .replace(/\/+$/, "");
+                        setFormDomain(clean);
+                      }}
+                      placeholder="vippip.com"
+                      className="pl-18 font-mono text-xs"
+                      required={!editingTenant?.isDefault}
+                    />
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Tus clientes accederán directamente a través de este dominio sin ver referencias a lajanrapid.app.
+                  </p>
+                </div>
+
+                {/* Guía DNS y Beneficios SEO */}
+                <div className="rounded-lg border border-border/70 bg-background/80 p-3 space-y-2 text-xs">
+                  <p className="font-semibold text-foreground flex items-center gap-1.5">
+                    <CheckCircle2 className="size-3.5 text-emerald-400" /> Configuración DNS requerida en tu registrador (Cloudflare, GoDaddy, Namecheap):
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] font-mono">
+                    <div className="rounded border border-border/50 bg-surface/50 p-2 space-y-0.5">
+                      <span className="text-muted-foreground block text-[10px] uppercase font-sans font-semibold">Registro CNAME (Recomendado)</span>
+                      <div><strong>Nombre/Host:</strong> <code>@ o www</code></div>
+                      <div><strong>Apunta a:</strong> <code>cname.lajanrapid.app</code></div>
+                    </div>
+                    <div className="rounded border border-border/50 bg-surface/50 p-2 space-y-0.5">
+                      <span className="text-muted-foreground block text-[10px] uppercase font-sans font-semibold">Google SEO & Metadatos</span>
+                      <div><strong>Canonical:</strong> <code>https://{formDomain || "tu-dominio.com"}</code></div>
+                      <div><strong>Indexación:</strong> <code>100% independiente en Google</code></div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
