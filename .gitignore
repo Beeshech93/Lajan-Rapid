@@ -39,3 +39,8 @@ supabase/.temp/
 *.keystore
 android-signing/
 
+# Archives
+*.zip
+*.tar.gz
+
+
